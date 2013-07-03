@@ -12,7 +12,8 @@ MultimediaSystemControlMessage	::=CHOICE
 	request	RequestMessage,
 	response	ResponseMessage,
 	command	CommandMessage,
-	indication	IndicationMessage
+	indication	IndicationMessage,
+	...
 }
 
 -- A RequestMessage results in action and requires an immediate response
