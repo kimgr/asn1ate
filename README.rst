@@ -19,7 +19,12 @@ This is very much an alpha-quality prototype. Things that need doing:
 
 * Regression test suite
 * HACK/TODO/BUGs need to be fixed
-* ASN.1 grammar is very incomplete and incorrect in some places
+* ASN.1 grammar is very incomplete and incorrect in some places. Known issues:
+  - Value references, e.g.
+      maxInt INTEGER ::= 123456
+      X ::= INTEGER(0 .. maxInt) -- fails here
+  - SET OF
+  - COMPONENTS OF
 * Improve parser error handling/reporting
 
 
