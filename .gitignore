@@ -4,3 +4,8 @@ __pycache__/
 
 # Proprietary test data
 source.asn1
+
+# Distutils artifacts
+MANIFEST
+build/
+dist/
