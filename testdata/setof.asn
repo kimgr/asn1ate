@@ -1,0 +1,12 @@
+Test DEFINITIONS ::=
+BEGIN
+  -- Top-level
+  Foo ::= SET OF INTEGER
+
+  -- Inline
+  Bar ::= SEQUENCE
+  {
+  	baz SET OF INTEGER, 	-- built-in type
+	quux SET OF Foo		-- user-defined type
+  }
+END

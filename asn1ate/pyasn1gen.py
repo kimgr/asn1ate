@@ -68,6 +68,7 @@ class Pyasn1Backend(object):
             ValueListType: self.decl_value_list_type,
             BitStringType: self.decl_bitstring_type,
             SequenceOfType: self.decl_sequenceof_type,
+            SetOfType: self.decl_setof_type,
             TypeAssignment: self.decl_type_assignment
         }
 
@@ -78,6 +79,7 @@ class Pyasn1Backend(object):
             ComponentType: self.expr_component_type,
             NamedType: self.expr_named_type,
             SequenceOfType: self.expr_sequenceof_type,
+            SetOfType: self.expr_setof_type
         }
 
     def generate_code(self):
@@ -233,6 +235,12 @@ class Pyasn1Backend(object):
     def decl_sequenceof_type(self, t):
         return 'componentType = %s' % self.generate_expr(t.type_decl)
 
+    def expr_setof_type(self, t):
+        return 'univ.SetOf(componentType=%s)' % self.generate_expr(t.type_decl)
+
+    def decl_setof_type(self, t):
+        return 'componentType = %s' % self.generate_expr(t.type_decl)
+
 
 def generate_pyasn1(sema_module, out_stream):
     return Pyasn1Backend(sema_module, out_stream).generate_code()
@@ -263,6 +271,7 @@ _ASN1_BUILTIN_TYPES = {
     'CHOICE': 'univ.Choice',
     'SEQUENCE': 'univ.Sequence',
     'SEQUENCE OF': 'univ.SequenceOf',
+    'SET OF': 'univ.SetOf',
     'UTF8String': 'char.UTF8String'
 }
 

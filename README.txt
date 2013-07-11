@@ -27,7 +27,6 @@ This is very much an alpha-quality prototype. Things that need doing:
         maxInt INTEGER ::= 12345   -- This parses
         X ::= INTEGER(0 .. maxInt) -- This doesn't
 
-  - SET OF
   - COMPONENTS OF
   - Extension syntax in SEQUENCE and CHOICE: trailing "..."
 

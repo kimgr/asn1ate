@@ -175,6 +175,21 @@ class SequenceOfType(object):
     __repr__ = __str__
 
 
+class SetOfType(object):
+    def __init__(self, elements):
+        setof, type_token = elements
+        self.type_name = setof
+        self.type_decl = _create_sema_node(type_token)
+
+    def imports(self):
+        return self.type_decl.imports()
+
+    def __str__(self):
+        return '%s %s' % (self.type_name, self.type_decl)
+
+    __repr__ = __str__
+
+
 class TaggedType(object):
     def __init__(self, elements):
         self.class_name = None
@@ -413,6 +428,8 @@ def _create_sema_node(token):
         return ChoiceType(token.elements)
     elif token.ty == 'SequenceOfType':
         return SequenceOfType(token.elements)
+    elif token.ty == 'SetOfType':
+        return SetOfType(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 
