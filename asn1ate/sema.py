@@ -42,12 +42,12 @@ def topological_sort(decls):
     """ Algorithm adapted from:
     http://en.wikipedia.org/wiki/Topological_sorting.
 
-    Assumes decls is an iterable of items with two members:
-    - type_name
-    - imports() method that returns an iterable of type names
+    Assumes decls is an iterable of items with two methods:
+    - reference_name() -- returns the reference name of the decl
+    - references() -- returns an iterable of reference names
     upon which the decl depends.
     """
-    graph = dict((d.type_name, set(d.imports())) for d in decls)
+    graph = dict((d.reference_name(), set(d.references())) for d in decls)
 
     def has_predecessor(node):
         for predecessor in graph.keys():
@@ -58,7 +58,7 @@ def topological_sort(decls):
 
     # Build a topological order of type names
     topological_order = []
-    roots = [type_name for type_name in graph.keys() if not has_predecessor(type_name)]
+    roots = [name for name in graph.keys() if not has_predecessor(name)]
 
     while roots:
         root = roots.pop()
@@ -72,11 +72,33 @@ def topological_sort(decls):
         topological_order.insert(0, root)
 
     if graph:
-        raise Exception('Can\'t sort cyclic dependencies: %s' % graph)
+        raise Exception('Can\'t sort cyclic references: %s' % graph)
 
     # Sort the actual decls based on the topological order
-    return sorted(decls, key=lambda d: topological_order.index(d.type_name))
+    return sorted(decls, key=lambda d: topological_order.index(d.reference_name()))
 
+
+"""
+Sema nodes
+
+Concepts in the ASN.1 specification are mirrored here as a simple object model.
+
+Class and member names typically follow the ASN.1 terminology, but there are
+some concepts captured which are not expressed in the spec.
+
+Most notably, we build a dependency graph of all types and values in a module,
+to allow code generators to build code in dependency order.
+
+All nodes that may be referenced (e.g. types and values) must have a
+method called ``reference_name``.
+
+All nodes that may reference other types (e.g. assignments, component types)
+must have a method called ``references`` returning the names of all referenced
+nodes.
+
+Typically, if you have a ``reference_name``, you must also have a ``references``,
+but not necessarily the other way around.
+"""
 
 class Module(object):
     def __init__(self, elements):
@@ -124,8 +146,11 @@ class TypeAssignment(object):
         self.type_name = type_name
         self.type_decl = _create_sema_node(type_decl)
 
-    def imports(self):
-        return self.type_decl.imports()
+    def reference_name(self):
+        return self.type_name
+
+    def references(self):
+        return self.type_decl.references()
 
     def __str__(self):
         return '%s ::= %s' % (self.type_name, self.type_decl)
@@ -135,15 +160,15 @@ class TypeAssignment(object):
 
 class ConstructedType(object):
     def __init__(self, elements):
-        kind, component_tokens = elements
-        self.type_name = kind
+        type_name, component_tokens = elements
+        self.type_name = type_name
         self.components = [_create_sema_node(token) for token in component_tokens]
 
-    def imports(self):
-        imports = []
+    def references(self):
+        references = []
         for component in self.components:
-            imports.extend(component.imports())
-        return imports
+            references.extend(component.references())
+        return references
 
     def __str__(self):
         component_type_list = ', '.join(map(str, self.components))
@@ -156,18 +181,20 @@ class ChoiceType(ConstructedType):
     def __init__(self, elements):
         super(ChoiceType, self).__init__(elements)
 
+
 class SequenceType(ConstructedType):
     def __init__(self, elements):
         super(SequenceType, self).__init__(elements)
 
+
 class SequenceOfType(object):
     def __init__(self, elements):
-        sequenceof, type_token = elements
-        self.type_name = sequenceof
+        type_name, type_token = elements
+        self.type_name = type_name
         self.type_decl = _create_sema_node(type_token)
 
-    def imports(self):
-        return self.type_decl.imports()
+    def references(self):
+        return self.type_decl.references()
 
     def __str__(self):
         return '%s %s' % (self.type_name, self.type_decl)
@@ -177,12 +204,12 @@ class SequenceOfType(object):
 
 class SetOfType(object):
     def __init__(self, elements):
-        setof, type_token = elements
-        self.type_name = setof
+        type_name, type_token = elements
+        self.type_name = type_name
         self.type_decl = _create_sema_node(type_token)
 
-    def imports(self):
-        return self.type_decl.imports()
+    def references(self):
+        return self.type_decl.references()
 
     def __str__(self):
         return '%s %s' % (self.type_name, self.type_decl)
@@ -217,8 +244,11 @@ class TaggedType(object):
     def type_name(self):
         return self.type_decl.type_name
 
-    def imports(self):
-        return self.type_decl.imports()
+    def reference_name(self):
+        return self.type_decl.type_name
+
+    def references(self):
+        return self.type_decl.references()
 
     def __str__(self):
         class_spec = []
@@ -244,7 +274,8 @@ class SimpleType(object):
         if len(elements) > 1 and elements[1].ty == 'Constraint':
             self.constraint = Constraint(elements[1].elements)
 
-    def imports(self):
+    def references(self):
+        # TODO: Any value references in constraints
         return [self.type_name]
 
     def __str__(self):
@@ -260,7 +291,7 @@ class UserDefinedType(object):
     def __init__(self, elements):
         self.type_name = elements[0]
 
-    def imports(self):
+    def references(self):
         return [self.type_name]
 
     def __str__(self):
@@ -274,6 +305,10 @@ class Constraint(object):
         min_value, max_value = elements
         self.min_value = min_value
         self.max_value = max_value
+
+    def references(self):
+        # TODO: Value references
+        return []
 
     def __str__(self):
         return '(%s..%s)' % (self.min_value, self.max_value)
@@ -306,8 +341,9 @@ class ComponentType(object):
 
         self.type_decl = _create_sema_node(type_token)
 
-    def imports(self):
-        return self.type_decl.imports()
+    def references(self):
+        # TODO: Value references in DEFAULT
+        return self.type_decl.references()
 
     def __str__(self):
         result = '%s %s' % (self.identifier, self.type_decl)
@@ -329,8 +365,8 @@ class NamedType(object):
         self.identifier = elements[0].elements[0]
         self.type_decl = _create_sema_node(elements[1])
 
-    def imports(self):
-        return self.type_decl.imports()
+    def references(self):
+        return self.type_decl.references()
 
     def __str__(self):
         return '%s %s' % (self.identifier, self.type_decl)
@@ -346,7 +382,8 @@ class ValueListType(object):
         else:
             self.named_values = None
 
-    def imports(self):
+    def references(self):
+        # TODO: Value references
         return []
 
     def __str__(self):
@@ -367,7 +404,8 @@ class BitStringType(object):
         else:
             self.named_bits = None
 
-    def imports(self):
+    def references(self):
+        # TODO: Value references
         return []
 
     def __str__(self):
@@ -386,7 +424,8 @@ class NamedValue(object):
         self.identifier = identifier_token.elements[0]
         self.value = value_token.elements[0]
 
-    def imports(self):
+    def references(self):
+        # TODO: This appears to never be called. Investigate.
         return []
 
     def __str__(self):
