@@ -9,3 +9,9 @@ source.asn1
 MANIFEST
 build/
 dist/
+
+# Patches
+*.patch
+
+# Project files
+.ropeproject
