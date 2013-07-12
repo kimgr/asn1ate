@@ -69,7 +69,8 @@ class Pyasn1Backend(object):
             BitStringType: self.decl_bitstring_type,
             SequenceOfType: self.decl_sequenceof_type,
             SetOfType: self.decl_setof_type,
-            TypeAssignment: self.decl_type_assignment
+            TypeAssignment: self.decl_type_assignment,
+            ValueAssignment: self.decl_value_assignment
         }
 
         self.expr_generators = {
@@ -240,6 +241,12 @@ class Pyasn1Backend(object):
 
     def decl_setof_type(self, t):
         return 'componentType = %s' % self.generate_expr(t.type_decl)
+
+    def decl_value_assignment(self, assignment):
+        assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
+
+        value_type = _translate_type(type_decl.type_name)
+        return '%s = %s(%s)' % (assigned_value, value_type, value)
 
 
 def generate_pyasn1(sema_module, out_stream):

@@ -160,20 +160,46 @@ class TypeAssignment(object):
 
 class ValueAssignment(object):
     def __init__(self, elements):
-        assert(len(elements) == 4)
         value_name, type_name, _, value = elements
-        self.value_name = value_name
+        self.value_name = ValueReference(value_name.elements) # First token is always a valuereference
         self.type_decl = _create_sema_node(type_name)
-        self.value = value
+
+        if isinstance(value, parser.AnnotatedToken):
+            self.value = _create_sema_node(value) 
+        else:
+            self.value = value
 
     def reference_name(self):
-        return self.value_name
+        return self.value_name.reference_name()
 
     def references(self):
-        return [self.type_decl.type_name]
+        refs = [self.type_decl.reference_name()]
+        if isinstance(self.value, ValueReference):
+            refs.append(self.value.reference_name())
+        else:
+            # It's a literal, and they don't play into declaration order.
+            pass
+
+        return refs
 
     def __str__(self):
         return '%s %s ::= %s' % (self.value_name, self.type_decl, self.value)
+
+    __repr__ = __str__
+
+
+class ValueReference(object):
+    def __init__(self, elements):
+        self.name = elements[0]
+
+    def reference_name(self):
+        return self.name
+
+    def references(self):
+        return []
+
+    def __str__(self):
+        return self.name
 
     __repr__ = __str__
 
@@ -293,6 +319,9 @@ class SimpleType(object):
         self.type_name = elements[0]
         if len(elements) > 1 and elements[1].ty == 'Constraint':
             self.constraint = Constraint(elements[1].elements)
+
+    def reference_name(self):
+        return self.type_name
 
     def references(self):
         # TODO: Any value references in constraints
@@ -463,6 +492,8 @@ def _create_sema_node(token):
         return TypeAssignment(token.elements)
     elif token.ty == 'ValueAssignment':
         return ValueAssignment(token.elements)
+    elif token.ty == 'ValueReference':
+        return ValueReference(token.elements)
     elif token.ty == 'ComponentType':
         return ComponentType(token.elements)
     elif token.ty == 'NamedType':
