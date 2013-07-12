@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 
 # Proprietary test data
-source.asn1
+source.asn*
 
 # Distutils artifacts
 MANIFEST
