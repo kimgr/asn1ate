@@ -1,0 +1,11 @@
+Test DEFINITIONS ::=
+BEGIN
+  -- Declare a value reference
+  value INTEGER ::= 123
+
+  -- Use a value reference
+  limit INTEGER ::= value
+
+  -- Use a value reference in a range constraint
+  Limited ::= INTEGER (1 .. limit)
+END
