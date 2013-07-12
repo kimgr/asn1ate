@@ -193,8 +193,8 @@ def _build_asn1_grammar():
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range.
-    value_range_min = (signed_number | MIN)
-    value_range_max = (signed_number | MAX)
+    value_range_min = (signed_number | valuereference | MIN)
+    value_range_max = (signed_number | valuereference | MAX)
     value_range_constraint = value_range_min + Suppress('..') + value_range_max
     constraint = Suppress('(') + value_range_constraint + Suppress(')')  # todo: consider exception spec from 45.6
 

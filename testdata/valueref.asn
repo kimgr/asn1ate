@@ -7,5 +7,5 @@ BEGIN
   limit INTEGER ::= value
 
   -- Use a value reference in a range 
-  -- Limited ::= INTEGER (1 .. limit)
+  Limited ::= INTEGER (1 .. limit)
 END

@@ -324,8 +324,11 @@ class SimpleType(object):
         return self.type_name
 
     def references(self):
-        # TODO: Any value references in constraints
-        return [self.type_name]
+        refs = [self.type_name]
+        if self.constraint:
+            refs.extend(self.constraint.references())
+
+        return refs
 
     def __str__(self):
         if self.constraint is None:
@@ -352,12 +355,19 @@ class UserDefinedType(object):
 class Constraint(object):
     def __init__(self, elements):
         min_value, max_value = elements
-        self.min_value = min_value
-        self.max_value = max_value
+
+        self.min_value = _maybe_create_sema_node(min_value)
+        self.max_value = _maybe_create_sema_node(max_value)
 
     def references(self):
-        # TODO: Value references
-        return []
+        refs = []
+        if isinstance(self.min_value, ValueReference):
+            refs.append(self.min_value.reference_name())
+
+        if isinstance(self.max_value, ValueReference):
+            refs.append(self.max_value.reference_name())
+
+        return refs
 
     def __str__(self):
         return '(%s..%s)' % (self.min_value, self.max_value)
@@ -481,6 +491,13 @@ class NamedValue(object):
         return '%s (%s)' % (self.identifier, self.value)
 
     __repr__ = __str__
+
+
+def _maybe_create_sema_node(token):
+    if isinstance(token, parser.AnnotatedToken):
+        return _create_sema_node(token)
+    else:
+        return token
 
 
 def _create_sema_node(token):
