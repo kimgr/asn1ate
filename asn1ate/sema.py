@@ -158,6 +158,26 @@ class TypeAssignment(object):
     __repr__ = __str__
 
 
+class ValueAssignment(object):
+    def __init__(self, elements):
+        assert(len(elements) == 4)
+        value_name, type_name, _, value = elements
+        self.value_name = value_name
+        self.type_decl = _create_sema_node(type_name)
+        self.value = value
+
+    def reference_name(self):
+        return self.value_name
+
+    def references(self):
+        return [self.type_decl.type_name]
+
+    def __str__(self):
+        return '%s %s ::= %s' % (self.value_name, self.type_decl, self.value)
+
+    __repr__ = __str__
+
+
 class ConstructedType(object):
     def __init__(self, elements):
         type_name, component_tokens = elements
@@ -441,6 +461,8 @@ def _create_sema_node(token):
         return Module(token.elements)
     elif token.ty == 'TypeAssignment':
         return TypeAssignment(token.elements)
+    elif token.ty == 'ValueAssignment':
+        return ValueAssignment(token.elements)
     elif token.ty == 'ComponentType':
         return ComponentType(token.elements)
     elif token.ty == 'NamedType':
