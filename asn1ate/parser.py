@@ -113,6 +113,7 @@ def _build_asn1_grammar():
     IMPLICIT_TAGS = Keyword('IMPLICIT TAGS')
     AUTOMATIC_TAGS = Keyword('AUTOMATIC TAGS')
     EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED')
+    COMPONENTS_OF = Keyword('COMPONENTS OF')
 
     # Built-in types
     SEQUENCE = Keyword('SEQUENCE')
@@ -187,8 +188,11 @@ def _build_asn1_grammar():
     # types
     defined_type = Unique(typereference)  # todo: consider other defined types from 13.1
     referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
-    named_type = Forward() # this can only be full defined once we have all types defined.
-    type_ = Forward() # this can only be full defined once we have all types defined.
+
+    # Forward-declare these, they can only be fully defined once
+    # we have all types defined. There are some circular dependencies.
+    named_type = Forward()
+    type_ = Forward()
 
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
@@ -198,13 +202,11 @@ def _build_asn1_grammar():
     value_range_constraint = value_range_min + Suppress('..') + value_range_max
     constraint = Suppress('(') + value_range_constraint + Suppress(')')  # todo: consider exception spec from 45.6
 
-    # BUG: identifier should not be Optional here,
-    # but our ASN.1 interpreter supports unnamed members,
-    # and we use them.
-    # todo: consider COMPONENTS OF from 24.1
-    component_optional = OPTIONAL
-    component_default = DEFAULT + value
-    component_type = Optional(identifier) + type_ + Optional(component_optional | component_default)
+    component_type_optional = named_type + Suppress(OPTIONAL)
+    component_type_default = named_type + Suppress(DEFAULT) + value
+    component_type_components_of = Suppress(COMPONENTS_OF) + type_
+    component_type = component_type_components_of | component_type_optional | component_type_default | named_type
+
     tagged_type = tag + Optional(IMPLICIT | EXPLICIT) + type_
 
     named_number_value = Suppress('(') + signed_number + Suppress(')')
@@ -240,7 +242,11 @@ def _build_asn1_grammar():
     builtin_type = tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | value_list_type | bitstring_type
 
     type_ << (builtin_type | referenced_type)
-    named_type << (identifier + type_)
+
+    # BUG: identifier should not be Optional here,
+    # but our ASN.1 interpreter supports unnamed members,
+    # and we use them.
+    named_type << (Optional(identifier) + type_)
 
     # BUG: Trailing semi-colon is not allowed by standard grammar, but our ASN.1 interpreter accepts it
     # and we happen to use it.
@@ -274,6 +280,9 @@ def _build_asn1_grammar():
     named_number.setParseAction(annotate('NamedValue'))
     constraint.setParseAction(annotate('Constraint'))
     component_type.setParseAction(annotate('ComponentType'))
+    component_type_optional.setParseAction(annotate('ComponentTypeOptional'))
+    component_type_default.setParseAction(annotate('ComponentTypeDefault'))
+    component_type_components_of.setParseAction(annotate('ComponentTypeComponentsOf'))
     tagged_type.setParseAction(annotate('TaggedType'))
     named_type.setParseAction(annotate('NamedType'))
     type_assignment.setParseAction(annotate('TypeAssignment'))
@@ -282,8 +291,6 @@ def _build_asn1_grammar():
     module_reference.setParseAction(annotate('ModuleReference'))
     module_body.setParseAction(annotate('ModuleBody'))
     module_definition.setParseAction(annotate('ModuleDefinition'))
-    component_optional.setParseAction(annotate('ComponentOptional'))
-    component_default.setParseAction(annotate('ComponentDefault'))
 
     return module_definition
 

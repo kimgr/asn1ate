@@ -1,0 +1,14 @@
+Test DEFINITIONS ::=
+BEGIN
+
+OneSequence ::= SEQUENCE {
+    first INTEGER,
+    second UTF8String
+}
+
+AnotherSequence ::= SEQUENCE {
+    COMPONENTS OF OneSequence,
+    status BOOLEAN
+}
+
+END

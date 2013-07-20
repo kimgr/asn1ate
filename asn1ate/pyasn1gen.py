@@ -122,6 +122,7 @@ class Pyasn1Backend(object):
         return type_expr
 
     def decl_simple_type(self, t):
+        # TODO: Handle constraint here.
         return 'pass'
 
     def expr_userdefined_type(self, t):
@@ -183,6 +184,16 @@ class Pyasn1Backend(object):
         return 'tag.Tag(%s, %s, %s)' % (context, tag_format, tag_def.class_number)
 
     def expr_component_type(self, t):
+        if t.components_of_type:
+            # COMPONENTS OF works like a literal include, so just
+            # expand all components of the referenced type.
+            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type)
+            included_content = self.expr_component_types(included_type_decl.components)
+
+            # Strip trailing newline from expr_component_types
+            # to make the list line up
+            return included_content.strip()
+
         if t.optional:
             return "namedtype.OptionalNamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
         elif t.default_value is not None:

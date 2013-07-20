@@ -377,41 +377,52 @@ class Constraint(object):
 
 class ComponentType(object):
     def __init__(self, elements):
+        self.identifier = None
+        self.type_decl = None
+        self.default_value = None
+        self.optional = False
+        self.components_of_type = None
+
+        def crack_named_type(token):
+            named_type = NamedType(token)
+            self.identifier = named_type.identifier
+            self.type_decl = named_type.type_decl
+
         first_token = elements[0]
-        if first_token.ty == 'Type':
-            # an unnamed member
-            type_token = first_token
-            self.identifier = _get_next_unnamed()
-            elements = elements[1:]
-        elif first_token.ty == 'Identifier':
-            # an identifier
-            self.identifier = first_token.elements[0]
-            type_token = elements[1]
-            elements = elements[2:]
-
-        self.optional = elements and elements[0].ty == 'ComponentOptional'
-
-        if elements and elements[0].ty == 'ComponentDefault':
-            default_spec = elements[0]
-            assert default_spec.elements[0] == 'DEFAULT'
-            self.default_value = default_spec.elements[1]
+        if first_token.ty == 'NamedType':
+            crack_named_type(first_token.elements)
+        elif first_token.ty == 'ComponentTypeOptional':
+            crack_named_type(first_token.elements[0].elements)
+            self.optional = True
+        elif first_token.ty == 'ComponentTypeDefault':
+            crack_named_type(first_token.elements[0].elements)
+            self.default_value = _maybe_create_sema_node(first_token.elements[1])
+        elif first_token.ty == 'ComponentTypeComponentsOf':
+            self.components_of_type = _create_sema_node(first_token.elements[0])
         else:
-            self.default_value = None
-
-        self.type_decl = _create_sema_node(type_token)
+            assert False, 'Unknown component type %s' % first_token
 
     def references(self):
-        # TODO: Value references in DEFAULT
-        return self.type_decl.references()
+        if self.components_of_type:
+            # TODO: Shouldn't this just be the type name?
+            return self.components_of_type.references()
+
+        # TODO: Shouldn't this just be the type name?
+        refs = self.type_decl.references()
+
+        # TODO: Default value if it's a value reference
+        return refs
 
     def __str__(self):
+        if self.components_of_type:
+            return 'COMPONENTS OF %s' % self.components_of_type
+
         result = '%s %s' % (self.identifier, self.type_decl)
         if self.optional:
             result += ' OPTIONAL'
+        elif self.default_value is not None:
+            result += ' DEFAULT %s' % self.default_value
 
-        if not self.default_value is None:
-            result += ' DEFAULT ' + self.default_value
-        
         return result
 
     __repr__ = __str__
@@ -419,10 +430,17 @@ class ComponentType(object):
 
 class NamedType(object):
     def __init__(self, elements):
-        assert(elements[0].ty == 'Identifier')
-        assert(elements[1].ty == 'Type')
-        self.identifier = elements[0].elements[0]
-        self.type_decl = _create_sema_node(elements[1])
+        first_token = elements[0]
+        if first_token.ty == 'Type':
+            # EXT: unnamed member
+            type_token = first_token
+            self.identifier = _get_next_unnamed()
+        elif first_token.ty == 'Identifier':
+            # an identifier
+            self.identifier = first_token.elements[0]
+            type_token = elements[1]
+
+        self.type_decl = _create_sema_node(type_token)
 
     def references(self):
         return self.type_decl.references()
