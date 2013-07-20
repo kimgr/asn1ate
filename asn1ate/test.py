@@ -49,7 +49,7 @@ def main():
 
     parse_tree = parser.parse_asn1(asn1def)
     if args.parse:
-        print(parse_tree)
+        parser.print_parse_tree(parse_tree)
         return 0
 
     modules = sema.build_semantic_model(parse_tree)
