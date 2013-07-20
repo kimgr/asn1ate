@@ -150,7 +150,12 @@ class TypeAssignment(object):
         return self.type_name
 
     def references(self):
-        return self.type_decl.references()
+        refs = self.type_decl.references()
+
+        # Remove any circular references
+        refs = [ref for ref in refs if ref != self.type_name]
+
+        return refs
 
     def __str__(self):
         return '%s ::= %s' % (self.type_name, self.type_decl)
@@ -179,6 +184,9 @@ class ValueAssignment(object):
         else:
             # It's a literal, and they don't play into declaration order.
             pass
+
+        # Remove any circular references
+        refs = [ref for ref in refs if ref != self.value_name]
 
         return refs
 
@@ -404,13 +412,14 @@ class ComponentType(object):
 
     def references(self):
         if self.components_of_type:
-            # TODO: Shouldn't this just be the type name?
-            return self.components_of_type.references()
+            return [self.components_of_type.type_name]
 
-        # TODO: Shouldn't this just be the type name?
-        refs = self.type_decl.references()
+        refs = [self.type_decl.type_name]
+        refs.extend(self.type_decl.references())
 
-        # TODO: Default value if it's a value reference
+        if self.default_value is not None:
+            refs.append(str(self.default_value))
+
         return refs
 
     def __str__(self):
