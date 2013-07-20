@@ -123,7 +123,10 @@ class Pyasn1Backend(object):
 
     def decl_simple_type(self, t):
         # TODO: Handle constraint here.
-        return 'pass'
+        if t.constraint:
+            return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        else:
+            return 'pass'
 
     def expr_userdefined_type(self, t):
         return t.type_name + '()'
