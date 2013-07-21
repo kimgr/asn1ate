@@ -107,13 +107,13 @@ class Module(object):
         _assert_annotated_token(module_body)
 
         self.name = module_reference.elements[0]
-        self.declarations = [_create_sema_node(token) for token in module_body.elements]
+        self.assignments = [_create_sema_node(token) for token in module_body.elements]
         self._user_types = {}
 
     def user_types(self):
         if not self._user_types:
             # Index all type assignments by name
-            for user_defined in self.declarations:
+            for user_defined in self.assignments:
                 self._user_types[user_defined.type_name] = user_defined.type_decl
 
         return self._user_types
@@ -133,7 +133,7 @@ class Module(object):
     def __str__(self):
         return '%s DEFINITIONS ::=\n' % self.name \
             + 'BEGIN\n' \
-            + '\n'.join(map(str, self.declarations)) + '\n' \
+            + '\n'.join(map(str, self.assignments)) + '\n' \
             + 'END\n'
 
     __repr__ = __str__

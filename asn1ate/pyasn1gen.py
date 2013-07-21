@@ -88,9 +88,9 @@ class Pyasn1Backend(object):
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint')
         self.writer.write_blanks(2)
 
-        declarations = topological_sort(self.sema_module.declarations)
-        for declaration in declarations:
-            self.writer.write_block(self.generate_decl(declaration))
+        assignments = topological_sort(self.sema_module.assignments)
+        for assignment in assignments:
+            self.writer.write_block(self.generate_decl(assignment))
             self.writer.write_blanks(2)
 
     def generate_expr(self, t):
