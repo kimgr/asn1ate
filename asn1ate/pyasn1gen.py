@@ -80,7 +80,8 @@ class Pyasn1Backend(object):
             ComponentType: self.expr_component_type,
             NamedType: self.expr_named_type,
             SequenceOfType: self.expr_sequenceof_type,
-            SetOfType: self.expr_setof_type
+            SetOfType: self.expr_setof_type,
+            ValueListType: self.expr_value_list_type
         }
 
     def generate_code(self):
@@ -225,6 +226,13 @@ class Pyasn1Backend(object):
             fragment.write_line('pass')
 
         return str(fragment)
+
+    def expr_value_list_type(self, t):
+        if t.named_values:
+            named_values = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_values))
+            return 'namedValues=namedval.NamedValues(%s)' % ', '.join(named_values)
+        else:
+            return ''
 
     def decl_bitstring_type(self, t):
         fragment = self.writer.get_fragment()
