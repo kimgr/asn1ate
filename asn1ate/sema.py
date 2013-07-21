@@ -38,16 +38,16 @@ def build_semantic_model(parse_result):
     return root
 
 
-def topological_sort(decls):
+def topological_sort(assignments):
     """ Algorithm adapted from:
     http://en.wikipedia.org/wiki/Topological_sorting.
 
-    Assumes decls is an iterable of items with two methods:
-    - reference_name() -- returns the reference name of the decl
+    Assumes assignments is an iterable of items with two methods:
+    - reference_name() -- returns the reference name of the assignment
     - references() -- returns an iterable of reference names
-    upon which the decl depends.
+    upon which the assignment depends.
     """
-    graph = dict((d.reference_name(), set(d.references())) for d in decls)
+    graph = dict((a.reference_name(), set(a.references())) for a in assignments)
 
     def has_predecessor(node):
         for predecessor in graph.keys():
@@ -56,7 +56,7 @@ def topological_sort(decls):
 
         return False
 
-    # Build a topological order of type names
+    # Build a topological order of reference names
     topological_order = []
     roots = [name for name in graph.keys() if not has_predecessor(name)]
 
@@ -74,8 +74,8 @@ def topological_sort(decls):
     if graph:
         raise Exception('Can\'t sort cyclic references: %s' % graph)
 
-    # Sort the actual decls based on the topological order
-    return sorted(decls, key=lambda d: topological_order.index(d.reference_name()))
+    # Sort the actual assignments based on the topological order
+    return sorted(assignments, key=lambda a: topological_order.index(a.reference_name()))
 
 
 """
