@@ -89,7 +89,7 @@ some concepts captured which are not expressed in the spec.
 Most notably, we build a dependency graph of all types and values in a module,
 to allow code generators to build code in dependency order.
 
-All nodes that may be referenced (e.g. types and values) must have a
+All nodes that may be referenced (type and value assignments) must have a
 method called ``reference_name``.
 
 All nodes that may reference other types (e.g. assignments, component types)
@@ -97,7 +97,7 @@ must have a method called ``references`` returning the names of all referenced
 nodes.
 
 Typically, if you have a ``reference_name``, you must also have a ``references``,
-but not necessarily the other way around.
+but not the other way around.
 """
 
 class Module(object):
