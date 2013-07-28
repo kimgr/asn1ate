@@ -270,9 +270,6 @@ class Pyasn1Backend(object):
         value_type = _translate_type(type_decl.type_name)
         return '%s = %s(%s)' % (assigned_value, value_type, value)
 
-    def ignore(self, t):
-        return ''
-
 
 def generate_pyasn1(sema_module, out_stream):
     return Pyasn1Backend(sema_module, out_stream).generate_code()
