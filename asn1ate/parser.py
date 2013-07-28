@@ -279,6 +279,7 @@ def _build_asn1_grammar():
     simple_type.setParseAction(annotate('SimpleType'))
     choice_type.setParseAction(annotate('ChoiceType'))
     sequence_type.setParseAction(annotate('SequenceType'))
+    set_type.setParseAction(annotate('SetType'))
     value_list_type.setParseAction(annotate('ValueListType'))
     bitstring_type.setParseAction(annotate('BitStringType'))
     referenced_type.setParseAction(annotate('ReferencedType'))

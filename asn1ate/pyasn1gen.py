@@ -62,6 +62,7 @@ class Pyasn1Backend(object):
         self.decl_generators = {
             ChoiceType: self.decl_constructed_type,
             SequenceType: self.decl_constructed_type,
+            SetType: self.decl_constructed_type,
             TaggedType: self.decl_tagged_type,
             SimpleType: self.decl_simple_type,
             UserDefinedType: self.decl_userdefined_type,
@@ -299,6 +300,7 @@ _ASN1_BUILTIN_TYPES = {
     'OCTET STRING': 'univ.OctetString',
     'CHOICE': 'univ.Choice',
     'SEQUENCE': 'univ.Sequence',
+    'SET': 'univ.Set',
     'SEQUENCE OF': 'univ.SequenceOf',
     'SET OF': 'univ.SetOf',
     'UTF8String': 'char.UTF8String',

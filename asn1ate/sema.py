@@ -241,6 +241,11 @@ class SequenceType(ConstructedType):
         super(SequenceType, self).__init__(elements)
 
 
+class SetType(ConstructedType):
+    def __init__(self, elements):
+        super(SetType, self).__init__(elements)
+
+
 class SequenceOfType(object):
     def __init__(self, elements):
         type_name, type_token = elements
@@ -575,6 +580,8 @@ def _create_sema_node(token):
         return SequenceType(token.elements)
     elif token.ty == 'ChoiceType':
         return ChoiceType(token.elements)
+    elif token.ty == 'SetType':
+        return SetType(token.elements)
     elif token.ty == 'SequenceOfType':
         return SequenceOfType(token.elements)
     elif token.ty == 'SetOfType':
