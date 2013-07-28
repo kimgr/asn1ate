@@ -118,6 +118,7 @@ def _build_asn1_grammar():
 
     # Built-in types
     SEQUENCE = Keyword('SEQUENCE')
+    SET = Keyword('SET')
     SEQUENCE_OF = Keyword('SEQUENCE OF')
     SET_OF = Keyword('SET OF')
     CHOICE = Keyword('CHOICE')
@@ -218,6 +219,7 @@ def _build_asn1_grammar():
     named_number = identifier + named_number_value
     enumeration = named_number | identifier
 
+    set_type = SET + braced_list(component_type | extension_marker)
     sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
     sequenceof_type = SEQUENCE_OF + (type_ | named_type)
     setof_type = SET_OF + (type_ | named_type)
@@ -242,7 +244,7 @@ def _build_asn1_grammar():
 
     # todo: consider other builtins from 16.2
     simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type) + Optional(constraint)
-    constructed_type = choice_type | sequence_type
+    constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | value_list_type | bitstring_type
 

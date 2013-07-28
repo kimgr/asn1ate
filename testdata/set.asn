@@ -1,0 +1,17 @@
+TEST DEFINITIONS ::=
+BEGIN
+  Foo ::= SET {
+    one INTEGER
+  }
+
+  Bar ::= SET {
+    COMPONENTS OF Foo,
+    another UTF8String
+  }
+
+  Baz ::= SET {
+    thing INTEGER,
+    anotherThing UTF8String,
+    ...
+  }
+END
