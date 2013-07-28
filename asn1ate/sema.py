@@ -520,6 +520,19 @@ class NamedValue(object):
     __repr__ = __str__
 
 
+class ExtensionMarker(object):
+    def __init__(self, elements):
+        pass
+
+    def references(self):
+        # TODO: This appears to never be called. Investigate.
+        return []
+
+    def __str__(self):
+        return '...'
+
+    __repr__ = __str__
+
 def _maybe_create_sema_node(token):
     if isinstance(token, parser.AnnotatedToken):
         return _create_sema_node(token)
@@ -566,6 +579,8 @@ def _create_sema_node(token):
         return SequenceOfType(token.elements)
     elif token.ty == 'SetOfType':
         return SetOfType(token.elements)
+    elif token.ty == 'ExtensionMarker':
+        return ExtensionMarker(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 

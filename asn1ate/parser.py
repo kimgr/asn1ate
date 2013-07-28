@@ -203,6 +203,9 @@ def _build_asn1_grammar():
     value_range_constraint = value_range_min + Suppress('..') + value_range_max
     constraint = Suppress('(') + value_range_constraint + Suppress(')')  # todo: consider exception spec from 45.6
 
+    # TODO: consider exception syntax from 24.1
+    extension_marker = Unique(ELLIPSIS)
+
     component_type_optional = named_type + Suppress(OPTIONAL)
     component_type_default = named_type + Suppress(DEFAULT) + value
     component_type_components_of = Suppress(COMPONENTS_OF) + type_
@@ -214,11 +217,10 @@ def _build_asn1_grammar():
     named_number = identifier + named_number_value
     enumeration = named_number | identifier
 
-    # todo: consider extension and exception syntax from 24.1
-    sequence_type = SEQUENCE + braced_list(component_type | ELLIPSIS)
+    sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
     sequenceof_type = SEQUENCE_OF + (type_ | named_type)
     setof_type = SET_OF + (type_ | named_type)
-    choice_type = CHOICE + braced_list(named_type | ELLIPSIS)
+    choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration)
     bitstring_type = BIT_STRING + braced_list(named_number)
     plain_integer_type = INTEGER
@@ -292,6 +294,7 @@ def _build_asn1_grammar():
     module_reference.setParseAction(annotate('ModuleReference'))
     module_body.setParseAction(annotate('ModuleBody'))
     module_definition.setParseAction(annotate('ModuleDefinition'))
+    extension_marker.setParseAction(annotate('ExtensionMarker'))
 
     return module_definition
 
