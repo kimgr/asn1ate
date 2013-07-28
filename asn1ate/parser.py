@@ -114,6 +114,7 @@ def _build_asn1_grammar():
     AUTOMATIC_TAGS = Keyword('AUTOMATIC TAGS')
     EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED')
     COMPONENTS_OF = Keyword('COMPONENTS OF')
+    ELLIPSIS = Keyword('...')
 
     # Built-in types
     SEQUENCE = Keyword('SEQUENCE')
@@ -214,10 +215,10 @@ def _build_asn1_grammar():
     enumeration = named_number | identifier
 
     # todo: consider extension and exception syntax from 24.1
-    sequence_type = SEQUENCE + braced_list(component_type)
+    sequence_type = SEQUENCE + braced_list(component_type | ELLIPSIS)
     sequenceof_type = SEQUENCE_OF + (type_ | named_type)
     setof_type = SET_OF + (type_ | named_type)
-    choice_type = CHOICE + braced_list(named_type)
+    choice_type = CHOICE + braced_list(named_type | ELLIPSIS)
     enumerated_type = ENUMERATED + braced_list(enumeration)
     bitstring_type = BIT_STRING + braced_list(named_number)
     plain_integer_type = INTEGER

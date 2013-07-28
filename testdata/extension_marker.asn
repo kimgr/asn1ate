@@ -1,0 +1,28 @@
+TEST DEFINITIONS ::=
+BEGIN
+
+ChoiceType ::= CHOICE
+{
+  required1 INTEGER,
+  required2 UTF8String,
+  ...
+}
+
+SequenceType ::= SEQUENCE
+{
+  required1 INTEGER,
+  required2 UTF8String,
+  ...
+}
+
+-- I'm not sure if this is valid syntax, but I expect not.
+-- The extension marker is likely only acceptable as the last
+-- choice/sequence component.
+PotentiallyInvalid ::= SEQUENCE
+{
+  required1 INTEGER,
+  ...,
+  required2 UTF8String
+}
+
+END
