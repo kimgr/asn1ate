@@ -301,7 +301,8 @@ _ASN1_BUILTIN_TYPES = {
     'SEQUENCE': 'univ.Sequence',
     'SEQUENCE OF': 'univ.SequenceOf',
     'SET OF': 'univ.SetOf',
-    'UTF8String': 'char.UTF8String'
+    'UTF8String': 'char.UTF8String',
+    'OBJECT IDENTIFIER': 'univ.ObjectIdentifier'
 }
 
 
