@@ -1,0 +1,13 @@
+TEST DEFINITIONS ::=
+BEGIN
+  Foo ::= OBJECT IDENTIFIER
+
+  Bar ::= SEQUENCE {
+    oid OBJECT IDENTIFIER
+  }
+
+  Baz ::= CHOICE {
+    oid OBJECT IDENTIFIER,
+    id INTEGER
+  }
+END

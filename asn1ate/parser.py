@@ -129,6 +129,7 @@ def _build_asn1_grammar():
     CHARACTER_STRING = Keyword('CHARACTER STRING')
     NULL = Keyword('NULL')
     INTEGER = Keyword('INTEGER')
+    OBJECT_IDENTIFIER = Keyword('OBJECT IDENTIFIER')
 
     # Restricted string types
     BMPString = Keyword('BMPString')
@@ -228,6 +229,7 @@ def _build_asn1_grammar():
     boolean_type = BOOLEAN
     real_type = REAL
     null_type = NULL
+    object_identifier_type = OBJECT_IDENTIFIER
     octetstring_type = OCTET_STRING
     unrestricted_characterstring_type = CHARACTER_STRING
     restricted_characterstring_type = BMPString | GeneralString | \
@@ -239,7 +241,7 @@ def _build_asn1_grammar():
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
 
     # todo: consider other builtins from 16.2
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type) + Optional(constraint)
+    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type) + Optional(constraint)
     constructed_type = choice_type | sequence_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | value_list_type | bitstring_type
