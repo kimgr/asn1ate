@@ -248,11 +248,12 @@ class Pyasn1Backend(object):
         return str(fragment)
 
     def expr_value_list_type(self, t):
+        class_name = _translate_type(t.type_name)
         if t.named_values:
             named_values = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_values))
-            return 'namedValues=namedval.NamedValues(%s)' % ', '.join(named_values)
+            return '%s(namedValues=namedval.NamedValues(%s))' % (class_name, ', '.join(named_values))
         else:
-            return ''
+            return class_name + '()'
 
     def decl_bitstring_type(self, t):
         fragment = self.writer.get_fragment()
