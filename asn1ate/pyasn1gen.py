@@ -82,7 +82,10 @@ class Pyasn1Backend(object):
             NamedType: self.expr_named_type,
             SequenceOfType: self.expr_sequenceof_type,
             SetOfType: self.expr_setof_type,
-            ValueListType: self.expr_value_list_type
+            ValueListType: self.expr_value_list_type,
+            ChoiceType: self.expr_constructed_type,
+            SequenceType: self.expr_constructed_type,
+            SetType: self.expr_constructed_type
         }
 
     def generate_code(self):
@@ -145,6 +148,21 @@ class Pyasn1Backend(object):
         fragment.pop_indent()
 
         fragment.write_line(')')
+
+        return str(fragment)
+
+    def expr_constructed_type(self, t):
+        fragment = self.writer.get_fragment()
+
+        class_name = _translate_type(t.type_name)
+
+        fragment.write_line('%s(componentType=namedtype.NamedTypes(' % class_name)
+
+        fragment.push_indent()
+        fragment.write_block(self.expr_component_types(t.components))
+        fragment.pop_indent()
+
+        fragment.write_line('))')
 
         return str(fragment)
 
