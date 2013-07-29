@@ -6,7 +6,11 @@ BEGIN
   -- Inline
   Bar ::= SEQUENCE
   {
-  	baz SET OF INTEGER, 	-- built-in type
-	quux SET OF Foo		-- user-defined type
+    baz SET OF INTEGER,  -- built-in type
+    quux SET OF Foo	 -- user-defined type
   }
+
+  -- With size constraint
+  Sized ::= SET SIZE(1..100) OF INTEGER
+  SizedWithParens ::= SET (SIZE(1..100)) OF INTEGER
 END

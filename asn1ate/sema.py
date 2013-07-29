@@ -264,16 +264,29 @@ class SequenceOfType(object):
 
 class SetOfType(object):
     def __init__(self, elements):
-        # TODO: handle optional size constraint
-        type_name, of_keyword, type_token = elements
-        self.type_name = type_name
-        self.type_decl = _create_sema_node(type_token)
+        self.type_name = 'SET OF'
+
+        if elements[0].ty == 'Type':
+            self.size_constraint = None
+            self.type_decl = _create_sema_node(elements[0])
+        elif elements[0].ty == 'SizeConstraint':
+            self.size_constraint = _create_sema_node(elements[0])
+            self.type_decl = _create_sema_node(elements[1])
+        else:
+            assert False, 'Unknown form of SET OF declaration: %s' % elements
 
     def references(self):
         return self.type_decl.references()
 
     def __str__(self):
-        return '%s %s' % (self.type_name, self.type_decl)
+        result = 'SET'
+
+        if self.size_constraint:
+            result += ' %s' % self.size_constraint
+
+        result += ' OF %s' % self.type_decl
+
+        return result
 
     __repr__ = __str__
 
@@ -386,6 +399,14 @@ class Constraint(object):
 
     def __str__(self):
         return '(%s..%s)' % (self.min_value, self.max_value)
+
+    __repr__ = __str__
+
+
+class SizeConstraint(Constraint):
+    """ Size constraints have the same form as any value range constraints."""
+    def __str__(self):
+        return 'SIZE(%s..%s)' % (self.min_value, self.max_value)
 
     __repr__ = __str__
 
@@ -590,6 +611,8 @@ def _create_sema_node(token):
         return SetOfType(token.elements)
     elif token.ty == 'ExtensionMarker':
         return ExtensionMarker(token.elements)
+    elif token.ty == 'SizeConstraint':
+        return SizeConstraint(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 
