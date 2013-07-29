@@ -248,7 +248,8 @@ class SetType(ConstructedType):
 
 class SequenceOfType(object):
     def __init__(self, elements):
-        type_name, type_token = elements
+        # TODO: handle optional size constraint
+        type_name, of_keyword, type_token = elements
         self.type_name = type_name
         self.type_decl = _create_sema_node(type_token)
 
@@ -263,7 +264,8 @@ class SequenceOfType(object):
 
 class SetOfType(object):
     def __init__(self, elements):
-        type_name, type_token = elements
+        # TODO: handle optional size constraint
+        type_name, of_keyword, type_token = elements
         self.type_name = type_name
         self.type_decl = _create_sema_node(type_token)
 

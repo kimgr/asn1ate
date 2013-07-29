@@ -115,12 +115,12 @@ def _build_asn1_grammar():
     EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED')
     COMPONENTS_OF = Keyword('COMPONENTS OF')
     ELLIPSIS = Keyword('...')
+    SIZE = Keyword('SIZE')
+    OF = Keyword('OF')
 
     # Built-in types
     SEQUENCE = Keyword('SEQUENCE')
     SET = Keyword('SET')
-    SEQUENCE_OF = Keyword('SEQUENCE OF')
-    SET_OF = Keyword('SET OF')
     CHOICE = Keyword('CHOICE')
     ENUMERATED = Keyword('ENUMERATED')
     BIT_STRING = Keyword('BIT STRING')
@@ -203,7 +203,10 @@ def _build_asn1_grammar():
     value_range_min = (signed_number | valuereference | MIN)
     value_range_max = (signed_number | valuereference | MAX)
     value_range_constraint = value_range_min + Suppress('..') + value_range_max
-    constraint = Suppress('(') + value_range_constraint + Suppress(')')  # todo: consider exception spec from 45.6
+    size_constraint = SIZE + Suppress('(') + value_range_constraint + Suppress(')')
+    constraint = Suppress('(') + value_range_constraint + Suppress(')')
+    optional_paren_l = Optional(Suppress('('))
+    optional_paren_r = Optional(Suppress(')'))
 
     # TODO: consider exception syntax from 24.1
     extension_marker = Unique(ELLIPSIS)
@@ -221,8 +224,8 @@ def _build_asn1_grammar():
 
     set_type = SET + braced_list(component_type | extension_marker)
     sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
-    sequenceof_type = SEQUENCE_OF + (type_ | named_type)
-    setof_type = SET_OF + (type_ | named_type)
+    sequenceof_type = SEQUENCE + Optional(optional_paren_l + size_constraint + optional_paren_r) + OF + (type_ | named_type)
+    setof_type = SET + Optional(optional_paren_l + size_constraint + optional_paren_r) + OF + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration)
     bitstring_type = BIT_STRING + braced_list(named_number)
