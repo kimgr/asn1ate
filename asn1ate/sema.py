@@ -113,7 +113,8 @@ class Module(object):
     def user_types(self):
         if not self._user_types:
             # Index all type assignments by name
-            for user_defined in self.assignments:
+            type_assignments = [a for a in self.assignments if isinstance(a, TypeAssignment)]
+            for user_defined in type_assignments:
                 self._user_types[user_defined.type_name] = user_defined.type_decl
 
         return self._user_types
@@ -245,6 +246,7 @@ class SequenceType(ConstructedType):
 class SetType(ConstructedType):
     def __init__(self, elements):
         super(SetType, self).__init__(elements)
+
 
 class CollectionType(object):
     """ Base type for SET OF and SEQUENCE OF. """
