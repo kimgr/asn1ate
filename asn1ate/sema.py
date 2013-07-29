@@ -152,7 +152,7 @@ class TypeAssignment(object):
     def references(self):
         refs = self.type_decl.references()
 
-        # Remove any circular references
+        # Remove any self-references
         refs = [ref for ref in refs if ref != self.type_name]
 
         return refs
@@ -185,7 +185,7 @@ class ValueAssignment(object):
             # It's a literal, and they don't play into declaration order.
             pass
 
-        # Remove any circular references
+        # Remove any self-references
         refs = [ref for ref in refs if ref != self.value_name]
 
         return refs
