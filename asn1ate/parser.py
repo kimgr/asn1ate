@@ -224,7 +224,7 @@ def _build_asn1_grammar():
 
     set_type = SET + braced_list(component_type | extension_marker)
     sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
-    sequenceof_type = SEQUENCE + Optional(optional_paren_l + size_constraint + optional_paren_r) + OF + (type_ | named_type)
+    sequenceof_type = Suppress(SEQUENCE) + Optional(optional_paren_l + size_constraint + optional_paren_r) + Suppress(OF) + (type_ | named_type)
     setof_type = Suppress(SET) + Optional(optional_paren_l + size_constraint + optional_paren_r) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration)

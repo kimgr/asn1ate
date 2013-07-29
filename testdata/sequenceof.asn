@@ -1,0 +1,16 @@
+Test DEFINITIONS ::=
+BEGIN
+  -- Top-level
+  Foo ::= SEQUENCE OF INTEGER
+
+  -- Inline
+  Bar ::= SEQUENCE
+  {
+    baz SEQUENCE OF INTEGER,  -- built-in type
+    quux SEQUENCE OF Foo      -- user-defined type
+  }
+
+  -- With size constraint
+  Sized ::= SEQUENCE SIZE(1..100) OF INTEGER
+  SizedWithParens ::= SEQUENCE (SIZE(1..100)) OF INTEGER
+END

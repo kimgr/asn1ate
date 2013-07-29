@@ -213,6 +213,7 @@ class ValueReference(object):
 
 
 class ConstructedType(object):
+    """ Base type for SEQUENCE, SET and CHOICE. """
     def __init__(self, elements):
         type_name, component_tokens = elements
         self.type_name = type_name
@@ -245,26 +246,11 @@ class SetType(ConstructedType):
     def __init__(self, elements):
         super(SetType, self).__init__(elements)
 
-
-class SequenceOfType(object):
-    def __init__(self, elements):
-        # TODO: handle optional size constraint
-        type_name, of_keyword, type_token = elements
-        self.type_name = type_name
-        self.type_decl = _create_sema_node(type_token)
-
-    def references(self):
-        return self.type_decl.references()
-
-    def __str__(self):
-        return '%s %s' % (self.type_name, self.type_decl)
-
-    __repr__ = __str__
-
-
-class SetOfType(object):
-    def __init__(self, elements):
-        self.type_name = 'SET OF'
+class CollectionType(object):
+    """ Base type for SET OF and SEQUENCE OF. """
+    def __init__(self, kind, elements):
+        self.kind = kind
+        self.type_name = self.kind + ' OF'
 
         if elements[0].ty == 'Type':
             self.size_constraint = None
@@ -273,22 +259,28 @@ class SetOfType(object):
             self.size_constraint = _create_sema_node(elements[0])
             self.type_decl = _create_sema_node(elements[1])
         else:
-            assert False, 'Unknown form of SET OF declaration: %s' % elements
+            assert False, 'Unknown form of %s OF declaration: %s' % (self.kind, elements)
 
     def references(self):
         return self.type_decl.references()
 
     def __str__(self):
-        result = 'SET'
-
         if self.size_constraint:
-            result += ' %s' % self.size_constraint
-
-        result += ' OF %s' % self.type_decl
-
-        return result
+            return '%s %s OF %s' % (self.kind, self.size_constraint, self.type_decl)
+        else:
+            return '%s OF %s' % (self.kind, self.type_decl)
 
     __repr__ = __str__
+
+
+class SequenceOfType(CollectionType):
+    def __init__(self, elements):
+        super(SequenceOfType, self).__init__('SEQUENCE', elements)
+
+
+class SetOfType(CollectionType):
+    def __init__(self, elements):
+        super(SetOfType, self).__init__('SET', elements)
 
 
 class TaggedType(object):
