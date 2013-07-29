@@ -1,0 +1,49 @@
+TEST DEFINITIONS ::=
+BEGIN
+  -- Simple scalar types
+  Bool ::= BOOLEAN
+  Null ::= NULL
+  Int ::= INTEGER
+  Real ::= REAL
+
+  -- Char string types
+  OctetStr ::= OCTET STRING
+  GeneralStr ::= GeneralString
+  Utf8Str ::= UTF8String
+  -- TODO: More string types.
+
+  -- Object identifier
+  ObjectIdentifier ::= OBJECT IDENTIFIER
+
+  -- Enumerated types
+  BitString ::= BIT STRING {
+    a(1),
+    b(2)
+  }
+
+  Enumerated ::= ENUMERATED {
+    a(1),
+    b(2),
+    c(3)
+  }
+
+  -- Constructed types
+  Choice ::= CHOICE {
+    a INTEGER,
+    b BOOLEAN
+  }
+
+  Sequence ::= SEQUENCE {
+    a INTEGER,
+    b BOOLEAN
+  }
+
+  Set ::= SET {
+    a INTEGER,
+    b BOOLEAN
+  }
+
+  -- Collection types
+  SequenceOf ::= SEQUENCE OF INTEGER
+  SetOf ::= SET OF INTEGER
+END
