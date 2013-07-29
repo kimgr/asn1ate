@@ -6,15 +6,6 @@ BEGIN
   Int ::= INTEGER
   Real ::= REAL
 
-  -- Char string types
-  OctetStr ::= OCTET STRING
-  GeneralStr ::= GeneralString
-  Utf8Str ::= UTF8String
-  -- TODO: More string types.
-
-  -- Object identifier
-  ObjectIdentifier ::= OBJECT IDENTIFIER
-
   -- Enumerated types
   BitString ::= BIT STRING {
     a(1),

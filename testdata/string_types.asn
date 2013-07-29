@@ -1,0 +1,9 @@
+TEST DEFINITIONS ::=
+BEGIN
+  -- Mostly a simple way to test that type
+  -- translation in codegen happens correctly.
+  OctetStr ::= OCTET STRING
+  GeneralStr ::= GeneralString
+  Utf8Str ::= UTF8String
+  -- TODO: More string types.
+END
