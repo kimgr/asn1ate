@@ -21,14 +21,12 @@ This is very much an alpha-quality prototype. Things that need doing:
 * HACK/TODO/BUGs need to be fixed
 * ASN.1 grammar is very incomplete and incorrect in some places. Known issues:
 
-  - Value references, e.g.
+  - Module definitive identifier, e.g.
     ::
 
-        maxInt INTEGER ::= 12345   -- This parses
-        X ::= INTEGER(0 .. maxInt) -- This doesn't
-
-  - COMPONENTS OF
-  - Extension syntax in SEQUENCE and CHOICE: trailing "..."
+	PKCS-12 {iso(1) member-body(2) us(840) rsadsi(113549)
+		 pkcs(1) pkcs-12(12) modules(0) pkcs-12(1)}
+	DEFINITIONS ::= ...
 
 * Improve parser error handling/reporting
 
