@@ -177,11 +177,22 @@ def _build_asn1_grammar():
 
     builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value
     defined_value = valuereference # todo: more options from 13.1
-    value = builtin_value | defined_value
+
+    # object identifier value
+    name_form = Unique(identifier)
+    number_form = number | defined_value
+    name_and_number_form = name_form + Suppress('(') + number_form + Suppress(')')
+    objid_components = name_and_number_form | name_form | number_form | defined_value
+    objid_components_list = OneOrMore(objid_components)
+    object_identifier_value = Suppress('{') + \
+                              (objid_components_list | (defined_value + objid_components_list)) + \
+                              Suppress('}')
+
+    value = builtin_value | defined_value | object_identifier_value
 
     # tags
     class_ = UNIVERSAL | APPLICATION | PRIVATE
-    class_number = number # todo: consider defined values from 30.1
+    class_number = Unique(number) # todo: consider defined values from 30.1
     tag = Suppress('[') + Optional(class_) + class_number + Suppress(']')
     tag_default = EXPLICIT_TAGS | IMPLICIT_TAGS | AUTOMATIC_TAGS | empty
 
@@ -300,6 +311,9 @@ def _build_asn1_grammar():
     module_body.setParseAction(annotate('ModuleBody'))
     module_definition.setParseAction(annotate('ModuleDefinition'))
     extension_marker.setParseAction(annotate('ExtensionMarker'))
+    name_form.setParseAction(annotate('NameForm'))
+    name_and_number_form.setParseAction(annotate('NameAndNumberForm'))
+    object_identifier_value.setParseAction(annotate('ObjectIdentifierValue'))
 
     return module_definition
 

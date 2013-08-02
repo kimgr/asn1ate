@@ -10,4 +10,14 @@ BEGIN
     oid OBJECT IDENTIFIER,
     id INTEGER
   }
+
+  -- Value assignment, name and number form
+  v1 OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840) rsadsi(113549)}
+
+  -- Value assignment, number form
+  v2 OBJECT IDENTIFIER ::= {1 2 840 113549}
+
+  -- Value assignment, name form
+  v3 OBJECT IDENTIFIER ::= {iso member-body us rsadsi}
+
 END
