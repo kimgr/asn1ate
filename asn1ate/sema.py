@@ -555,6 +555,48 @@ class ExtensionMarker(object):
 
     __repr__ = __str__
 
+
+class NameForm(object):
+    def __init__(self, elements):
+        self.name = elements[0]
+
+    def references(self):
+        return [self.name]
+
+    def __str__(self):
+        return self.name
+
+    __repr__ = __str__
+
+
+class NameAndNumberForm(object):
+    def __init__(self, elements):
+        self.name = _create_sema_node(elements[0])
+        self.number = _maybe_create_sema_node(elements[1])
+
+    def references(self):
+        return [str(self.name), str(self.number)]
+
+    def __str__(self):
+        return '%s(%s)' % (self.name, self.number)
+
+    __repr__ = __str__
+
+
+class ObjectIdentifierValue(object):
+    def __init__(self, elements):
+        self.components = [_maybe_create_sema_node(c) for c in elements]
+
+    def references(self):
+        # TODO
+        return []
+
+    def __str__(self):
+        return '{' + ' '.join(str(x) for x in self.components) + '}'
+
+    __repr__ = __str__
+
+
 def _maybe_create_sema_node(token):
     if isinstance(token, parser.AnnotatedToken):
         return _create_sema_node(token)
@@ -607,6 +649,12 @@ def _create_sema_node(token):
         return ExtensionMarker(token.elements)
     elif token.ty == 'SizeConstraint':
         return SizeConstraint(token.elements)
+    elif token.ty == 'ObjectIdentifierValue':
+        return ObjectIdentifierValue(token.elements)
+    elif token.ty == 'NameForm':
+        return NameForm(token.elements)
+    elif token.ty == 'NameAndNumberForm':
+        return NameAndNumberForm(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 
