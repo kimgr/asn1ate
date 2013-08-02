@@ -200,13 +200,9 @@ def _build_asn1_grammar():
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range.
-    value_range_min = (signed_number | valuereference | MIN)
-    value_range_max = (signed_number | valuereference | MAX)
-    value_range_constraint = value_range_min + Suppress('..') + value_range_max
-    size_constraint = Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')')
+    value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
+    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')') + Optional(Suppress(')'))
     constraint = Suppress('(') + value_range_constraint + Suppress(')')
-    optional_paren_l = Optional(Suppress('('))
-    optional_paren_r = Optional(Suppress(')'))
 
     # TODO: consider exception syntax from 24.1
     extension_marker = Unique(ELLIPSIS)
@@ -224,8 +220,8 @@ def _build_asn1_grammar():
 
     set_type = SET + braced_list(component_type | extension_marker)
     sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
-    sequenceof_type = Suppress(SEQUENCE) + Optional(optional_paren_l + size_constraint + optional_paren_r) + Suppress(OF) + (type_ | named_type)
-    setof_type = Suppress(SET) + Optional(optional_paren_l + size_constraint + optional_paren_r) + Suppress(OF) + (type_ | named_type)
+    sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
+    setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration)
     bitstring_type = BIT_STRING + braced_list(named_number)
