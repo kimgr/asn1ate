@@ -18,6 +18,11 @@ BEGIN
   v2 OBJECT IDENTIFIER ::= {1 2 840 113549}
 
   -- Value assignment, name form
-  v3 OBJECT IDENTIFIER ::= {iso member-body us rsadsi}
+  -- First three parts are known names, the last one a defined value.
+  local INTEGER ::= 1234
+  v3 OBJECT IDENTIFIER ::= {iso member-body us local}
+
+  -- Value assignment, mixed
+  v4 OBJECT IDENTIFIER ::= {v1 723 local}
 
 END

@@ -571,7 +571,9 @@ class NameForm(object):
 
 class NameAndNumberForm(object):
     def __init__(self, elements):
-        self.name = _create_sema_node(elements[0])
+        # The first element is a NameForm containing only the
+        # name, so unpack it into a string.
+        self.name = elements[0].elements[0]
         self.number = _maybe_create_sema_node(elements[1])
 
     def references(self):
@@ -588,8 +590,12 @@ class ObjectIdentifierValue(object):
         self.components = [_maybe_create_sema_node(c) for c in elements]
 
     def references(self):
-        # TODO
-        return []
+        references = []
+        for component in self.components:
+            if not isinstance(component, str):
+                references.extend(component.references())
+
+        return references
 
     def __str__(self):
         return '{' + ' '.join(str(x) for x in self.components) + '}'
