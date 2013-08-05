@@ -180,7 +180,7 @@ def _build_asn1_grammar():
 
     # object identifier value
     name_form = Unique(identifier)
-    number_form = number | defined_value
+    number_form = Unique(number)
     name_and_number_form = name_form + Suppress('(') + number_form + Suppress(')')
     objid_components = name_and_number_form | name_form | number_form | defined_value
     objid_components_list = OneOrMore(objid_components)
@@ -312,6 +312,7 @@ def _build_asn1_grammar():
     module_definition.setParseAction(annotate('ModuleDefinition'))
     extension_marker.setParseAction(annotate('ExtensionMarker'))
     name_form.setParseAction(annotate('NameForm'))
+    number_form.setParseAction(annotate('NumberForm'))
     name_and_number_form.setParseAction(annotate('NameAndNumberForm'))
     object_identifier_value.setParseAction(annotate('ObjectIdentifierValue'))
 

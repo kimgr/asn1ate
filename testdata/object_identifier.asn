@@ -20,7 +20,7 @@ BEGIN
   -- Value assignment, name form
   -- First three parts are known names, the last one a defined value.
   local INTEGER ::= 1234
-  v3 OBJECT IDENTIFIER ::= {iso member-body us local}
+  v3 OBJECT IDENTIFIER ::= {iso member-body us(840) local}
 
   -- Value assignment, mixed
   v4 OBJECT IDENTIFIER ::= {v1 723 local}

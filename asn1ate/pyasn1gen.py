@@ -85,7 +85,8 @@ class Pyasn1Backend(object):
             ValueListType: self.expr_value_list_type,
             ChoiceType: self.expr_constructed_type,
             SequenceType: self.expr_constructed_type,
-            SetType: self.expr_constructed_type
+            SetType: self.expr_constructed_type,
+            ObjectIdentifierValue: self.expr_object_identifier_value
         }
 
     def generate_code(self):
@@ -287,8 +288,30 @@ class Pyasn1Backend(object):
     def decl_value_assignment(self, assignment):
         assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
 
+        if isinstance(value, ObjectIdentifierValue):
+            value = self.expr_object_identifier_value(value)
+
         value_type = _translate_type(type_decl.type_name)
         return '%s = %s(%s)' % (assigned_value, value_type, value)
+
+    def expr_object_identifier_value(self, t):
+        normalized_components = []
+
+        for c in t.components:
+            if isinstance(c, NameForm):
+                if c.name in REGISTERED_OID_NAMES:
+                    normalized_components.append('univ.ObjectIdentifier((%s,))' % REGISTERED_OID_NAMES[c.name])
+                else:
+                    # TODO: handle defined values
+                    normalized_components.append('univ.ObjectIdentifier((%s,))' % c.name)
+            elif isinstance(c, NumberForm):
+                normalized_components.append('univ.ObjectIdentifier((%s,))' % c.value)
+            elif isinstance(c, NameAndNumberForm):
+                normalized_components.append('univ.ObjectIdentifier((%s,))' % c.number.value)
+            else:
+                assert False
+
+        return ' + '.join(normalized_components)
 
 
 def generate_pyasn1(sema_module, out_stream):

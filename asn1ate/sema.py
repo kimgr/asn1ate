@@ -78,6 +78,26 @@ def topological_sort(assignments):
     return sorted(assignments, key=lambda a: topological_order.index(a.reference_name()))
 
 
+# Registered object identifier names
+REGISTERED_OID_NAMES = {
+    'ccitt': 0,
+    'iso': 1,
+    'joint-iso-ccitt': 2,
+    # ccitt
+    'recommendation': 0,
+    'question': 1,
+    'administration': 2,
+    'network-operator': 3,
+    # iso
+    'standard': 0,
+    'registration-authority': 1,
+    'member-body': 2,
+    'identified-organization': 3,
+    # joint-iso-ccitt
+    'country': 16,
+    'registration-procedures': 17
+}
+
 """
 Sema nodes
 
@@ -182,6 +202,8 @@ class ValueAssignment(object):
         refs = [self.type_decl.reference_name()]
         if isinstance(self.value, ValueReference):
             refs.append(self.value.reference_name())
+        elif isinstance(self.value, ObjectIdentifierValue):
+            refs.extend(self.value.references())
         else:
             # It's a literal, and they don't play into declaration order.
             pass
@@ -569,12 +591,25 @@ class NameForm(object):
     __repr__ = __str__
 
 
+class NumberForm(object):
+    def __init__(self, elements):
+        self.value = elements[0]
+
+    def references(self):
+        return []
+
+    def __str__(self):
+        return str(self.value)
+
+    __repr__ = __str__
+
+
 class NameAndNumberForm(object):
     def __init__(self, elements):
         # The first element is a NameForm containing only the
         # name, so unpack it into a string.
         self.name = elements[0].elements[0]
-        self.number = _maybe_create_sema_node(elements[1])
+        self.number = _create_sema_node(elements[1])
 
     def references(self):
         return [str(self.name), str(self.number)]
@@ -587,15 +622,17 @@ class NameAndNumberForm(object):
 
 class ObjectIdentifierValue(object):
     def __init__(self, elements):
-        self.components = [_maybe_create_sema_node(c) for c in elements]
+        self.components = [_create_sema_node(c) for c in elements]
 
     def references(self):
-        references = []
+        refs = []
         for component in self.components:
             if not isinstance(component, str):
-                references.extend(component.references())
+                refs.extend(component.references())
+            else:
+                refs.append(component)
 
-        return references
+        return refs
 
     def __str__(self):
         return '{' + ' '.join(str(x) for x in self.components) + '}'
@@ -659,6 +696,8 @@ def _create_sema_node(token):
         return ObjectIdentifierValue(token.elements)
     elif token.ty == 'NameForm':
         return NameForm(token.elements)
+    elif token.ty == 'NumberForm':
+        return NumberForm(token.elements)
     elif token.ty == 'NameAndNumberForm':
         return NameAndNumberForm(token.elements)
 
