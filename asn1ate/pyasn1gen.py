@@ -86,11 +86,15 @@ class Pyasn1Backend(object):
             ChoiceType: self.expr_constructed_type,
             SequenceType: self.expr_constructed_type,
             SetType: self.expr_constructed_type,
-            ObjectIdentifierValue: self.expr_object_identifier_value
         }
 
     def generate_code(self):
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint')
+        self.writer.write_blanks(2)
+
+        # TODO: Only generate _OID if sema_module
+        # contains object identifier values.
+        self.generate_OID()
         self.writer.write_blanks(2)
 
         assignments = topological_sort(self.sema_module.assignments)
@@ -289,29 +293,51 @@ class Pyasn1Backend(object):
         assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
 
         if isinstance(value, ObjectIdentifierValue):
-            value = self.expr_object_identifier_value(value)
+            value_constructor = self.build_object_identifier_value(value)
+        else:
+            value_type = _translate_type(type_decl.type_name)
+            value_constructor = '%s(%s)' % (value_type, value)
 
-        value_type = _translate_type(type_decl.type_name)
-        return '%s = %s(%s)' % (assigned_value, value_type, value)
+        return '%s = %s' % (assigned_value, value_constructor)
 
-    def expr_object_identifier_value(self, t):
-        normalized_components = []
+    def build_object_identifier_value(self, t):
+        objid_components = []
 
         for c in t.components:
             if isinstance(c, NameForm):
                 if c.name in REGISTERED_OID_NAMES:
-                    normalized_components.append('univ.ObjectIdentifier((%s,))' % REGISTERED_OID_NAMES[c.name])
+                    objid_components.append(str(REGISTERED_OID_NAMES[c.name]))
                 else:
-                    # TODO: handle defined values
-                    normalized_components.append('univ.ObjectIdentifier((%s,))' % c.name)
+                    objid_components.append(c.name)
             elif isinstance(c, NumberForm):
-                normalized_components.append('univ.ObjectIdentifier((%s,))' % c.value)
+                objid_components.append(str(c.value))
             elif isinstance(c, NameAndNumberForm):
-                normalized_components.append('univ.ObjectIdentifier((%s,))' % c.number.value)
+                objid_components.append(str(c.number.value))
             else:
                 assert False
 
-        return ' + '.join(normalized_components)
+        return '_OID(%s)' % ', '.join(objid_components)
+
+    def generate_OID(self):
+        self.writer.write_line('def _OID(*components):')
+        self.writer.push_indent()
+        self.writer.write_line('output = []')
+        self.writer.write_line('for x in tuple(components):')
+        self.writer.push_indent()
+        self.writer.write_line('if isinstance(x, univ.ObjectIdentifier):')
+        self.writer.push_indent()
+        self.writer.write_line('output.extend(list(x))')
+        self.writer.pop_indent()
+        self.writer.write_line('else:')
+        self.writer.push_indent()
+        self.writer.write_line('output.append(int(x))')
+        self.writer.pop_indent()
+        self.writer.pop_indent()
+        self.writer.write_blanks(1)
+        self.writer.write_line('return univ.ObjectIdentifier(output)')
+        self.writer.pop_indent()
+
+        self.writer.pop_indent()
 
 
 def generate_pyasn1(sema_module, out_stream):

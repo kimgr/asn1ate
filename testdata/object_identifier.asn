@@ -11,6 +11,8 @@ BEGIN
     id INTEGER
   }
 
+  v0 OBJECT IDENTIFIER ::= { 1 }
+
   -- Value assignment, name and number form
   v1 OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840) rsadsi(113549)}
 
