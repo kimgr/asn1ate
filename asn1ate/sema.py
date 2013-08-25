@@ -120,11 +120,20 @@ Typically, if you have a ``reference_name``, you must also have a ``references``
 but not the other way around.
 """
 
+class SemaNode(object):
+    def children(self):
+        raise NotImplementedError()
+
+
 class Module(object):
     def __init__(self, elements):
-        module_reference, _, _, _, module_body, _ = elements
+        print(elements)
+        module_reference, definitive_identifier, _, _, _, module_body, _ = elements
         _assert_annotated_token(module_reference)
         _assert_annotated_token(module_body)
+
+        # Ignore the definitive identifier for now,
+        # maybe expose it from the Module if it comes to any use.
 
         self.name = module_reference.elements[0]
         self.assignments = [_create_sema_node(token) for token in module_body.elements]

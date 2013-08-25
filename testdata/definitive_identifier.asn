@@ -1,0 +1,5 @@
+-- Make sure we have name form, name and number form as well as simple number form
+TEST { iso member-body(2) us(840) 12345 }
+DEFINITIONS ::=
+BEGIN
+END

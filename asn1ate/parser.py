@@ -190,6 +190,13 @@ def _build_asn1_grammar():
 
     value = builtin_value | defined_value | object_identifier_value
 
+    # definitive identifier value
+    definitive_number_form = Unique(number)
+    definitive_name_and_number_form = name_form + Suppress('(') + definitive_number_form + Suppress(')')
+    definitive_objid_component = definitive_name_and_number_form | name_form | definitive_number_form
+    definitive_objid_component_list = OneOrMore(definitive_objid_component)
+    definitive_identifier = Optional(Suppress('{') + definitive_objid_component_list + Suppress('}'))
+
     # tags
     class_ = UNIVERSAL | APPLICATION | PRIVATE
     class_number = Unique(number) # todo: consider defined values from 30.1
@@ -275,7 +282,8 @@ def _build_asn1_grammar():
 
     module_body = (assignment_list | empty)
     module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
-    module_definition = module_reference + DEFINITIONS + module_defaults + '::=' + BEGIN + module_body + END
+    module_identifier = module_reference + definitive_identifier
+    module_definition = module_identifier + DEFINITIONS + module_defaults + '::=' + BEGIN + module_body + END
 
     module_definition.ignore(comment)
 
@@ -315,6 +323,9 @@ def _build_asn1_grammar():
     number_form.setParseAction(annotate('NumberForm'))
     name_and_number_form.setParseAction(annotate('NameAndNumberForm'))
     object_identifier_value.setParseAction(annotate('ObjectIdentifierValue'))
+    definitive_identifier.setParseAction(annotate('DefinitiveIdentifier'))
+    definitive_number_form.setParseAction(annotate('DefinitiveNumberForm'))
+    definitive_name_and_number_form.setParseAction(annotate('DefinitiveNameAndNumberForm'))
 
     return module_definition
 
