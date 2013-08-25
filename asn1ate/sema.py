@@ -249,6 +249,9 @@ class ValueReference(object):
 
 
 class Type(object):
+    """ A container for all types, contains
+    additional metadata such as constraints.
+    """
     def __init__(self, elements):
         self.type_decl = _create_sema_node(elements[0])
         if len(elements) == 2:
