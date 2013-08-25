@@ -266,7 +266,7 @@ def _build_asn1_grammar():
     simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type)
     value_list_type = restricted_integer_type | enumerated_type
 
-    builtin_type = tagged_type | simple_type | choice_type | sequence_type | set_type | sequenceof_type | setof_type | value_list_type | bitstring_type
+    builtin_type = value_list_type | tagged_type | simple_type | choice_type | sequence_type | set_type | sequenceof_type | setof_type | bitstring_type
     referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
 
     type_ << ((builtin_type | referenced_type) + Optional(constraint))
