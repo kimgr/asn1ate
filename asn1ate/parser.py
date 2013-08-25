@@ -271,12 +271,12 @@ def _build_asn1_grammar():
 
     type_ << ((builtin_type | referenced_type) + Optional(constraint))
 
-    # BUG: identifier should not be Optional here,
+    # EXT: identifier should not be Optional here,
     # but our ASN.1 interpreter supports unnamed members,
     # and we use them.
     named_type << (Optional(identifier) + type_)
 
-    # BUG: Trailing semi-colon is not allowed by standard grammar, but our ASN.1 interpreter accepts it
+    # EXT: Trailing semi-colon is not allowed by standard grammar, but our ASN.1 interpreter accepts it
     # and we happen to use it.
     type_assignment = typereference + '::=' + type_ + Suppress(Optional(';'))
     value_assignment = valuereference + type_ + '::=' + value
