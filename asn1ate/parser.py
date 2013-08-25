@@ -117,6 +117,8 @@ def _build_asn1_grammar():
     ELLIPSIS = Keyword('...')
     SIZE = Keyword('SIZE')
     OF = Keyword('OF')
+    IMPORTS = Keyword('IMPORTS')
+    FROM = Keyword('FROM')
 
     # Built-in types
     SEQUENCE = Keyword('SEQUENCE')
@@ -165,6 +167,7 @@ def _build_asn1_grammar():
     valuereference = build_identifier('[a-z]')
     typereference = build_identifier('[A-Z]')
     module_reference = build_identifier('[A-Z]')
+    reference = valuereference | typereference  # TODO: consider object references from 12.1
 
     # values
     # BUG: These are badly specified and cause the grammar to break if used generally.
@@ -280,7 +283,18 @@ def _build_asn1_grammar():
     assignment = type_assignment | value_assignment
     assignment_list = OneOrMore(assignment)
 
-    module_body = (assignment_list | empty)
+    assigned_identifier = Optional(object_identifier_value | defined_value)
+    global_module_reference = module_reference + assigned_identifier
+
+    symbol = Unique(reference)  # TODO: parameterized reference?
+    symbol_list = Group(delimitedList(symbol))
+
+    symbols_from_module = symbol_list + Suppress(FROM) + global_module_reference
+    symbols_from_module_list = OneOrMore(symbols_from_module)
+    symbols_imported = Optional(symbols_from_module_list)
+    imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
+
+    module_body = (imports + assignment_list) | empty
     module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + DEFINITIONS + module_defaults + '::=' + BEGIN + module_body + END
@@ -326,6 +340,8 @@ def _build_asn1_grammar():
     definitive_identifier.setParseAction(annotate('DefinitiveIdentifier'))
     definitive_number_form.setParseAction(annotate('DefinitiveNumberForm'))
     definitive_name_and_number_form.setParseAction(annotate('DefinitiveNameAndNumberForm'))
+    imports.setParseAction(annotate('Imports'))
+    assignment_list.setParseAction(annotate('AssignmentList'))
 
     return module_definition
 

@@ -127,17 +127,16 @@ class SemaNode(object):
 
 class Module(object):
     def __init__(self, elements):
-        print(elements)
-        module_reference, definitive_identifier, _, _, _, module_body, _ = elements
-        _assert_annotated_token(module_reference)
-        _assert_annotated_token(module_body)
-
-        # Ignore the definitive identifier for now,
-        # maybe expose it from Module if it comes to any use.
-
-        self.name = module_reference.elements[0]
-        self.assignments = [_create_sema_node(token) for token in module_body.elements]
         self._user_types = {}
+
+        module_reference, _, _, _, _, module_body, _ = elements
+        self.name = module_reference.elements[0]
+
+        if module_body.elements:
+            _, assignments = module_body.elements
+            self.assignments = [_create_sema_node(token) for token in assignments.elements]
+        else:
+            self.assignments = []
 
     def user_types(self):
         if not self._user_types:

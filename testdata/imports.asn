@@ -1,0 +1,17 @@
+TEST DEFINITIONS ::=
+BEGIN
+
+-- Try imports of various forms
+IMPORTS
+informationFramework
+        FROM UsefulDefinitions {joint-iso-itu-t(2) ds(5) module(1)
+        usefulDefinitions(0) 3}
+
+ATTRIBUTE
+	FROM InformationFramework informationFramework
+;
+
+-- Must have assignments if there are imports
+value INTEGER ::= 1
+
+END
