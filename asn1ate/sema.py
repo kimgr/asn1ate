@@ -133,7 +133,7 @@ class Module(object):
         _assert_annotated_token(module_body)
 
         # Ignore the definitive identifier for now,
-        # maybe expose it from the Module if it comes to any use.
+        # maybe expose it from Module if it comes to any use.
 
         self.name = module_reference.elements[0]
         self.assignments = [_create_sema_node(token) for token in module_body.elements]
