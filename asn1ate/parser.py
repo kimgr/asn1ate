@@ -263,7 +263,7 @@ def _build_asn1_grammar():
 
     # these productions are used for custom parse actions,
     # because they typically generate similar code.
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type) # + Optional(constraint)
+    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type)
     value_list_type = restricted_integer_type | enumerated_type
 
     builtin_type = tagged_type | simple_type | choice_type | sequence_type | set_type | sequenceof_type | setof_type | value_list_type | bitstring_type
