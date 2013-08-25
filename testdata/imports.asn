@@ -1,7 +1,7 @@
 TEST DEFINITIONS ::=
 BEGIN
 
--- Try imports of various forms
+-- Try various forms of imports
 IMPORTS
 informationFramework
         FROM UsefulDefinitions {joint-iso-itu-t(2) ds(5) module(1)
