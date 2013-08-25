@@ -153,6 +153,11 @@ class Module(object):
         """
         user_types = self.user_types()
 
+        # Drill through Type, it acts as a container
+        # for type + metadata like constraints.
+        if isinstance(type_decl, Type):
+            type_decl = type_decl.type_decl
+
         if isinstance(type_decl, UserDefinedType):
             return self.resolve_type_decl(user_types[type_decl.type_name])
         else:
@@ -239,6 +244,37 @@ class ValueReference(object):
 
     def __str__(self):
         return self.name
+
+    __repr__ = __str__
+
+
+class Type(object):
+    def __init__(self, elements):
+        self.type_decl = _create_sema_node(elements[0])
+        if len(elements) == 2:
+            assert elements[1].ty == 'Constraint'
+            self.constraint = Constraint(elements[1].elements)
+        else:
+            self.constraint = None
+
+    @property
+    def type_name(self):
+        return self.type_decl.type_name
+
+    def reference_name(self):
+        return self.type_decl.type_name
+
+    def references(self):
+        if self.constraint:
+            return self.constraint.references()
+
+        return []
+
+    def __str__(self):
+        if self.constraint:
+            return '%s %s' % (self.type_decl, self.constraint)
+        else:
+            return str(self.type_decl)
 
     __repr__ = __str__
 
@@ -677,9 +713,7 @@ def _create_sema_node(token):
     elif token.ty == 'NamedValue':
         return NamedValue(token.elements)
     elif token.ty == 'Type':
-        # Type tokens have a more specific type category
-        # embedded as their first element
-        return _create_sema_node(token.elements[0])
+        return Type(token.elements)
     elif token.ty == 'SimpleType':
         return SimpleType(token.elements)
     elif token.ty == 'ReferencedType':

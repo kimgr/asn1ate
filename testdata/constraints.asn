@@ -1,0 +1,21 @@
+TEST DEFINITIONS ::=
+BEGIN
+  UnsignedInt ::= INTEGER (0..4294967295)
+
+  intMax INTEGER ::= 4294967295
+  UnsignedIntAgain ::= INTEGER (0..intMax)
+
+--  PkcsTricky ::= INTEGER {v3(3)}(v3,...)
+
+  Seq ::= SEQUENCE {
+    valueConstrained INTEGER (0..4294967295),
+    taggedValueConstrained [1] INTEGER (0..4294967295),
+    definedValueConstrained INTEGER (0..intMax)
+--    inlineBracedListAndConstraint INTEGER {v3(3)}(v3,...)
+  }
+
+  ConstrainedList ::= SEQUENCE OF INTEGER (1..64)
+
+  Bob ::= UnsignedInt (10..20)
+
+END

@@ -71,7 +71,8 @@ class Pyasn1Backend(object):
             SequenceOfType: self.decl_sequenceof_type,
             SetOfType: self.decl_setof_type,
             TypeAssignment: self.decl_type_assignment,
-            ValueAssignment: self.decl_value_assignment
+            ValueAssignment: self.decl_value_assignment,
+            Type: self.decl_type,
         }
 
         self.expr_generators = {
@@ -86,6 +87,7 @@ class Pyasn1Backend(object):
             ChoiceType: self.expr_constructed_type,
             SequenceType: self.expr_constructed_type,
             SetType: self.expr_constructed_type,
+            Type: self.expr_type,
         }
 
     def generate_code(self):
@@ -119,29 +121,36 @@ class Pyasn1Backend(object):
         fragment.write_line('class %s(%s):' % (assigned_type, base_type))
 
         fragment.push_indent()
-        fragment.write_block(self.generate_decl(type_decl))
+        fragment.write_block(self.generate_decl(type_decl) or 'pass')
         fragment.pop_indent()
 
         return str(fragment)
 
-    def expr_simple_type(self, t):
-        type_expr = _translate_type(t.type_name) + '()'
+    def expr_type(self, t):
+        type_expr = self.generate_expr(t.type_decl)
         if t.constraint:
             type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
 
         return type_expr
 
-    def decl_simple_type(self, t):
+    def decl_type(self, t):
+        type_decl = self.generate_decl(t.type_decl)
         if t.constraint:
-            return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
-        else:
-            return 'pass'
+            type_decl += 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+
+        return type_decl
+
+    def expr_simple_type(self, t):
+        return _translate_type(t.type_name) + '()'
+
+    def decl_simple_type(self, t):
+        return ''
 
     def expr_userdefined_type(self, t):
         return t.type_name + '()'
 
     def decl_userdefined_type(self, t):
-        return 'pass'
+        return ''
 
     def decl_constructed_type(self, t):
         fragment = self.writer.get_fragment()
@@ -196,7 +205,7 @@ class Pyasn1Backend(object):
         tag_type = 'tagImplicitly' if t.implicit else 'tagExplicitly'
         base_type = _translate_type(t.type_decl.type_name)
         fragment.write_line('tagSet = %s.tagSet.%s(%s)' % (base_type, tag_type, self.build_tag_expr(t)))
-        fragment.write_line(self.generate_decl(t.type_decl))  # possibly 'pass'. but that's OK in a decl
+        fragment.write_line(self.generate_decl(t.type_decl))
 
         return str(fragment)
 
@@ -247,8 +256,6 @@ class Pyasn1Backend(object):
 
             fragment.pop_indent()
             fragment.write_line(')')
-        else:
-            fragment.write_line('pass')
 
         return str(fragment)
 
@@ -272,8 +279,6 @@ class Pyasn1Backend(object):
 
             fragment.pop_indent()
             fragment.write_line(')')
-        else:
-            fragment.write_line('pass')
 
         return str(fragment)
 
@@ -411,7 +416,7 @@ def main(args):
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
     for module in modules:
-        print(pygen.auto_generated_header())
+        print(pygen.auto_generated_header(args[0]))
         generate_pyasn1(module, sys.stdout)
 
     return 0
