@@ -149,6 +149,10 @@ def _build_asn1_grammar():
     VideotexString = Keyword('VideotexString')
     VisibleString = Keyword('VisibleString')
 
+    # Useful types
+    GeneralizedTime = Keyword('GeneralizedTime')
+    UTCTime = Keyword('UTCTime')
+
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
@@ -257,6 +261,7 @@ def _build_asn1_grammar():
                                       T61String | UniversalString | \
                                       UTF8String | VideotexString | VisibleString
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
+    useful_type = GeneralizedTime | UTCTime  # TODO: ObjectDescriptor
 
     # todo: consider other builtins from 16.2
     defined_type = Unique(typereference)  # todo: consider other defined types from 13.1
@@ -267,7 +272,7 @@ def _build_asn1_grammar():
     value_list_type = restricted_integer_type | enumerated_type
 
     builtin_type = value_list_type | tagged_type | simple_type | choice_type | sequence_type | set_type | sequenceof_type | setof_type | bitstring_type
-    referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
+    referenced_type = defined_type | useful_type  # todo: consider other ref:d types from 16.3
 
     type_ << ((builtin_type | referenced_type) + Optional(constraint))
 
