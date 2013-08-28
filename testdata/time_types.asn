@@ -1,5 +1,0 @@
-TEST DEFINITIONS ::=
-BEGIN
-  GTime ::= GeneralizedTime
-  UTime ::= UTCTime
-END

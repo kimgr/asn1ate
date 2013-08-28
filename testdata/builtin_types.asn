@@ -6,11 +6,6 @@ BEGIN
   Int ::= INTEGER
   Real ::= REAL
 
-  RestrictedInteger ::= INTEGER {
-    v1(1),
-    v2(2)
-  }
-
   -- Enumerated types
   BitString ::= BIT STRING {
     a(1),

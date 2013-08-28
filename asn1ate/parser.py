@@ -149,10 +149,6 @@ def _build_asn1_grammar():
     VideotexString = Keyword('VideotexString')
     VisibleString = Keyword('VisibleString')
 
-    # Useful types
-    GeneralizedTime = Keyword('GeneralizedTime')
-    UTCTime = Keyword('UTCTime')
-
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
@@ -213,6 +209,10 @@ def _build_asn1_grammar():
     # extensions
     extension_default = EXTENSIBILITY_IMPLIED | empty
 
+    # types
+    defined_type = Unique(typereference)  # todo: consider other defined types from 13.1
+    referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
+
     # Forward-declare these, they can only be fully defined once
     # we have all types defined. There are some circular dependencies.
     named_type = Forward()
@@ -261,27 +261,21 @@ def _build_asn1_grammar():
                                       T61String | UniversalString | \
                                       UTF8String | VideotexString | VisibleString
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
-    useful_type = GeneralizedTime | UTCTime  # TODO: ObjectDescriptor
 
     # todo: consider other builtins from 16.2
-    defined_type = Unique(typereference)  # todo: consider other defined types from 13.1
-
-    # these productions are used for custom parse actions,
-    # because they typically generate similar code.
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type)
+    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type) + Optional(constraint)
+    constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
+    builtin_type = tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | value_list_type | bitstring_type
 
-    builtin_type = value_list_type | tagged_type | simple_type | choice_type | sequence_type | set_type | sequenceof_type | setof_type | bitstring_type
-    referenced_type = defined_type | useful_type  # todo: consider other ref:d types from 16.3
+    type_ << (builtin_type | referenced_type)
 
-    type_ << ((builtin_type | referenced_type) + Optional(constraint))
-
-    # EXT: identifier should not be Optional here,
+    # BUG: identifier should not be Optional here,
     # but our ASN.1 interpreter supports unnamed members,
     # and we use them.
     named_type << (Optional(identifier) + type_)
 
-    # EXT: Trailing semi-colon is not allowed by standard grammar, but our ASN.1 interpreter accepts it
+    # BUG: Trailing semi-colon is not allowed by standard grammar, but our ASN.1 interpreter accepts it
     # and we happen to use it.
     type_assignment = typereference + '::=' + type_ + Suppress(Optional(';'))
     value_assignment = valuereference + type_ + '::=' + value
