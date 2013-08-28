@@ -1,0 +1,14 @@
+TEST DEFINITIONS ::=
+BEGIN
+  g1 GeneralizedTime ::= "12345678901234.5"
+  u1 UTCTime ::= "1234567890Z"
+  o1 ObjectDescriptor ::= "Text"
+ 
+  GTime ::= GeneralizedTime
+  UTime ::= UTCTime
+  OD ::= ObjectDescriptor
+
+  g2 GTime ::= "19851106210627.3"
+  u2 UTime ::= "8201021200Z"
+  o2 OD ::= "A free-text description"
+END

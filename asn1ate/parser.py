@@ -25,7 +25,7 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange
+from pyparsing import Keyword, Literal, Word, OneOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString
 
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
@@ -149,6 +149,11 @@ def _build_asn1_grammar():
     VideotexString = Keyword('VideotexString')
     VisibleString = Keyword('VisibleString')
 
+    # Useful types
+    GeneralizedTime = Keyword('GeneralizedTime')
+    UTCTime = Keyword('UTCTime')
+    ObjectDescriptor = Keyword('ObjectDescriptor')
+
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
@@ -177,8 +182,9 @@ def _build_asn1_grammar():
     bitstring_value = bstring | hstring     # todo: consider more forms from 21.9
     integer_value = signed_number
     null_value = NULL
+    cstring_value = dblQuotedString
 
-    builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value
+    builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value | cstring_value
     defined_value = valuereference # todo: more options from 13.1
 
     # object identifier value
@@ -261,9 +267,10 @@ def _build_asn1_grammar():
                                       T61String | UniversalString | \
                                       UTF8String | VideotexString | VisibleString
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
+    useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
     # todo: consider other builtins from 16.2
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type) + Optional(constraint)
+    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(constraint)
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type

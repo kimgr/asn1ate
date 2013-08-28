@@ -89,7 +89,7 @@ class Pyasn1Backend(object):
         }
 
     def generate_code(self):
-        self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint')
+        self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
         self.writer.write_blanks(2)
 
         # TODO: Only generate _OID if sema_module
@@ -373,7 +373,14 @@ _ASN1_BUILTIN_TYPES = {
     'SET OF': 'univ.SetOf',
     'UTF8String': 'char.UTF8String',
     'GeneralString': 'char.GeneralString',
-    'OBJECT IDENTIFIER': 'univ.ObjectIdentifier'
+    'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
+    'GeneralizedTime': 'useful.GeneralizedTime',
+    'UTCTime': 'useful.UTCTime',
+
+    # BUG: This should be useful.ObjectDescriptor
+    # but it's not implemented in pyasn1 for some
+    # reason.
+    'ObjectDescriptor': 'char.GraphicString',
 }
 
 

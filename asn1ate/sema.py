@@ -395,6 +395,9 @@ class UserDefinedType(object):
     def __init__(self, elements):
         self.type_name = elements[0]
 
+    def reference_name(self):
+        return self.type_name
+
     def references(self):
         return [self.type_name]
 
