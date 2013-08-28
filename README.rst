@@ -19,14 +19,10 @@ This is very much an alpha-quality prototype. Things that need doing:
 
 * Regression test suite
 * HACK/TODO/BUGs need to be fixed
-* ASN.1 grammar is very incomplete and incorrect in some places. Known issues:
+* ASN.1 grammar is very incomplete in some places. Known issues:
 
-  - Module definitive identifier, e.g.
-    ::
-
-	PKCS-12 {iso(1) member-body(2) us(840) rsadsi(113549)
-		 pkcs(1) pkcs-12(12) modules(0) pkcs-12(1)}
-	DEFINITIONS ::= ...
+  - Constraint syntax is currently limited to simple value range constraints (ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12.asn, line 53)
+  - Reference syntax is not accepted at all (ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12.asn, line 74)
 
 * Improve parser error handling/reporting
 
