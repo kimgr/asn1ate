@@ -373,6 +373,7 @@ _ASN1_BUILTIN_TYPES = {
     'SET OF': 'univ.SetOf',
     'UTF8String': 'char.UTF8String',
     'GeneralString': 'char.GeneralString',
+    'NumericString': 'char.NumericString',
     'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',
