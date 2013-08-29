@@ -374,6 +374,7 @@ _ASN1_BUILTIN_TYPES = {
     'UTF8String': 'char.UTF8String',
     'GeneralString': 'char.GeneralString',
     'NumericString': 'char.NumericString',
+    'PrintableString': 'char.PrintableString',
     'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',

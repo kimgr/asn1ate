@@ -6,5 +6,6 @@ BEGIN
   GeneralStr ::= GeneralString
   Utf8Str ::= UTF8String
   NumStr ::= NumericString
+  PrintStr ::= PrintableString
   -- TODO: More string types.
 END
