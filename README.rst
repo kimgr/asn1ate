@@ -25,6 +25,7 @@ This is very much an alpha-quality prototype. Things that need doing:
   - Reference syntax is not accepted at all (ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12.asn, line 74)
 
 * Improve parser error handling/reporting
+* Allow for semantic analysis, e.g. validity check, warnings for problematic constructs, etc.
 
 
 Usage
