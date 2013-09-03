@@ -378,11 +378,7 @@ _ASN1_BUILTIN_TYPES = {
     'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',
-
-    # BUG: This should be useful.ObjectDescriptor
-    # but it's not implemented in pyasn1 for some
-    # reason.
-    'ObjectDescriptor': 'char.GraphicString',
+    'ObjectDescriptor': 'useful.ObjectDescriptor',  # In pyasn1 r1.2
 }
 
 
