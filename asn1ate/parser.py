@@ -118,6 +118,7 @@ def _build_asn1_grammar():
     SIZE = Keyword('SIZE')
     OF = Keyword('OF')
     IMPORTS = Keyword('IMPORTS')
+    EXPORTS = Keyword('EXPORTS')
     FROM = Keyword('FROM')
 
     # Built-in types
@@ -296,11 +297,10 @@ def _build_asn1_grammar():
 
     symbol = Unique(reference)  # TODO: parameterized reference?
     symbol_list = Group(delimitedList(symbol))
-
     symbols_from_module = symbol_list + Suppress(FROM) + global_module_reference
     symbols_from_module_list = OneOrMore(symbols_from_module)
     symbols_imported = Optional(symbols_from_module_list)
-    imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
+    imports = Optional( (IMPORTS ^ EXPORTS) + (symbol_list ^ symbols_imported) + Suppress(';'))
 
     module_body = (imports + assignment_list) | empty
     module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
