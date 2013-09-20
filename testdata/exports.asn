@@ -1,0 +1,15 @@
+TEST 
+DEFINITIONS ::=
+BEGIN
+
+EXPORTS
+	Bool, 
+	Int,
+	Null;
+
+  -- Simple scalar types
+  Bool ::= BOOLEAN
+  Null ::= NULL
+  Int ::= INTEGER
+
+END
