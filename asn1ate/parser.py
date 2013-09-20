@@ -300,9 +300,10 @@ def _build_asn1_grammar():
     symbols_from_module = symbol_list + Suppress(FROM) + global_module_reference
     symbols_from_module_list = OneOrMore(symbols_from_module)
     symbols_imported = Optional(symbols_from_module_list)
-    imports = Optional(EXPORTS + symbol_list + Suppress(';')) + Optional(IMPORTS + symbols_imported + Suppress(';')) 
+    exports = Optional(Suppress(EXPORTS) + symbol_list + Suppress(';'))
+    imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
 
-    module_body = (imports + assignment_list) | empty
+    module_body = (exports + imports + assignment_list) | empty
     module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + DEFINITIONS + module_defaults + '::=' + BEGIN + module_body + END
@@ -349,6 +350,7 @@ def _build_asn1_grammar():
     definitive_number_form.setParseAction(annotate('DefinitiveNumberForm'))
     definitive_name_and_number_form.setParseAction(annotate('DefinitiveNameAndNumberForm'))
     imports.setParseAction(annotate('Imports'))
+    exports.setParseAction(annotate('Exports'))
     assignment_list.setParseAction(annotate('AssignmentList'))
 
     return module_definition

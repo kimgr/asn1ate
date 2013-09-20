@@ -133,7 +133,7 @@ class Module(object):
         self.name = module_reference.elements[0]
 
         if module_body.elements:
-            _, assignments = module_body.elements
+            _, _, assignments = module_body.elements
             self.assignments = [_create_sema_node(token) for token in assignments.elements]
         else:
             self.assignments = []
