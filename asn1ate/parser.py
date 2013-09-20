@@ -300,8 +300,7 @@ def _build_asn1_grammar():
     symbols_from_module = symbol_list + Suppress(FROM) + global_module_reference
     symbols_from_module_list = OneOrMore(symbols_from_module)
     symbols_imported = Optional(symbols_from_module_list)
-    imports = Optional(EXPORTS + symbol_list + Suppress(Optional(';'))) + Optional(IMPORTS + symbols_imported + Suppress(Optional(';'))) 
-
+    imports = Optional(EXPORTS + symbol_list + Suppress(';')) + Optional(IMPORTS + symbols_imported + Suppress(';')) 
 
     module_body = (imports + assignment_list) | empty
     module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
