@@ -130,13 +130,10 @@ class Module(object):
         self._user_types = {}
 
         module_reference, _, _, _, _, module_body, _ = elements
-        self.name = module_reference.elements[0]
+        exports, imports, assignments = module_body.elements
 
-        if module_body.elements:
-            _, _, assignments = module_body.elements
-            self.assignments = [_create_sema_node(token) for token in assignments.elements]
-        else:
-            self.assignments = []
+        self.name = module_reference.elements[0]
+        self.assignments = [_create_sema_node(token) for token in assignments.elements]
 
     def user_types(self):
         if not self._user_types:

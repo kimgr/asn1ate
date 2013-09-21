@@ -25,7 +25,7 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString
+from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString
 
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
@@ -290,7 +290,7 @@ def _build_asn1_grammar():
     value_assignment = valuereference + type_ + '::=' + value
 
     assignment = type_assignment | value_assignment
-    assignment_list = OneOrMore(assignment)
+    assignment_list = ZeroOrMore(assignment)
 
     assigned_identifier = Optional(object_identifier_value | defined_value)
     global_module_reference = module_reference + assigned_identifier
@@ -303,7 +303,7 @@ def _build_asn1_grammar():
     exports = Optional(Suppress(EXPORTS) + symbol_list + Suppress(';'))
     imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
 
-    module_body = (exports + imports + assignment_list) | empty
+    module_body = (exports + imports + assignment_list)
     module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + DEFINITIONS + module_defaults + '::=' + BEGIN + module_body + END
