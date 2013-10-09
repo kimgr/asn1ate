@@ -283,10 +283,7 @@ def _build_asn1_grammar():
     # and we use them.
     named_type << (Optional(identifier) + type_)
 
-    # EXT: Trailing semi-colon is not allowed by standard
-    # grammar, but our other ASN.1 code generator accepts it
-    # and we happen to use it.
-    type_assignment = typereference + '::=' + type_ + Suppress(Optional(';'))
+    type_assignment = typereference + '::=' + type_
     value_assignment = valuereference + type_ + '::=' + value
 
     assignment = type_assignment | value_assignment
