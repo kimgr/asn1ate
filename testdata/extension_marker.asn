@@ -25,4 +25,12 @@ PotentiallyInvalid ::= SEQUENCE
   required2 UTF8String
 }
 
+EnumType ::= ENUMERATED
+{
+  zero (0),
+  one  (1),
+  two  (2),
+  ...
+}
+
 END

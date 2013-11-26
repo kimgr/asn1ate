@@ -251,7 +251,7 @@ def _build_asn1_grammar():
     sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
-    enumerated_type = ENUMERATED + braced_list(enumeration)
+    enumerated_type = ENUMERATED + braced_list(enumeration | Suppress(extension_marker))
     bitstring_type = BIT_STRING + braced_list(named_number)
     plain_integer_type = INTEGER
     restricted_integer_type = INTEGER + braced_list(named_number)
