@@ -81,7 +81,7 @@ class AnnotatedToken(object):
 
 def _build_asn1_grammar():
     def build_identifier(prefix_pattern):
-        identifier_suffix = Optional(Word(srange('[-0-9a-zA-Z]')))
+        identifier_suffix = Optional(Word(srange('[-0-9a-zA-Z.]')))
         identifier = Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)  # todo: more rigorous? trailing hyphens and -- forbidden
         return identifier
 
