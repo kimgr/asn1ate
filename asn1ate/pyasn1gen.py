@@ -128,14 +128,18 @@ class Pyasn1Backend(object):
 
     def expr_simple_type(self, t):
         type_expr = _translate_type(t.type_name) + '()'
-        if t.constraint:
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            type_expr += '.subtype(subtypeSpec=constraint.ValueSizeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
+        elif t.constraint:
             type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
 
         return type_expr
 
     def decl_simple_type(self, t):
-        if t.constraint:
-            return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            return 'subtypeSpec = constraint.ValueSizeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        elif t.constraint:
+             return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
         else:
             return 'pass'
 

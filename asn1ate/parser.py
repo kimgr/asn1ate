@@ -38,6 +38,7 @@ def parse_asn1(asn1_payload):
     AnnotatedToken objects.
     """
     grammar = _build_asn1_grammar()
+    print(grammar.parseString(asn1_payload))
     parse_result = grammar.scanString(asn1_payload)
     parse_tree = reduce(operator.add, [result[0] for result in parse_result])
     return parse_tree
@@ -179,7 +180,7 @@ def _build_asn1_grammar():
     # values
     # BUG: These are badly specified and cause the grammar to break if used generally.
     # todo: consider more literals from 16.9
-    real_value = Regex(r'-?\d+(\.\d*)?') # todo: this doesn't really follow the spec
+    real_value = Regex(r'-?\d+(\.\d+)?') # todo: this doesn't really follow the spec
     boolean_value = TRUE | FALSE
     bitstring_value = bstring | hstring     # todo: consider more forms from 21.9
     integer_value = signed_number
@@ -228,10 +229,11 @@ def _build_asn1_grammar():
 
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
-    # but for now, just implement a simple integer value range.
-    value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
-    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')') + Optional(Suppress(')'))
-    constraint = Suppress('(') + value_range_constraint + Suppress(')')
+    # but for now, just implement a simple integer value range, and size constraints
+    int_value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
+    real_value_range_constraint = (real_value | valuereference | MIN) + Suppress('..') + (real_value | valuereference | MAX)
+    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + int_value_range_constraint + Suppress(')') + Optional(Suppress(')'))
+    value_constraint = Suppress('(') + real_value_range_constraint + Suppress(')')
 
     # TODO: consider exception syntax from 24.1
     extension_marker = Unique(ELLIPSIS)
@@ -248,31 +250,32 @@ def _build_asn1_grammar():
     enumeration = named_number | identifier
 
     set_type = SET + braced_list(component_type | extension_marker)
-    sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
-    sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
-    setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
+    sequence_type = SEQUENCE + Optional(size_constraint) + braced_list(component_type | extension_marker)
+    sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type) + Optional(size_constraint)
+    setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type) + Optional(size_constraint)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration | Suppress(extension_marker))
-    bitstring_type = BIT_STRING + braced_list(named_number)
-    plain_integer_type = INTEGER
+    bitstring_type = BIT_STRING + braced_list(named_number) + Optional(size_constraint)
+    plain_integer_type = INTEGER + Optional(value_constraint)
     restricted_integer_type = INTEGER + braced_list(named_number)
     boolean_type = BOOLEAN
-    real_type = REAL
+    real_type = REAL + Optional(value_constraint)
     null_type = NULL
     object_identifier_type = OBJECT_IDENTIFIER
-    octetstring_type = OCTET_STRING
-    unrestricted_characterstring_type = CHARACTER_STRING
-    restricted_characterstring_type = BMPString | GeneralString | \
+    octetstring_type = OCTET_STRING + Optional(size_constraint)
+    unrestricted_characterstring_type = CHARACTER_STRING + Optional(size_constraint)
+    restricted_characterstring_type = (BMPString | GeneralString | \
                                       GraphicString | IA5String | \
                                       ISO646String | NumericString | \
                                       PrintableString | TeletexString | \
                                       T61String | UniversalString | \
-                                      UTF8String | VideotexString | VisibleString
+                                      UTF8String | VideotexString | VisibleString) \
+                                      + (Optional(size_constraint) | Optional(value_constraint))
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
     # todo: consider other builtins from 16.2
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(constraint)
+    simple_type = boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type
@@ -328,7 +331,7 @@ def _build_asn1_grammar():
     sequenceof_type.setParseAction(annotate('SequenceOfType'))
     setof_type.setParseAction(annotate('SetOfType'))
     named_number.setParseAction(annotate('NamedValue'))
-    constraint.setParseAction(annotate('Constraint'))
+    value_constraint.setParseAction(annotate('ValueConstraint'))
     size_constraint.setParseAction(annotate('SizeConstraint'))
     component_type.setParseAction(annotate('ComponentType'))
     component_type_optional.setParseAction(annotate('ComponentTypeOptional'))
