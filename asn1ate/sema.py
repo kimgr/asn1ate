@@ -201,7 +201,13 @@ class ValueAssignment(object):
         if isinstance(value, parser.AnnotatedToken):
             self.value = _create_sema_node(value) 
         else:
-            self.value = value
+            # Convert hex or binary to int
+            if value[-1] == 'H':
+                self.value = str(int(value[1:-2], 16))
+            elif value[-1] == 'B':
+                self.value = str(int(value[1:-2], 2))
+            else:
+                self.value = value
 
     def reference_name(self):
         return self.value_name.reference_name()
