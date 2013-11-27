@@ -158,8 +158,8 @@ def _build_asn1_grammar():
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
-    bstring = Literal('\'') + Regex('[01]+') + Literal('\'B')
-    hstring = Literal('\'') + Regex('[0-9A-F]+') + Literal('\'H')
+    bstring = Regex('\'[01]+\'B')
+    hstring = Regex('\'[0-9A-F]+\'H')
 
     # Comments
     hyphen_comment = Regex(r"--[\s\S]*?(--|$)", flags=re.MULTILINE)

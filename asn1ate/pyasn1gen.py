@@ -295,6 +295,13 @@ class Pyasn1Backend(object):
         if isinstance(value, ObjectIdentifierValue):
             value_constructor = self.build_object_identifier_value(value)
         else:
+            # If this is an octet type or derived from it, we need to parse any bin/hex strings
+            root_type = self.sema_module.resolve_type_decl(type_decl)
+            if root_type.type_name == 'OCTET STRING':
+                if isinstance(value, str) and value[-3:-1] == '\'H':
+                    value = 'hexValue='+value[1:-2]
+                elif isinstance(value, str) and value[-3:-1] == '\'B':
+                    value = 'binValue='+value[1:-2]
             value_type = _translate_type(type_decl.type_name)
             value_constructor = '%s(%s)' % (value_type, value)
 
