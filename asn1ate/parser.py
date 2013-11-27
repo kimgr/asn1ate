@@ -228,7 +228,7 @@ def _build_asn1_grammar():
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range.
-    value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
+    value_range_constraint = Optional((signed_number | valuereference | MIN) + Suppress('..')) + (signed_number | valuereference | MAX)
     size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')') + Optional(Suppress(')'))
     constraint = Suppress('(') + value_range_constraint + Suppress(')')
 
@@ -247,26 +247,27 @@ def _build_asn1_grammar():
     enumeration = named_number | identifier
 
     set_type = SET + braced_list(component_type | extension_marker)
-    sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
+    sequence_type = SEQUENCE + Optional(size_constraint) + braced_list(component_type | extension_marker)
     sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration | Suppress(extension_marker))
-    bitstring_type = BIT_STRING + braced_list(named_number)
+    bitstring_type = BIT_STRING + braced_list(named_number) + Optional(size_constraint)
     plain_integer_type = INTEGER
     restricted_integer_type = INTEGER + braced_list(named_number)
     boolean_type = BOOLEAN
     real_type = REAL
     null_type = NULL
     object_identifier_type = OBJECT_IDENTIFIER
-    octetstring_type = OCTET_STRING
+    octetstring_type = OCTET_STRING + Optional(size_constraint)
     unrestricted_characterstring_type = CHARACTER_STRING
-    restricted_characterstring_type = BMPString | GeneralString | \
+    restricted_characterstring_type = (BMPString | GeneralString | \
                                       GraphicString | IA5String | \
                                       ISO646String | NumericString | \
                                       PrintableString | TeletexString | \
                                       T61String | UniversalString | \
-                                      UTF8String | VideotexString | VisibleString
+                                      UTF8String | VideotexString | VisibleString) \
+                                      + Optional(size_constraint)
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
