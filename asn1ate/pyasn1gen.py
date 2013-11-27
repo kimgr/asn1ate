@@ -27,6 +27,7 @@ from __future__ import print_function  # Python 2 compatibility
 
 import sys
 import argparse
+from cStringIO import StringIO
 from asn1ate import parser
 from asn1ate.support import pygen
 from asn1ate.sema import *
@@ -429,12 +430,28 @@ def main(args):
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
     
     outfile = sys.stdout
+    module_names = []
+    for module in modules:
+        module_names.append(module.name)
+    
+    
     for module in modules:
         if args.write_to_file:
             outfile = open(module.name + '.py', 'w')
-        print(pygen.auto_generated_header(), file=outfile)
+        tmp = StringIO()
+        generate_pyasn1(module, tmp)
         print('# Module: ' + module.name, file=outfile)
-        generate_pyasn1(module, outfile)
+        print(file=outfile)
+
+        # Generate appropriate import statements
+        for name in module_names:
+            if name + '.' in tmp.getvalue():
+                print('import ' + name, file=outfile)
+                continue
+
+        # Print out the body of the module
+        print(tmp.getvalue(), file=outfile)
+        outfile.close()
 
     return 0
 

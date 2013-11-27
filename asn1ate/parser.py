@@ -24,6 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import operator
 from copy import copy
 from pyparsing import Keyword, Literal, Word, OneOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString
 
@@ -37,8 +38,8 @@ def parse_asn1(asn1_payload):
     AnnotatedToken objects.
     """
     grammar = _build_asn1_grammar()
-    parse_result = grammar.parseString(asn1_payload)
-    parse_tree = parse_result.asList()
+    parse_result = grammar.scanString(asn1_payload)
+    parse_tree = reduce(operator.add, [result[0] for result in parse_result])
     return parse_tree
 
 
