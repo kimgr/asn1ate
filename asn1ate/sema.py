@@ -397,7 +397,7 @@ class SimpleType(object):
 
 class UserDefinedType(object):
     def __init__(self, elements):
-        self.type_name = elements[0]
+        self.type_name = elements[0].replace('-', '')
 
     def reference_name(self):
         return self.type_name
