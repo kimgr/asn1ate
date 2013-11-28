@@ -306,7 +306,7 @@ class Pyasn1Backend(object):
                     value = 'binValue='+value[1:-2]
             value_type = _translate_type(type_decl.type_name)
             value_constructor = '%s(%s)' % (value_type, value)
-
+            
         return '%s = %s' % (assigned_value, value_constructor)
 
     def build_object_identifier_value(self, t):

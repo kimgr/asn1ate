@@ -233,7 +233,7 @@ class ValueAssignment(object):
 
 class ValueReference(object):
     def __init__(self, elements):
-        self.name = elements[0]
+        self.name = elements[0].replace ('-', '_')
 
     def reference_name(self):
         return self.name
