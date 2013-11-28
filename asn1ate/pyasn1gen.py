@@ -26,6 +26,7 @@
 from __future__ import print_function  # Python 2 compatibility
 
 import sys
+import argparse
 from asn1ate import parser
 from asn1ate.support import pygen
 from asn1ate.sema import *
@@ -126,14 +127,18 @@ class Pyasn1Backend(object):
 
     def expr_simple_type(self, t):
         type_expr = _translate_type(t.type_name) + '()'
-        if t.constraint:
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            type_expr += '.subtype(subtypeSpec=constraint.SizeRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
+        elif t.constraint:
             type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
 
         return type_expr
 
     def decl_simple_type(self, t):
-        if t.constraint:
-            return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            return 'subtypeSpec = constraint.SizeRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        elif t.constraint:
+             return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
         else:
             return 'pass'
 
@@ -406,18 +411,27 @@ def _translate_value(value):
 
 # Simplistic command-line driver
 def main(args):
-    with open(args[0]) as f:
-        asn1def = f.read()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('inputfile', type=argparse.FileType('r'),
+        help='Input ASN.1 file to parse.', nargs='?', default=sys.stdin)
+    argparser.add_argument('-w', '--write-to-file', action='store_true', help='Write output to file(s).')
+    args = argparser.parse_args()
+    
+    asn1def = args.inputfile.read()
 
     parse_tree = parser.parse_asn1(asn1def)
 
     modules = build_semantic_model(parse_tree)
-    if len(modules) > 1:
+    if len(modules) > 1 and not args.write_to_file:
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
-
+    
+    outfile = sys.stdout
     for module in modules:
-        print(pygen.auto_generated_header())
-        generate_pyasn1(module, sys.stdout)
+        if args.write_to_file:
+            outfile = open(module.name + '.py', 'w')
+        print(pygen.auto_generated_header(), file=outfile)
+        print('# Module: ' + module.name, file=outfile)
+        generate_pyasn1(module, outfile)
 
     return 0
 

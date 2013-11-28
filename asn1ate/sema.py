@@ -201,7 +201,13 @@ class ValueAssignment(object):
         if isinstance(value, parser.AnnotatedToken):
             self.value = _create_sema_node(value) 
         else:
-            self.value = value
+            # Convert hex or binary to int
+            if value[-1] == 'H':
+                self.value = str(int(value[1:-2], 16))
+            elif value[-1] == 'B':
+                self.value = str(int(value[1:-2], 2))
+            else:
+                self.value = value
 
     def reference_name(self):
         return self.value_name.reference_name()
@@ -371,6 +377,8 @@ class SimpleType(object):
         self.type_name = elements[0]
         if len(elements) > 1 and elements[1].ty == 'Constraint':
             self.constraint = Constraint(elements[1].elements)
+        if len(elements) > 1 and elements[1].ty == 'SizeConstraint':
+            self.constraint = SizeConstraint(elements[1].elements)
 
     def reference_name(self):
         return self.type_name
@@ -409,7 +417,11 @@ class UserDefinedType(object):
 
 class Constraint(object):
     def __init__(self, elements):
-        min_value, max_value = elements
+        if len(elements) == 2:
+            min_value, max_value = elements
+        else:
+            min_value = elements[0]
+            max_value = elements[0]
 
         self.min_value = _maybe_create_sema_node(min_value)
         self.max_value = _maybe_create_sema_node(max_value)

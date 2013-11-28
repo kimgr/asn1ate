@@ -24,6 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import operator
 from copy import copy
 from pyparsing import Keyword, Literal, Word, OneOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString
 
@@ -37,8 +38,8 @@ def parse_asn1(asn1_payload):
     AnnotatedToken objects.
     """
     grammar = _build_asn1_grammar()
-    parse_result = grammar.parseString(asn1_payload)
-    parse_tree = parse_result.asList()
+    parse_result = grammar.scanString(asn1_payload)
+    parse_tree = reduce(operator.add, [result[0] for result in parse_result])
     return parse_tree
 
 
@@ -81,7 +82,7 @@ class AnnotatedToken(object):
 
 def _build_asn1_grammar():
     def build_identifier(prefix_pattern):
-        identifier_suffix = Optional(Word(srange('[-0-9a-zA-Z]')))
+        identifier_suffix = Optional(Word(srange('[-0-9a-zA-Z.]')))
         identifier = Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)  # todo: more rigorous? trailing hyphens and -- forbidden
         return identifier
 
@@ -158,8 +159,8 @@ def _build_asn1_grammar():
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
-    bstring = Literal('\'') + Regex('[01]+') + Literal('\'B')
-    hstring = Literal('\'') + Regex('[0-9A-F]+') + Literal('\'H')
+    bstring = Regex('\'[01]+\'B')
+    hstring = Regex('\'[0-9A-F]+\'H')
 
     # Comments
     hyphen_comment = Regex(r"--[\s\S]*?(--|$)", flags=re.MULTILINE)
@@ -228,7 +229,7 @@ def _build_asn1_grammar():
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range.
-    value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
+    value_range_constraint = Optional((signed_number | valuereference | MIN) + Suppress('..')) + (signed_number | valuereference | MAX)
     size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')') + Optional(Suppress(')'))
     constraint = Suppress('(') + value_range_constraint + Suppress(')')
 
@@ -247,26 +248,27 @@ def _build_asn1_grammar():
     enumeration = named_number | identifier
 
     set_type = SET + braced_list(component_type | extension_marker)
-    sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
+    sequence_type = SEQUENCE + Optional(size_constraint) + braced_list(component_type | extension_marker)
     sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
-    enumerated_type = ENUMERATED + braced_list(enumeration)
-    bitstring_type = BIT_STRING + braced_list(named_number)
+    enumerated_type = ENUMERATED + braced_list(enumeration | Suppress(extension_marker))
+    bitstring_type = BIT_STRING + braced_list(named_number) + Optional(size_constraint)
     plain_integer_type = INTEGER
     restricted_integer_type = INTEGER + braced_list(named_number)
     boolean_type = BOOLEAN
     real_type = REAL
     null_type = NULL
     object_identifier_type = OBJECT_IDENTIFIER
-    octetstring_type = OCTET_STRING
+    octetstring_type = OCTET_STRING + Optional(size_constraint)
     unrestricted_characterstring_type = CHARACTER_STRING
-    restricted_characterstring_type = BMPString | GeneralString | \
+    restricted_characterstring_type = (BMPString | GeneralString | \
                                       GraphicString | IA5String | \
                                       ISO646String | NumericString | \
                                       PrintableString | TeletexString | \
                                       T61String | UniversalString | \
-                                      UTF8String | VideotexString | VisibleString
+                                      UTF8String | VideotexString | VisibleString) \
+                                      + Optional(size_constraint)
     characterstring_type = restricted_characterstring_type | unrestricted_characterstring_type
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
