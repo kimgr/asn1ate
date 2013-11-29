@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import keyword
 from asn1ate import parser
 
 
@@ -234,6 +235,8 @@ class ValueAssignment(object):
 class ValueReference(object):
     def __init__(self, elements):
         self.name = elements[0].replace ('-', '_')
+        if self.name in keyword.kwlist:
+            self.name += '_' # Append an underscore if this is a Python keyword
 
     def reference_name(self):
         return self.name
