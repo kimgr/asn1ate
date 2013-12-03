@@ -278,7 +278,11 @@ class Pyasn1Backend(object):
 
             fragment.pop_indent()
             fragment.write_line(')')
-        else:
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            fragment.write_line('subtypeSpec = constraint.ValueSizeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value))
+        elif t.constraint:
+             fragment.write_line('subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value))
+        if not t.named_bits and not t.constraint:
             fragment.write_line('pass')
 
         return str(fragment)

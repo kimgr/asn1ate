@@ -4,11 +4,36 @@ BEGIN
   -- Value constraints
   A ::= INTEGER (13..19)
   B ::= REAL (-13.0..19.0)
-  C ::= INTEGER (MIN..10)
-  D ::= INTEGER (0..MAX)
+  
+  -- pyasn can't handle max and min
+  -- C ::= INTEGER (MIN..10) 
+  -- D ::= INTEGER (0..MAX)
   
   -- TODO
   -- It is valid to have a range constraint on a derived type, but we can't do this yet
   -- E ::= A (15..16)
-
+  
+  -- Size constraints
+  OneByte ::= BIT STRING (SIZE(8))
+  MaybeOneByte ::= BIT STRING (SIZE(1..8))
+  NamedOneByte ::= BIT STRING {
+    a (0),
+    b (1),
+    c (2),
+    d (3),
+    e (4),
+    f (5)
+    } (SIZE(8))
+  NamedMaybeOneByte ::= BIT STRING {
+    a (0),
+    b (1),
+    c (2),
+    d (3),
+    e (4),
+    f (5)
+    } (SIZE(5..8))
+  
+  TwoBytes ::= OCTET STRING (SIZE(2))
+  MaybeTwoBytes ::= OCTET STRING (SIZE(1..2))
+  
 END

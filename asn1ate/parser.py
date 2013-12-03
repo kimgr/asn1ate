@@ -38,7 +38,6 @@ def parse_asn1(asn1_payload):
     AnnotatedToken objects.
     """
     grammar = _build_asn1_grammar()
-    print(grammar.parseString(asn1_payload))
     parse_result = grammar.scanString(asn1_payload)
     parse_tree = reduce(operator.add, [result[0] for result in parse_result])
     return parse_tree
@@ -230,7 +229,7 @@ def _build_asn1_grammar():
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range, and size constraints
-    int_value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
+    int_value_range_constraint = Optional((signed_number | valuereference | MIN) + Suppress('..')) + (signed_number | valuereference | MAX)
     real_value_range_constraint = (real_value | valuereference | MIN) + Suppress('..') + (real_value | valuereference | MAX)
     size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + int_value_range_constraint + Suppress(')') + Optional(Suppress(')'))
     value_constraint = Suppress('(') + real_value_range_constraint + Suppress(')')
@@ -255,7 +254,7 @@ def _build_asn1_grammar():
     setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type) + Optional(size_constraint)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration | Suppress(extension_marker))
-    bitstring_type = BIT_STRING + braced_list(named_number) + Optional(size_constraint)
+    bitstring_type = BIT_STRING + Optional(braced_list(named_number)) + Optional(size_constraint)
     plain_integer_type = INTEGER + Optional(value_constraint)
     restricted_integer_type = INTEGER + braced_list(named_number)
     boolean_type = BOOLEAN

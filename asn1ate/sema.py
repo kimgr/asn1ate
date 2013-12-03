@@ -554,22 +554,39 @@ class ValueListType(object):
 
 class BitStringType(object):
     def __init__(self, elements):
+        self.constraint = None
         self.type_name = elements[0]
+        self.named_bits = None
         if len(elements) > 1:
-            self.named_bits = [_create_sema_node(token) for token in elements[1]]
-        else:
-            self.named_bits = None
+            if isinstance(elements[1], list):
+                self.named_bits = [_create_sema_node(token) for token in elements[1]]
+            elif 'Constraint' in elements[1].ty:
+                self.constraint = _create_sema_node(elements[1])
+        if len(elements) == 3 and 'Constraint' in elements[2].ty:
+            self.constraint = _create_sema_node(elements[2])
 
+    def reference_name(self):
+        return self.type_name
+        
     def references(self):
         # TODO: Value references
-        return []
+        refs = [self.type_name]
+        if self.constraint:
+            refs.extend(self.constraint.references())
+        return refs
 
     def __str__(self):
         if self.named_bits:
             named_bit_list = ', '.join(map(str, self.named_bits))
-            return '%s { %s }' % (self.type_name, named_bit_list)
+            if self.constraint is None:
+                return '%s { %s }' % (self.type_name, named_bit_list)
+            else:
+                return '%s { %s } %s' % (self.type_name, named_bit_list, self.constraint)
         else:
-            return '%s' % self.type_name
+            if self.constraint is None:
+                return '%s' % self.type_name
+            else:
+                return '%s %s' % (self.type_name, self.constraint)
 
     __repr__ = __str__
 
