@@ -7,5 +7,6 @@ BEGIN
   Utf8Str ::= UTF8String
   NumStr ::= NumericString
   PrintStr ::= PrintableString
+  IA5Str ::= IA5String
   -- TODO: More string types.
 END

@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import keyword
 from asn1ate import parser
 
 
@@ -172,7 +173,9 @@ class TypeAssignment(object):
     def __init__(self, elements):
         assert(len(elements) == 3)
         type_name, _, type_decl = elements
-        self.type_name = type_name
+        self.type_name = type_name.replace('-', '')
+        if self.type_name in keyword.kwlist:
+            self.type_name += '_' # Append an underscore if this is a Python keyword
         self.type_decl = _create_sema_node(type_decl)
 
     def reference_name(self):
@@ -201,7 +204,11 @@ class ValueAssignment(object):
         if isinstance(value, parser.AnnotatedToken):
             self.value = _create_sema_node(value) 
         else:
-            self.value = value
+            # Add surrounding quotes to hex or binary
+            if value[-1] == 'H' or value[-1] == 'B':
+                self.value = '"' + value + '"'
+            else:
+                self.value = value
 
     def reference_name(self):
         return self.value_name.reference_name()
@@ -229,7 +236,9 @@ class ValueAssignment(object):
 
 class ValueReference(object):
     def __init__(self, elements):
-        self.name = elements[0]
+        self.name = elements[0].replace ('-', '_')
+        if self.name in keyword.kwlist:
+            self.name += '_' # Append an underscore if this is a Python keyword
 
     def reference_name(self):
         return self.name
@@ -369,8 +378,8 @@ class SimpleType(object):
     def __init__(self, elements):
         self.constraint = None
         self.type_name = elements[0]
-        if len(elements) > 1 and elements[1].ty == 'Constraint':
-            self.constraint = Constraint(elements[1].elements)
+        if len(elements) > 1 and 'Constraint' in elements[1].ty:
+            self.constraint = _create_sema_node(elements[1])
 
     def reference_name(self):
         return self.type_name
@@ -393,7 +402,9 @@ class SimpleType(object):
 
 class UserDefinedType(object):
     def __init__(self, elements):
-        self.type_name = elements[0]
+        self.type_name = elements[0].replace('-', '')
+        if self.type_name in keyword.kwlist:
+            self.type_name += '_' # Append an underscore if this is a Python keyword
 
     def reference_name(self):
         return self.type_name
@@ -407,9 +418,13 @@ class UserDefinedType(object):
     __repr__ = __str__
 
 
-class Constraint(object):
+class ValueConstraint(object):
     def __init__(self, elements):
-        min_value, max_value = elements
+        if len(elements) == 2:
+            min_value, max_value = elements
+        else:
+            min_value = elements[0]
+            max_value = elements[0]
 
         self.min_value = _maybe_create_sema_node(min_value)
         self.max_value = _maybe_create_sema_node(max_value)
@@ -430,7 +445,7 @@ class Constraint(object):
     __repr__ = __str__
 
 
-class SizeConstraint(Constraint):
+class SizeConstraint(ValueConstraint):
     """ Size constraints have the same form as any value range constraints."""
     def __str__(self):
         return 'SIZE(%s..%s)' % (self.min_value, self.max_value)
@@ -539,22 +554,39 @@ class ValueListType(object):
 
 class BitStringType(object):
     def __init__(self, elements):
+        self.constraint = None
         self.type_name = elements[0]
+        self.named_bits = None
         if len(elements) > 1:
-            self.named_bits = [_create_sema_node(token) for token in elements[1]]
-        else:
-            self.named_bits = None
+            if isinstance(elements[1], list):
+                self.named_bits = [_create_sema_node(token) for token in elements[1]]
+            elif 'Constraint' in elements[1].ty:
+                self.constraint = _create_sema_node(elements[1])
+        if len(elements) == 3 and 'Constraint' in elements[2].ty:
+            self.constraint = _create_sema_node(elements[2])
 
+    def reference_name(self):
+        return self.type_name
+        
     def references(self):
         # TODO: Value references
-        return []
+        refs = [self.type_name]
+        if self.constraint:
+            refs.extend(self.constraint.references())
+        return refs
 
     def __str__(self):
         if self.named_bits:
             named_bit_list = ', '.join(map(str, self.named_bits))
-            return '%s { %s }' % (self.type_name, named_bit_list)
+            if self.constraint is None:
+                return '%s { %s }' % (self.type_name, named_bit_list)
+            else:
+                return '%s { %s } %s' % (self.type_name, named_bit_list, self.constraint)
         else:
-            return '%s' % self.type_name
+            if self.constraint is None:
+                return '%s' % self.type_name
+            else:
+                return '%s %s' % (self.type_name, self.constraint)
 
     __repr__ = __str__
 
@@ -701,6 +733,8 @@ def _create_sema_node(token):
         return SetOfType(token.elements)
     elif token.ty == 'ExtensionMarker':
         return ExtensionMarker(token.elements)
+    elif token.ty == 'ValueConstraint':
+        return ValueConstraint(token.elements)
     elif token.ty == 'SizeConstraint':
         return SizeConstraint(token.elements)
     elif token.ty == 'ObjectIdentifierValue':

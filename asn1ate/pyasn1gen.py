@@ -26,6 +26,8 @@
 from __future__ import print_function  # Python 2 compatibility
 
 import sys
+import argparse
+from cStringIO import StringIO
 from asn1ate import parser
 from asn1ate.support import pygen
 from asn1ate.sema import *
@@ -126,14 +128,18 @@ class Pyasn1Backend(object):
 
     def expr_simple_type(self, t):
         type_expr = _translate_type(t.type_name) + '()'
-        if t.constraint:
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            type_expr += '.subtype(subtypeSpec=constraint.ValueSizeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
+        elif t.constraint:
             type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
 
         return type_expr
 
     def decl_simple_type(self, t):
-        if t.constraint:
-            return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            return 'subtypeSpec = constraint.ValueSizeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        elif t.constraint:
+             return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
         else:
             return 'pass'
 
@@ -272,7 +278,11 @@ class Pyasn1Backend(object):
 
             fragment.pop_indent()
             fragment.write_line(')')
-        else:
+        if t.constraint and 'SIZE' in t.constraint.__str__():
+            fragment.write_line('subtypeSpec = constraint.ValueSizeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value))
+        elif t.constraint:
+             fragment.write_line('subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value))
+        if not t.named_bits and not t.constraint:
             fragment.write_line('pass')
 
         return str(fragment)
@@ -295,9 +305,16 @@ class Pyasn1Backend(object):
         if isinstance(value, ObjectIdentifierValue):
             value_constructor = self.build_object_identifier_value(value)
         else:
+            # If this is an octet type or derived from it, we need to parse any bin/hex strings
+            root_type = self.sema_module.resolve_type_decl(type_decl)
+            if root_type.type_name == 'OCTET STRING':
+                if isinstance(value, str) and value[-3:-1] == '\'H':
+                    value = 'hexValue='+value[1:-2]
+                elif isinstance(value, str) and value[-3:-1] == '\'B':
+                    value = 'binValue='+value[1:-2]
             value_type = _translate_type(type_decl.type_name)
             value_constructor = '%s(%s)' % (value_type, value)
-
+            
         return '%s = %s' % (assigned_value, value_constructor)
 
     def build_object_identifier_value(self, t):
@@ -375,6 +392,7 @@ _ASN1_BUILTIN_TYPES = {
     'GeneralString': 'char.GeneralString',
     'NumericString': 'char.NumericString',
     'PrintableString': 'char.PrintableString',
+    'IA5String': 'char.IA5String',
     'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',
@@ -406,18 +424,43 @@ def _translate_value(value):
 
 # Simplistic command-line driver
 def main(args):
-    with open(args[0]) as f:
-        asn1def = f.read()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('inputfile', type=argparse.FileType('r'),
+        help='Input ASN.1 file to parse.', nargs='?', default=sys.stdin)
+    argparser.add_argument('-w', '--write-to-file', action='store_true', help='Write output to file(s).')
+    args = argparser.parse_args()
+    
+    asn1def = args.inputfile.read()
 
     parse_tree = parser.parse_asn1(asn1def)
 
     modules = build_semantic_model(parse_tree)
-    if len(modules) > 1:
+    if len(modules) > 1 and not args.write_to_file:
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
-
+    
+    outfile = sys.stdout
+    module_names = []
     for module in modules:
-        print(pygen.auto_generated_header())
-        generate_pyasn1(module, sys.stdout)
+        module_names.append(module.name)
+    
+    
+    for module in modules:
+        if args.write_to_file:
+            outfile = open(module.name + '.py', 'w')
+        tmp = StringIO()
+        generate_pyasn1(module, tmp)
+        print('# Module: ' + module.name, file=outfile)
+        print(file=outfile)
+
+        # Generate appropriate import statements
+        for name in module_names:
+            if name + '.' in tmp.getvalue():
+                print('import ' + name, file=outfile)
+                continue
+
+        # Print out the body of the module
+        print(tmp.getvalue(), file=outfile)
+        outfile.close()
 
     return 0
 

@@ -1,0 +1,20 @@
+Module1 DEFINITIONS ::=
+BEGIN
+
+OneSequence ::= SEQUENCE {
+    first INTEGER,
+    second BOOLEAN
+}
+
+END
+
+
+Module2 DEFINITIONS ::=
+BEGIN
+
+AnotherSequence ::= SEQUENCE {
+    first INTEGER,
+    second BOOLEAN
+}
+
+END

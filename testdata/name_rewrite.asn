@@ -1,0 +1,21 @@
+Test DEFINITIONS ::=
+BEGIN
+
+  -- All dashes need to be changed to underscores
+  
+  My-Sequence ::= SEQUENCE {
+    my-val INTEGER
+  }
+  my-value INTEGER ::= 123
+  my-limit INTEGER ::= my-value
+  Limited ::= INTEGER (1 .. my-limit)
+
+  -- Any python keywords should have and underscore appended
+  Assert ::= SEQUENCE {
+    break INTEGER
+  }
+  and INTEGER ::= 123
+  yield INTEGER ::= and
+  Keyword-Limited ::= INTEGER (1 .. and)
+
+END
