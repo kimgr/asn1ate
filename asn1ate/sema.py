@@ -174,6 +174,8 @@ class TypeAssignment(object):
         assert(len(elements) == 3)
         type_name, _, type_decl = elements
         self.type_name = type_name.replace('-', '')
+        if self.type_name in keyword.kwlist:
+            self.type_name += '_' # Append an underscore if this is a Python keyword
         self.type_decl = _create_sema_node(type_decl)
 
     def reference_name(self):
@@ -401,6 +403,8 @@ class SimpleType(object):
 class UserDefinedType(object):
     def __init__(self, elements):
         self.type_name = elements[0].replace('-', '')
+        if self.type_name in keyword.kwlist:
+            self.type_name += '_' # Append an underscore if this is a Python keyword
 
     def reference_name(self):
         return self.type_name
