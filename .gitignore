@@ -15,3 +15,6 @@ dist/
 
 # Project files
 .ropeproject
+
+# TODO
+todo.txt
