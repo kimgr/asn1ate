@@ -31,13 +31,13 @@ from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Re
 __all__ = ['parse_asn1', 'AnnotatedToken']
 
 
-def parse_asn1(asn1_payload):
-    """ Parse a string containing an ASN.1 module definition
-    and return a syntax tree in the form of a list of
+def parse_asn1(asn1_definition):
+    """ Parse a string containing one or more ASN.1 module definitions.
+    Returns a list of module syntax trees represented as nested lists of
     AnnotatedToken objects.
     """
     grammar = _build_asn1_grammar()
-    parse_result = grammar.parseString(asn1_payload)
+    parse_result = grammar.parseString(asn1_definition)
     parse_tree = parse_result.asList()
     return parse_tree
 
@@ -350,7 +350,8 @@ def _build_asn1_grammar():
     exports.setParseAction(annotate('Exports'))
     assignment_list.setParseAction(annotate('AssignmentList'))
 
-    return module_definition
+    start = ZeroOrMore(module_definition)
+    return start
 
 
 def Unique(token):
