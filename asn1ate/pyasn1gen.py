@@ -242,7 +242,7 @@ class Pyasn1Backend(object):
             fragment.write_line('namedValues = namedval.NamedValues(')
             fragment.push_indent()
 
-            named_values = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_values))
+            named_values = ['(\'%s\', %s)' % (v.identifier, v.value) for v in t.named_values if not isinstance(v, ExtensionMarker)]
             fragment.write_enumeration(named_values)
 
             fragment.pop_indent()
@@ -255,7 +255,7 @@ class Pyasn1Backend(object):
     def expr_value_list_type(self, t):
         class_name = _translate_type(t.type_name)
         if t.named_values:
-            named_values = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_values))
+            named_values = ['(\'%s\', %s)' % (v.identifier, v.value) for v in t.named_values if not isinstance(v, ExtensionMarker)]
             return '%s(namedValues=namedval.NamedValues(%s))' % (class_name, ', '.join(named_values))
         else:
             return class_name + '()'

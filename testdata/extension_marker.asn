@@ -25,4 +25,23 @@ PotentiallyInvalid ::= SEQUENCE
   required2 UTF8String
 }
 
+EnumType1 ::= ENUMERATED
+{
+  one (1),
+  ...
+}
+
+EnumType2 ::= ENUMERATED
+{
+  two (2),
+  ...,
+  three (3)
+}
+
+EnumInSequence ::= SEQUENCE
+{
+  -- Check also the inline form of an enum
+  foo ENUMERATED { zero(0), ..., one(1) }
+}
+
 END
