@@ -25,7 +25,7 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString
+from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString, White
 
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
@@ -158,7 +158,10 @@ def _build_asn1_grammar():
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
-    bstring = Literal('\'') + Regex('[01]+') + Literal('\'B')
+    horizontal_whitespace = White('\t ')
+    binary_digit = Literal('0') | Literal('1')
+    binary_string = Combine(ZeroOrMore(Suppress(horizontal_whitespace) | binary_digit))
+    bstring = Suppress('\'') + binary_string + Suppress('\'B')
     hstring = Literal('\'') + Regex('[0-9A-F]+') + Literal('\'H')
 
     # Comments
@@ -349,6 +352,7 @@ def _build_asn1_grammar():
     imports.setParseAction(annotate('Imports'))
     exports.setParseAction(annotate('Exports'))
     assignment_list.setParseAction(annotate('AssignmentList'))
+    bstring.setParseAction(annotate('BinaryStringValue'))
 
     start = ZeroOrMore(module_definition)
     return start

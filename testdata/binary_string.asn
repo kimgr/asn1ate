@@ -1,0 +1,13 @@
+Test DEFINITIONS ::=
+BEGIN
+  value OCTET STRING ::= '0101010'B
+
+  -- With whitespace
+  whitespace OCTET STRING ::= '1 1	0'B
+
+  -- Whitespace only. This should probably be invalid.
+  whitespace-only OCTET STRING ::= ' 	'B
+
+  -- Empty literal. This should probably be invalid.
+  empty OCTET STRING ::= ''B
+END

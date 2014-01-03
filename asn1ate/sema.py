@@ -635,15 +635,28 @@ class ObjectIdentifierValue(object):
     def references(self):
         refs = []
         for component in self.components:
-            if not isinstance(component, str):
-                refs.extend(component.references())
-            else:
+            if isinstance(component, str):
                 refs.append(component)
+            else:
+                refs.extend(component.references())
 
         return refs
 
     def __str__(self):
         return '{' + ' '.join(str(x) for x in self.components) + '}'
+
+    __repr__ = __str__
+
+
+class BinaryStringValue(object):
+    def __init__(self, elements):
+        self.value = elements[0]
+
+    def references(self):
+        return []
+
+    def __str__(self):
+        return '\'%s\'B' % self.value
 
     __repr__ = __str__
 
@@ -708,6 +721,8 @@ def _create_sema_node(token):
         return NumberForm(token.elements)
     elif token.ty == 'NameAndNumberForm':
         return NameAndNumberForm(token.elements)
+    elif token.ty == 'BinaryStringValue':
+        return BinaryStringValue(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 
