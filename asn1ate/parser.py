@@ -158,9 +158,8 @@ def _build_asn1_grammar():
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
-    horizontal_whitespace = White('\t ')
     binary_digit = Literal('0') | Literal('1')
-    binary_string = Combine(ZeroOrMore(Suppress(horizontal_whitespace) | binary_digit))
+    binary_string = Combine(OneOrMore(binary_digit), adjacent=False)  # Use adjacent=False to skip whiteepace
     bstring = Suppress('\'') + binary_string + Suppress('\'B')
     hstring = Literal('\'') + Regex('[0-9A-F]+') + Literal('\'H')
 
