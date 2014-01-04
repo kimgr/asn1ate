@@ -354,7 +354,7 @@ def _build_asn1_grammar():
     assignment_list.setParseAction(annotate('AssignmentList'))
     bstring.setParseAction(annotate('BinaryStringValue'))
 
-    start = ZeroOrMore(module_definition)
+    start = OneOrMore(module_definition)
     return start
 
 
