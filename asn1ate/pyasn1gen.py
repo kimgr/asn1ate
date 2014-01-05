@@ -294,6 +294,9 @@ class Pyasn1Backend(object):
 
         if isinstance(value, ObjectIdentifierValue):
             value_constructor = self.build_object_identifier_value(value)
+        elif isinstance(value, BinaryStringValue):
+            value_type = _translate_type(type_decl.type_name)
+            value_constructor = '%s(binValue=\'%s\')' % (value_type, value.value)
         else:
             value_type = _translate_type(type_decl.type_name)
             value_constructor = '%s(%s)' % (value_type, value)
