@@ -25,7 +25,7 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString, White
+from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString, Or
 
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
@@ -158,10 +158,8 @@ def _build_asn1_grammar():
     # Literals
     number = Word(nums)
     signed_number = Combine(Optional('-') + number)  # todo: consider defined values from 18.1
-    binary_digit = Literal('0') | Literal('1')
-    binary_string = Combine(OneOrMore(binary_digit), adjacent=False)  # Use adjacent=False to skip whiteepace
-    bstring = Suppress('\'') + binary_string + Suppress('\'B')
-    hstring = Literal('\'') + Regex('[0-9A-F]+') + Literal('\'H')
+    bstring = Suppress('\'') + StringOf('01') + Suppress('\'B')
+    hstring = Suppress('\'') + StringOf('0123456789ABCDEF') + Suppress('\'H')
 
     # Comments
     hyphen_comment = Regex(r"--[\s\S]*?(--|$)", flags=re.MULTILINE)
@@ -352,6 +350,7 @@ def _build_asn1_grammar():
     exports.setParseAction(annotate('Exports'))
     assignment_list.setParseAction(annotate('AssignmentList'))
     bstring.setParseAction(annotate('BinaryStringValue'))
+    hstring.setParseAction(annotate('HexStringValue'))
 
     start = OneOrMore(module_definition)
     return start
@@ -370,3 +369,22 @@ def Unique(token):
     with the same underlying rules.
     """
     return copy(token)
+
+
+def StringOf(elements):
+    """ Create a rule to parse a string of any of the chars in elements.
+    Skips any whitespace.
+    This is useful for the ASN.1 hstring and bstring productions.
+    """
+    element = CharSet(elements)
+    return Combine(OneOrMore(element), adjacent=False)  # Use adjacent=False to skip whitespace
+
+
+def CharSet(elements):
+    """ Create a set of valid characters as a single rule.
+    elements is a string containing all the desired chars, e.g.
+      CharSet('01234567890')        # all numbers
+      CharSet('01234567890ABCDEF')  # all hex numbers
+    """
+    unpacked_chars = [Literal(c) for c in elements]
+    return Or(unpacked_chars)

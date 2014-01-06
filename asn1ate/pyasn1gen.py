@@ -297,6 +297,9 @@ class Pyasn1Backend(object):
         elif isinstance(value, BinaryStringValue):
             value_type = _translate_type(type_decl.type_name)
             value_constructor = '%s(binValue=\'%s\')' % (value_type, value.value)
+        elif isinstance(value, HexStringValue):
+            value_type = _translate_type(type_decl.type_name)
+            value_constructor = '%s(hexValue=\'%s\')' % (value_type, value.value)
         else:
             value_type = _translate_type(type_decl.type_name)
             value_constructor = '%s(%s)' % (value_type, value)

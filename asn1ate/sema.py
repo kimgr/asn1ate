@@ -661,6 +661,19 @@ class BinaryStringValue(object):
     __repr__ = __str__
 
 
+class HexStringValue(object):
+    def __init__(self, elements):
+        self.value = elements[0]
+
+    def references(self):
+        return []
+
+    def __str__(self):
+        return '\'%s\'H' % self.value
+
+    __repr__ = __str__
+
+
 def _maybe_create_sema_node(token):
     if isinstance(token, parser.AnnotatedToken):
         return _create_sema_node(token)
@@ -723,6 +736,8 @@ def _create_sema_node(token):
         return NameAndNumberForm(token.elements)
     elif token.ty == 'BinaryStringValue':
         return BinaryStringValue(token.elements)
+    elif token.ty == 'HexStringValue':
+        return HexStringValue(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 

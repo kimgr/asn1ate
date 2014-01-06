@@ -1,0 +1,7 @@
+Test DEFINITIONS ::=
+BEGIN
+  value OCTET STRING ::= '0123456789ABCDEF'H
+
+  -- Whitespace is ignored in hex strings
+  whitespace OCTET STRING ::= 'A B 1 4'H
+END
