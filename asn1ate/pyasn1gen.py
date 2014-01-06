@@ -377,12 +377,12 @@ _ASN1_BUILTIN_TYPES = {
     'SET': 'univ.Set',
     'SEQUENCE OF': 'univ.SequenceOf',
     'SET OF': 'univ.SetOf',
+    'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
     'UTF8String': 'char.UTF8String',
     'GeneralString': 'char.GeneralString',
     'NumericString': 'char.NumericString',
     'PrintableString': 'char.PrintableString',
     'IA5String': 'char.IA5String',
-    'OBJECT IDENTIFIER': 'univ.ObjectIdentifier',
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',
     'ObjectDescriptor': 'useful.ObjectDescriptor',  # In pyasn1 r1.2
