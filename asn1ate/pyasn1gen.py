@@ -67,7 +67,7 @@ class Pyasn1Backend(object):
             SimpleType: self.decl_simple_type,
             UserDefinedType: self.decl_userdefined_type,
             ValueListType: self.decl_value_list_type,
-            BitStringType: self.decl_bitstring_type,
+            BitStringType: self.decl_value_list_type,
             SequenceOfType: self.decl_sequenceof_type,
             SetOfType: self.decl_setof_type,
             TypeAssignment: self.decl_type_assignment,
@@ -83,6 +83,7 @@ class Pyasn1Backend(object):
             SequenceOfType: self.expr_sequenceof_type,
             SetOfType: self.expr_setof_type,
             ValueListType: self.expr_value_list_type,
+            BitStringType: self.expr_value_list_type,
             ChoiceType: self.expr_constructed_type,
             SequenceType: self.expr_constructed_type,
             SetType: self.expr_constructed_type,
@@ -128,12 +129,16 @@ class Pyasn1Backend(object):
         type_expr = _translate_type(t.type_name) + '()'
         if t.constraint:
             type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
+        if t.size_constraint:
+            type_expr += '.subtype(subtypeSpec=constraint.ValueSizeConstraint(%s, %s))' % (t.size_constraint.min_value, t.size_constraint.max_value)
 
         return type_expr
 
     def decl_simple_type(self, t):
         if t.constraint:
             return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
+        if t.size_constraint:
+            return 'subtypeSpec = constraint.ValueSizeConstraint(%s, %s)' % (t.size_constraint.min_value, t.size_constraint.max_value)
         else:
             return 'pass'
 
@@ -259,23 +264,6 @@ class Pyasn1Backend(object):
             return '%s(namedValues=namedval.NamedValues(%s))' % (class_name, ', '.join(named_values))
         else:
             return class_name + '()'
-
-    def decl_bitstring_type(self, t):
-        fragment = self.writer.get_fragment()
-
-        if t.named_bits:
-            fragment.write_line('namedValues = namedval.NamedValues(')
-            fragment.push_indent()
-
-            named_bit_list = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_bits))
-            fragment.write_enumeration(named_bit_list)
-
-            fragment.pop_indent()
-            fragment.write_line(')')
-        else:
-            fragment.write_line('pass')
-
-        return str(fragment)
 
     def expr_sequenceof_type(self, t):
         return 'univ.SequenceOf(componentType=%s)' % self.generate_expr(t.type_decl)

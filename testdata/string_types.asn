@@ -3,6 +3,8 @@ BEGIN
   -- Mostly a simple way to test that type
   -- translation in codegen happens correctly.
   OctetStr ::= OCTET STRING
+  OctetRangeSizeLimitStr ::= OCTET STRING SIZE(5..10)
+  OctetFixedSizeLimitStr ::= OCTET STRING SIZE(5)
   GeneralStr ::= GeneralString
   Utf8Str ::= UTF8String
   NumStr ::= NumericString

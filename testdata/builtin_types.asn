@@ -17,6 +17,8 @@ BEGIN
     b(2)
   }
 
+  UnenumeratedBitString ::= BIT STRING
+
   Enumerated ::= ENUMERATED {
     a(1),
     b(2),
