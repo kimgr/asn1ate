@@ -196,7 +196,7 @@ class ValueAssignment(object):
         self.type_decl = _create_sema_node(type_name)
 
         if isinstance(value, parser.AnnotatedToken):
-            self.value = _create_sema_node(value) 
+            self.value = _create_sema_node(value)
         else:
             self.value = value
 
@@ -517,6 +517,12 @@ class ValueListType(object):
         self.type_name = elements[0]
         if len(elements) > 1:
             self.named_values = [_create_sema_node(token) for token in elements[1]]
+            for idx,n in enumerate(self.named_values):
+                if isinstance(n, NamedValue) and n.value is None:
+                    if idx == 0:
+                        n.value = str(0)
+                    else:
+                        n.value = str(int(self.named_values[idx-1].value) + 1)
         else:
             self.named_values = None
 
@@ -558,9 +564,14 @@ class BitStringType(object):
 
 class NamedValue(object):
     def __init__(self, elements):
-        identifier_token, value_token = elements
-        self.identifier = identifier_token.elements[0]
-        self.value = value_token.elements[0]
+        if len(elements) == 1:
+            identifier_token = elements[0]
+            self.identifier = identifier_token
+            self.value = None
+        else:
+            identifier_token, value_token = elements
+            self.identifier = identifier_token.elements[0]
+            self.value = value_token.elements[0]
 
     def references(self):
         # TODO: This appears to never be called. Investigate.
