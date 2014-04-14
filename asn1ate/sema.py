@@ -517,7 +517,7 @@ class ValueListType(object):
         self.type_name = elements[0]
         if len(elements) > 1:
             self.named_values = [_create_sema_node(token) for token in elements[1]]
-            for idx,n in enumerate(self.named_values):
+            for idx, n in enumerate(self.named_values):
                 if isinstance(n, NamedValue) and n.value is None:
                     if idx == 0:
                         n.value = str(0)
