@@ -244,7 +244,8 @@ def _build_asn1_grammar():
 
     named_number_value = Suppress('(') + signed_number + Suppress(')')
     named_number = identifier + named_number_value
-    enumeration = named_number | identifier
+    named_nonumber = Unique(identifier)
+    enumeration = named_number | named_nonumber
 
     set_type = SET + braced_list(component_type | extension_marker)
     sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
@@ -324,6 +325,7 @@ def _build_asn1_grammar():
     sequenceof_type.setParseAction(annotate('SequenceOfType'))
     setof_type.setParseAction(annotate('SetOfType'))
     named_number.setParseAction(annotate('NamedValue'))
+    named_nonumber.setParseAction(annotate('NamedValue'))
     constraint.setParseAction(annotate('Constraint'))
     size_constraint.setParseAction(annotate('SizeConstraint'))
     component_type.setParseAction(annotate('ComponentType'))
