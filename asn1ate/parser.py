@@ -244,7 +244,7 @@ def _build_asn1_grammar():
 
     named_number_value = Suppress('(') + signed_number + Suppress(')')
     named_number = identifier + named_number_value
-    named_nonumber = identifier.copy()
+    named_nonumber = Unique(identifier)
     enumeration = named_number | named_nonumber
 
     set_type = SET + braced_list(component_type | extension_marker)
