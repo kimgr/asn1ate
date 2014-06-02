@@ -10,7 +10,7 @@ setup(
     author='Kim Gräsman',
     author_email='kim.grasman@gmail.com',
     license='BSD',
-    long_description=open('README.rst').read(),
+    long_description=open('README.txt').read(),
     url='http://github.com/kimgr/asn1ate',
     packages=[
         'asn1ate',

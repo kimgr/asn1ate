@@ -1,4 +1,3 @@
 include *.txt
-include *.rst
 
 prune testdata
