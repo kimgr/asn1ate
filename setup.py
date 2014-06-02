@@ -5,7 +5,7 @@ from distutils.core import setup
 
 setup(
     name='asn1ate',
-    version='0.4',
+    version='0.4.1',
     description='ASN.1 translation library.',
     author='Kim Gräsman',
     author_email='kim.grasman@gmail.com',
@@ -19,5 +19,14 @@ setup(
     platforms=['any'],
     requires=[
         'pyparsing (>=2.0.0)',
+    ],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Topic :: Software Development :: Code Generators',
     ]
 )
