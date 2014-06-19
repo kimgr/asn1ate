@@ -229,7 +229,7 @@ def _build_asn1_grammar():
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range.
     value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
-    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')') + Optional(Suppress(')'))
+    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + (value_range_constraint | signed_number) + Suppress(')') + Optional(Suppress(')'))
     constraint = Suppress('(') + value_range_constraint + Suppress(')')
 
     # TODO: consider exception syntax from 24.1
@@ -253,14 +253,15 @@ def _build_asn1_grammar():
     setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
-    bitstring_type = BIT_STRING + braced_list(named_number)
+    bitstring_type = BIT_STRING + Optional(braced_list(named_number))
     plain_integer_type = INTEGER
     restricted_integer_type = INTEGER + braced_list(named_number)
     boolean_type = BOOLEAN
     real_type = REAL
     null_type = NULL
     object_identifier_type = OBJECT_IDENTIFIER
-    octetstring_type = OCTET_STRING
+    octetstring_type = OCTET_STRING + Optional(size_constraint)
+    
     unrestricted_characterstring_type = CHARACTER_STRING
     restricted_characterstring_type = BMPString | GeneralString | \
                                       GraphicString | IA5String | \

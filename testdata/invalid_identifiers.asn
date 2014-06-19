@@ -1,0 +1,8 @@
+-- Examples of invalid identifiers that should be safely sanitised to conform with Python class naming conventions.
+TEST DEFINITIONS ::=
+BEGIN
+
+  -- '-' is valid in ASN but not Python identifiers
+  Invalid-name ::= OCTET STRING
+
+END

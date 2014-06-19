@@ -165,10 +165,16 @@ class Module(object):
     __repr__ = __str__
 
 
+def sanitise_name(input_name):
+    """ Map ASN.1 name to a valid Python class name """
+    return input_name.replace('-', 'Z')
+
+
 class TypeAssignment(object):
     def __init__(self, elements):
         assert(len(elements) == 3)
         type_name, _, type_decl = elements
+        type_name = sanitise_name(type_name)     
         self.type_name = type_name
         self.type_decl = _create_sema_node(type_decl)
 
@@ -194,6 +200,7 @@ class ValueAssignment(object):
         value_name, type_name, _, value = elements
         self.value_name = ValueReference(value_name.elements) # First token is always a valuereference
         self.type_decl = _create_sema_node(type_name)
+
 
         if isinstance(value, parser.AnnotatedToken):
             self.value = _create_sema_node(value)
@@ -365,9 +372,12 @@ class TaggedType(object):
 class SimpleType(object):
     def __init__(self, elements):
         self.constraint = None
+        self.size_constraint = None
         self.type_name = elements[0]
         if len(elements) > 1 and elements[1].ty == 'Constraint':
             self.constraint = Constraint(elements[1].elements)
+        if len(elements) > 1 and elements[1].ty == 'SizeConstraint':
+            self.size_constraint = SizeConstraint(elements[1].elements)
 
     def reference_name(self):
         return self.type_name
@@ -390,7 +400,7 @@ class SimpleType(object):
 
 class UserDefinedType(object):
     def __init__(self, elements):
-        self.type_name = elements[0]
+        self.type_name = sanitise_name(elements[0])     
 
     def reference_name(self):
         return self.type_name
@@ -406,7 +416,11 @@ class UserDefinedType(object):
 
 class Constraint(object):
     def __init__(self, elements):
-        min_value, max_value = elements
+        if len(elements) > 1:
+            min_value, max_value = elements
+        elif len(elements) == 1:
+            min_value = elements[0]
+            max_value = min_value
 
         self.min_value = _maybe_create_sema_node(min_value)
         self.max_value = _maybe_create_sema_node(max_value)
@@ -540,26 +554,8 @@ class ValueListType(object):
     __repr__ = __str__
 
 
-class BitStringType(object):
-    def __init__(self, elements):
-        self.type_name = elements[0]
-        if len(elements) > 1:
-            self.named_bits = [_create_sema_node(token) for token in elements[1]]
-        else:
-            self.named_bits = None
-
-    def references(self):
-        # TODO: Value references
-        return []
-
-    def __str__(self):
-        if self.named_bits:
-            named_bit_list = ', '.join(map(str, self.named_bits))
-            return '%s { %s }' % (self.type_name, named_bit_list)
-        else:
-            return '%s' % self.type_name
-
-    __repr__ = __str__
+class BitStringType(ValueListType):
+    pass
 
 
 class NamedValue(object):
