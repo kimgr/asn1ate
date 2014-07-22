@@ -186,7 +186,8 @@ def _build_asn1_grammar():
     cstring_value = dblQuotedString
 
     builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value | cstring_value
-    defined_value = valuereference # todo: more options from 13.1
+    defined_value = Unique(valuereference) # todo: more options from 13.1
+    referenced_value = Unique(defined_value) # todo: more options from 16.11
 
     # object identifier value
     name_form = Unique(identifier)
@@ -198,7 +199,7 @@ def _build_asn1_grammar():
                               (objid_components_list | (defined_value + objid_components_list)) + \
                               Suppress('}')
 
-    value = builtin_value | defined_value | object_identifier_value
+    value = builtin_value | referenced_value | object_identifier_value
 
     # definitive identifier value
     definitive_number_form = Unique(number)
@@ -220,6 +221,8 @@ def _build_asn1_grammar():
     defined_type = Unique(typereference)  # todo: consider other defined types from 13.1
     referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
 
+    # values
+
     # Forward-declare these, they can only be fully defined once
     # we have all types defined. There are some circular dependencies.
     named_type = Forward()
@@ -228,7 +231,7 @@ def _build_asn1_grammar():
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
     # but for now, just implement a simple integer value range.
-    value_range_constraint = (signed_number | valuereference | MIN) + Suppress('..') + (signed_number | valuereference | MAX)
+    value_range_constraint = (signed_number | referenced_value | MIN) + Suppress('..') + (signed_number | referenced_value | MAX)
     size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + Suppress('(') + value_range_constraint + Suppress(')') + Optional(Suppress(')'))
     constraint = Suppress('(') + value_range_constraint + Suppress(')')
 
@@ -321,7 +324,6 @@ def _build_asn1_grammar():
     set_type.setParseAction(annotate('SetType'))
     value_list_type.setParseAction(annotate('ValueListType'))
     bitstring_type.setParseAction(annotate('BitStringType'))
-    referenced_type.setParseAction(annotate('ReferencedType'))
     sequenceof_type.setParseAction(annotate('SequenceOfType'))
     setof_type.setParseAction(annotate('SetOfType'))
     named_number.setParseAction(annotate('NamedValue'))
@@ -336,7 +338,6 @@ def _build_asn1_grammar():
     named_type.setParseAction(annotate('NamedType'))
     type_assignment.setParseAction(annotate('TypeAssignment'))
     value_assignment.setParseAction(annotate('ValueAssignment'))
-    valuereference.setParseAction(annotate('ValueReference'))
     module_reference.setParseAction(annotate('ModuleReference'))
     module_body.setParseAction(annotate('ModuleBody'))
     module_definition.setParseAction(annotate('ModuleDefinition'))
@@ -353,6 +354,8 @@ def _build_asn1_grammar():
     assignment_list.setParseAction(annotate('AssignmentList'))
     bstring.setParseAction(annotate('BinaryStringValue'))
     hstring.setParseAction(annotate('HexStringValue'))
+    referenced_type.setParseAction(annotate('ReferencedType'))
+    referenced_value.setParseAction(annotate('ReferencedValue'))
 
     start = OneOrMore(module_definition)
     return start

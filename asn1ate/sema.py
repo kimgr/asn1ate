@@ -42,23 +42,27 @@ def topological_sort(assignments):
     """ Algorithm adapted from:
     http://en.wikipedia.org/wiki/Topological_sorting.
 
+    Use this in code generators to sort assignments in dependency order, IFF
+    there are no circular dependencies.
+
     Assumes assignments is an iterable of items with two methods:
     - reference_name() -- returns the reference name of the assignment
     - references() -- returns an iterable of reference names
     upon which the assignment depends.
     """
-    graph = dict((a.reference_name(), set(a.references())) for a in assignments)
+    graph = dict((a.reference_name(), a.references()) for a in assignments)
 
     def has_predecessor(node):
-        for predecessor in graph.keys():
-            if node in graph[predecessor]:
+        for predecessors in graph.values():
+            if node in predecessors:
                 return True
 
         return False
 
     # Build a topological order of reference names
     topological_order = []
-    roots = [name for name in graph.keys() if not has_predecessor(name)]
+    roots = [name for name in graph.keys()
+             if not has_predecessor(name)]
 
     while roots:
         root = roots.pop()
@@ -67,7 +71,8 @@ def topological_sort(assignments):
         # and collect all new roots (the nodes that
         # were previously only referenced from n)
         successors = graph.pop(root, set())
-        roots.extend(successor for successor in successors if not has_predecessor(successor))
+        roots.extend(successor for successor in successors
+                     if not has_predecessor(successor))
 
         topological_order.insert(0, root)
 
@@ -75,7 +80,85 @@ def topological_sort(assignments):
         raise Exception('Can\'t sort cyclic references: %s' % graph)
 
     # Sort the actual assignments based on the topological order
-    return sorted(assignments, key=lambda a: topological_order.index(a.reference_name()))
+    return sorted(assignments,
+                  key=lambda a: topological_order.index(a.reference_name()))
+
+
+def dependency_sort(assignments):
+    """ We define a dependency sort as a Tarjan strongly-connected
+    components resolution. Tarjan's algorithm happens to topologically
+    sort as a by-product of finding strongly-connected components.
+
+    Use this in code generators to sort assignments in dependency order, if
+    there are circular dependencies. It is slower than ``topological_sort``.
+
+    In the sema model, each node depends on types mentioned in its
+    ``descendants``. The model is nominally a tree, except ``descendants``
+    can contain node references forming a cycle.
+
+    Returns a list of tuples, where each item represents a component
+    in the graph. Ideally they're one-tuples, but if the graph has cycles
+    items can have any number of elements constituting a cycle.
+
+    This is nice, because the output is in perfect dependency order,
+    except for the cycle components, where there is no order. They
+    can be detected on the basis of their plurality and handled
+    separately.
+    """
+    # Build reverse-lookup table from name -> node.
+    assignments_by_name = {a.reference_name(): a for a in assignments}
+
+    # Build the dependency graph.
+    graph = {}
+    for assignment in assignments:
+        references = assignment.references()
+        graph[assignment] = [assignments_by_name[r] for r in references
+                             if r in assignments_by_name]
+
+    # Now let Tarjan do its work! Adapted from here:
+    # http://www.logarithmic.net/pfh-files/blog/01208083168/tarjan.py
+    index_counter = [0]
+    stack = []
+    lowlinks = {}
+    index = {}
+    result = []
+
+    def strongconnect(node):
+        # Set the depth index for this node to the smallest unused index
+        index[node] = index_counter[0]
+        lowlinks[node] = index_counter[0]
+        index_counter[0] += 1
+        stack.append(node)
+
+        # Consider successors of `node`
+        successors = graph.get(node, [])
+        for successor in successors:
+            if successor not in lowlinks:
+                # Successor has not yet been visited; recurse on it
+                strongconnect(successor)
+                lowlinks[node] = min(lowlinks[node], lowlinks[successor])
+            elif successor in stack:
+                # the successor is in the stack and hence in the current
+                # strongly connected component (SCC)
+                lowlinks[node] = min(lowlinks[node], index[successor])
+
+        # If `node` is a root node, pop the stack and generate an SCC
+        if lowlinks[node] == index[node]:
+            connected_component = []
+
+            while True:
+                successor = stack.pop()
+                connected_component.append(successor)
+                if successor == node: break
+
+            component = tuple(connected_component)
+            result.append(component)
+
+    for node in graph:
+        if node not in lowlinks:
+            strongconnect(node)
+
+    return result
 
 
 # Registered object identifier names
@@ -109,23 +192,46 @@ some concepts captured which are not expressed in the spec.
 Most notably, we build a dependency graph of all types and values in a module,
 to allow code generators to build code in dependency order.
 
-All nodes that may be referenced (type and value assignments) must have a
-method called ``reference_name``.
-
-All nodes that may reference other types (e.g. assignments, component types)
-must have a method called ``references`` returning the names of all referenced
-nodes.
-
-Typically, if you have a ``reference_name``, you must also have a ``references``,
-but not the other way around.
+All nodes that somehow denote a referenced type or value, either definitions
+(type and value assignments) or references (referenced types, referenced values,
+etc) must have a method called ``reference_name``.
 """
 
 class SemaNode(object):
+    """ Base class for all sema nodes. """
+
     def children(self):
-        raise NotImplementedError()
+        """ Return a list of all contained sema nodes.
+
+        This implementation finds all member variables of type
+        SemaNode. It also expands list members, to transparently
+        handle the case where a node holds a list of other
+        sema nodes.
+        """
+        # Collect all SemaNode members.
+        members = list(vars(self).values())
+        children = [m for m in members if isinstance(m, SemaNode)]
+
+        # Expand SemaNodes out of list members, but do not recurse
+        # through lists of lists.
+        list_members = [m for m  in members if isinstance(m, list)]
+        for m in list_members:
+            children.extend(n for n in m if isinstance(n, SemaNode))
+
+        return children
+
+    def descendants(self):
+        """ Return a list of all recursively contained sema nodes.
+        """
+        descendants = []
+        for child in self.children():
+            descendants.append(child)
+            descendants.extend(child.descendants())
+
+        return descendants
 
 
-class Module(object):
+class Module(SemaNode):
     def __init__(self, elements):
         self._user_types = {}
 
@@ -150,7 +256,7 @@ class Module(object):
         """
         user_types = self.user_types()
 
-        if isinstance(type_decl, UserDefinedType):
+        if isinstance(type_decl, ReferencedType):
             return self.resolve_type_decl(user_types[type_decl.type_name])
         else:
             return type_decl
@@ -165,7 +271,19 @@ class Module(object):
     __repr__ = __str__
 
 
-class TypeAssignment(object):
+class Assignment(SemaNode):
+    def references(self):
+        """ Return a set of all reference names (both values and types) that
+        this assignment depends on.
+
+        This happens to coincide with all contained SemaNodes as exposed by
+        ``descendants`` with a ``reference_name`` method.
+        """
+        return set(d.reference_name() for d in self.descendants()
+                   if hasattr(d, 'reference_name'))
+
+
+class TypeAssignment(Assignment):
     def __init__(self, elements):
         assert(len(elements) == 3)
         type_name, _, type_decl = elements
@@ -175,48 +293,21 @@ class TypeAssignment(object):
     def reference_name(self):
         return self.type_name
 
-    def references(self):
-        refs = self.type_decl.references()
-
-        # Remove any self-references
-        refs = [ref for ref in refs if ref != self.type_name]
-
-        return refs
-
     def __str__(self):
         return '%s ::= %s' % (self.type_name, self.type_decl)
 
     __repr__ = __str__
 
 
-class ValueAssignment(object):
+class ValueAssignment(Assignment):
     def __init__(self, elements):
         value_name, type_name, _, value = elements
-        self.value_name = ValueReference(value_name.elements) # First token is always a valuereference
+        self.value_name = value_name
         self.type_decl = _create_sema_node(type_name)
-
-        if isinstance(value, parser.AnnotatedToken):
-            self.value = _create_sema_node(value)
-        else:
-            self.value = value
+        self.value = _maybe_create_sema_node(value)
 
     def reference_name(self):
-        return self.value_name.reference_name()
-
-    def references(self):
-        refs = [self.type_decl.reference_name()]
-        if isinstance(self.value, ValueReference):
-            refs.append(self.value.reference_name())
-        elif isinstance(self.value, ObjectIdentifierValue):
-            refs.extend(self.value.references())
-        else:
-            # It's a literal, and they don't play into declaration order.
-            pass
-
-        # Remove any self-references
-        refs = [ref for ref in refs if ref != self.value_name]
-
-        return refs
+        return self.value_name
 
     def __str__(self):
         return '%s %s ::= %s' % (self.value_name, self.type_decl, self.value)
@@ -224,34 +315,12 @@ class ValueAssignment(object):
     __repr__ = __str__
 
 
-class ValueReference(object):
-    def __init__(self, elements):
-        self.name = elements[0]
-
-    def reference_name(self):
-        return self.name
-
-    def references(self):
-        return []
-
-    def __str__(self):
-        return self.name
-
-    __repr__ = __str__
-
-
-class ConstructedType(object):
+class ConstructedType(SemaNode):
     """ Base type for SEQUENCE, SET and CHOICE. """
     def __init__(self, elements):
         type_name, component_tokens = elements
         self.type_name = type_name
         self.components = [_create_sema_node(token) for token in component_tokens]
-
-    def references(self):
-        references = []
-        for component in self.components:
-            references.extend(component.references())
-        return references
 
     def __str__(self):
         component_type_list = ', '.join(map(str, self.components))
@@ -275,7 +344,7 @@ class SetType(ConstructedType):
         super(SetType, self).__init__(elements)
 
 
-class CollectionType(object):
+class CollectionType(SemaNode):
     """ Base type for SET OF and SEQUENCE OF. """
     def __init__(self, kind, elements):
         self.kind = kind
@@ -289,9 +358,6 @@ class CollectionType(object):
             self.type_decl = _create_sema_node(elements[1])
         else:
             assert False, 'Unknown form of %s OF declaration: %s' % (self.kind, elements)
-
-    def references(self):
-        return self.type_decl.references()
 
     def __str__(self):
         if self.size_constraint:
@@ -312,7 +378,7 @@ class SetOfType(CollectionType):
         super(SetOfType, self).__init__('SET', elements)
 
 
-class TaggedType(object):
+class TaggedType(SemaNode):
     def __init__(self, elements):
         self.class_name = None
         self.class_number = None
@@ -339,12 +405,6 @@ class TaggedType(object):
     def type_name(self):
         return self.type_decl.type_name
 
-    def reference_name(self):
-        return self.type_decl.type_name
-
-    def references(self):
-        return self.type_decl.references()
-
     def __str__(self):
         class_spec = []
         if self.class_name:
@@ -362,22 +422,12 @@ class TaggedType(object):
     __repr__ = __str__
 
 
-class SimpleType(object):
+class SimpleType(SemaNode):
     def __init__(self, elements):
         self.constraint = None
         self.type_name = elements[0]
         if len(elements) > 1 and elements[1].ty == 'Constraint':
             self.constraint = Constraint(elements[1].elements)
-
-    def reference_name(self):
-        return self.type_name
-
-    def references(self):
-        refs = [self.type_name]
-        if self.constraint:
-            refs.extend(self.constraint.references())
-
-        return refs
 
     def __str__(self):
         if self.constraint is None:
@@ -388,15 +438,12 @@ class SimpleType(object):
     __repr__ = __str__
 
 
-class UserDefinedType(object):
+class ReferencedType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
 
     def reference_name(self):
         return self.type_name
-
-    def references(self):
-        return [self.type_name]
 
     def __str__(self):
         return self.type_name
@@ -404,22 +451,25 @@ class UserDefinedType(object):
     __repr__ = __str__
 
 
-class Constraint(object):
+class ReferencedValue(SemaNode):
+    def __init__(self, elements):
+        self.name = elements[0]
+
+    def reference_name(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+    __repr__ = __str__
+
+
+class Constraint(SemaNode):
     def __init__(self, elements):
         min_value, max_value = elements
 
         self.min_value = _maybe_create_sema_node(min_value)
         self.max_value = _maybe_create_sema_node(max_value)
-
-    def references(self):
-        refs = []
-        if isinstance(self.min_value, ValueReference):
-            refs.append(self.min_value.reference_name())
-
-        if isinstance(self.max_value, ValueReference):
-            refs.append(self.max_value.reference_name())
-
-        return refs
 
     def __str__(self):
         return '(%s..%s)' % (self.min_value, self.max_value)
@@ -435,7 +485,7 @@ class SizeConstraint(Constraint):
     __repr__ = __str__
 
 
-class ComponentType(object):
+class ComponentType(SemaNode):
     def __init__(self, elements):
         self.identifier = None
         self.type_decl = None
@@ -462,18 +512,6 @@ class ComponentType(object):
         else:
             assert False, 'Unknown component type %s' % first_token
 
-    def references(self):
-        if self.components_of_type:
-            return [self.components_of_type.type_name]
-
-        refs = [self.type_decl.type_name]
-        refs.extend(self.type_decl.references())
-
-        if self.default_value is not None:
-            refs.append(str(self.default_value))
-
-        return refs
-
     def __str__(self):
         if self.components_of_type:
             return 'COMPONENTS OF %s' % self.components_of_type
@@ -489,7 +527,7 @@ class ComponentType(object):
     __repr__ = __str__
 
 
-class NamedType(object):
+class NamedType(SemaNode):
     def __init__(self, elements):
         first_token = elements[0]
         if first_token.ty == 'Type':
@@ -503,16 +541,13 @@ class NamedType(object):
 
         self.type_decl = _create_sema_node(type_token)
 
-    def references(self):
-        return self.type_decl.references()
-
     def __str__(self):
         return '%s %s' % (self.identifier, self.type_decl)
 
     __repr__ = __str__
 
 
-class ValueListType(object):
+class ValueListType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
         if len(elements) > 1:
@@ -526,10 +561,6 @@ class ValueListType(object):
         else:
             self.named_values = None
 
-    def references(self):
-        # TODO: Value references
-        return []
-
     def __str__(self):
         if self.named_values:
             named_value_list = ', '.join(map(str, self.named_values))
@@ -540,17 +571,13 @@ class ValueListType(object):
     __repr__ = __str__
 
 
-class BitStringType(object):
+class BitStringType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
         if len(elements) > 1:
             self.named_bits = [_create_sema_node(token) for token in elements[1]]
         else:
             self.named_bits = None
-
-    def references(self):
-        # TODO: Value references
-        return []
 
     def __str__(self):
         if self.named_bits:
@@ -562,7 +589,7 @@ class BitStringType(object):
     __repr__ = __str__
 
 
-class NamedValue(object):
+class NamedValue(SemaNode):
     def __init__(self, elements):
         if len(elements) == 1:
             identifier_token = elements[0]
@@ -573,23 +600,15 @@ class NamedValue(object):
             self.identifier = identifier_token.elements[0]
             self.value = value_token.elements[0]
 
-    def references(self):
-        # TODO: This appears to never be called. Investigate.
-        return []
-
     def __str__(self):
         return '%s (%s)' % (self.identifier, self.value)
 
     __repr__ = __str__
 
 
-class ExtensionMarker(object):
+class ExtensionMarker(SemaNode):
     def __init__(self, elements):
         pass
-
-    def references(self):
-        # TODO: This appears to never be called. Investigate.
-        return []
 
     def __str__(self):
         return '...'
@@ -597,12 +616,12 @@ class ExtensionMarker(object):
     __repr__ = __str__
 
 
-class NameForm(object):
+class NameForm(SemaNode):
     def __init__(self, elements):
         self.name = elements[0]
 
-    def references(self):
-        return [self.name]
+    def reference_name(self):
+        return self.name
 
     def __str__(self):
         return self.name
@@ -610,12 +629,9 @@ class NameForm(object):
     __repr__ = __str__
 
 
-class NumberForm(object):
+class NumberForm(SemaNode):
     def __init__(self, elements):
         self.value = elements[0]
-
-    def references(self):
-        return []
 
     def __str__(self):
         return str(self.value)
@@ -623,15 +639,10 @@ class NumberForm(object):
     __repr__ = __str__
 
 
-class NameAndNumberForm(object):
+class NameAndNumberForm(SemaNode):
     def __init__(self, elements):
-        # The first element is a NameForm containing only the
-        # name, so unpack it into a string.
-        self.name = elements[0].elements[0]
+        self.name = _create_sema_node(elements[0])
         self.number = _create_sema_node(elements[1])
-
-    def references(self):
-        return [str(self.name), str(self.number)]
 
     def __str__(self):
         return '%s(%s)' % (self.name, self.number)
@@ -639,19 +650,9 @@ class NameAndNumberForm(object):
     __repr__ = __str__
 
 
-class ObjectIdentifierValue(object):
+class ObjectIdentifierValue(SemaNode):
     def __init__(self, elements):
         self.components = [_create_sema_node(c) for c in elements]
-
-    def references(self):
-        refs = []
-        for component in self.components:
-            if isinstance(component, str):
-                refs.append(component)
-            else:
-                refs.extend(component.references())
-
-        return refs
 
     def __str__(self):
         return '{' + ' '.join(str(x) for x in self.components) + '}'
@@ -659,12 +660,9 @@ class ObjectIdentifierValue(object):
     __repr__ = __str__
 
 
-class BinaryStringValue(object):
+class BinaryStringValue(SemaNode):
     def __init__(self, elements):
         self.value = elements[0]
-
-    def references(self):
-        return []
 
     def __str__(self):
         return '\'%s\'B' % self.value
@@ -672,12 +670,9 @@ class BinaryStringValue(object):
     __repr__ = __str__
 
 
-class HexStringValue(object):
+class HexStringValue(SemaNode):
     def __init__(self, elements):
         self.value = elements[0]
-
-    def references(self):
-        return []
 
     def __str__(self):
         return '\'%s\'H' % self.value
@@ -701,8 +696,6 @@ def _create_sema_node(token):
         return TypeAssignment(token.elements)
     elif token.ty == 'ValueAssignment':
         return ValueAssignment(token.elements)
-    elif token.ty == 'ValueReference':
-        return ValueReference(token.elements)
     elif token.ty == 'ComponentType':
         return ComponentType(token.elements)
     elif token.ty == 'NamedType':
@@ -720,7 +713,9 @@ def _create_sema_node(token):
     elif token.ty == 'SimpleType':
         return SimpleType(token.elements)
     elif token.ty == 'ReferencedType':
-        return UserDefinedType(token.elements)
+        return ReferencedType(token.elements)
+    elif token.ty == 'ReferencedValue':
+        return ReferencedValue(token.elements)
     elif token.ty == 'TaggedType':
         return TaggedType(token.elements)
     elif token.ty == 'SequenceType':

@@ -33,59 +33,86 @@ from asn1ate.sema import *
 
 class Pyasn1Backend(object):
     """ Backend to generate pyasn1 declarations from semantic tree.
-    Generators are divided into declarations and expressions,
-    because types in pyasn1 can be declared either as class
-    definitions or inline, e.g.
 
-    # Foo ::= INTEGER
-    # Foo is a decl
-    class Foo(univ.Integer):
-        pass
+    Pyasn1 represents type assignments as class derivation, e.g.
 
-    # Seq ::= SEQUENCE {
-    #     foo INTEGER
-    # }
-    # Seq is a decl,
-    # univ.Integer is an expr
-    class Seq(univ.Sequence):
-        componentType = namedtype.NamedTypes(
+        # Foo ::= INTEGER
+        class Foo(univ.Integer):
+            pass
+
+    For constructed types, the component types are instantiated inline, e.g.
+
+        # Seq ::= SEQUENCE {
+        #     foo INTEGER
+        # }
+        class Seq(univ.Sequence):
+             componentType = namedtype.NamedTypes(
+                namedtype.NamedType('foo', univ.Integer())
+             )
+
+    (univ.Integer is not a base class here, but a value.)
+
+    To cope with circular dependencies, we define types in two passes so we'll
+    generate the above as:
+
+        class Seq(univ.Sequence):
+            pass
+
+        Seq.componentType = namedtype.NamedTypes(
             namedtype.NamedType('foo', univ.Integer())
         )
 
-    Typically, declarations can contain other declarations
-    or expressions, expressions can only contain other expressions.
+    This is nice, because we separate the introduction of a name (``Seq``) from
+    the details of what it contains, so we can build recursive definitions
+    without getting into trouble with Python's name lookup.
+
+    We call the empty class a *declaration*, and the population of its members
+    *definition*. The instantiation of univ.Integer is called an
+    *inline definition*.
+
+    The translation from ASN.1 constructs to Pyasn1 come in different flavors,
+    depending on whether they're declarations, definitions or inline
+    definitions.
+
+    Only type and value assignments generate declarations. For type assignments
+    we generate a definition once all dependent declarations are created. If the
+    type assignment involves a constructed type, it is filled with inline
+    definitions.
     """
     def __init__(self, sema_module, out_stream):
         self.sema_module = sema_module
         self.writer = pygen.PythonWriter(out_stream)
 
         self.decl_generators = {
-            ChoiceType: self.decl_constructed_type,
-            SequenceType: self.decl_constructed_type,
-            SetType: self.decl_constructed_type,
-            TaggedType: self.decl_tagged_type,
-            SimpleType: self.decl_simple_type,
-            UserDefinedType: self.decl_userdefined_type,
-            ValueListType: self.decl_value_list_type,
-            BitStringType: self.decl_bitstring_type,
-            SequenceOfType: self.decl_sequenceof_type,
-            SetOfType: self.decl_setof_type,
             TypeAssignment: self.decl_type_assignment,
             ValueAssignment: self.decl_value_assignment
         }
 
-        self.expr_generators = {
-            TaggedType: self.expr_tagged_type,
-            SimpleType: self.expr_simple_type,
-            UserDefinedType: self.expr_userdefined_type,
-            ComponentType: self.expr_component_type,
-            NamedType: self.expr_named_type,
-            SequenceOfType: self.expr_sequenceof_type,
-            SetOfType: self.expr_setof_type,
-            ValueListType: self.expr_value_list_type,
-            ChoiceType: self.expr_constructed_type,
-            SequenceType: self.expr_constructed_type,
-            SetType: self.expr_constructed_type,
+        self.defn_generators = {
+            ChoiceType: self.defn_constructed_type,
+            SequenceType: self.defn_constructed_type,
+            SetType: self.defn_constructed_type,
+            TaggedType: self.defn_tagged_type,
+            SimpleType: self.defn_simple_type,
+            ReferencedType: self.defn_referenced_type,
+            ValueListType: self.defn_value_list_type,
+            BitStringType: self.defn_bitstring_type,
+            SequenceOfType: self.defn_sequenceof_type,
+            SetOfType: self.defn_setof_type,
+        }
+
+        self.inline_generators = {
+            TaggedType: self.inline_tagged_type,
+            SimpleType: self.inline_simple_type,
+            ReferencedType: self.inline_referenced_type,
+            ComponentType: self.inline_component_type,
+            NamedType: self.inline_named_type,
+            SequenceOfType: self.inline_sequenceof_type,
+            SetOfType: self.inline_setof_type,
+            ValueListType: self.inline_value_list_type,
+            ChoiceType: self.inline_constructed_type,
+            SequenceType: self.inline_constructed_type,
+            SetType: self.inline_constructed_type,
         }
 
     def generate_code(self):
@@ -94,21 +121,41 @@ class Pyasn1Backend(object):
 
         # TODO: Only generate _OID if sema_module
         # contains object identifier values.
-        self.generate_OID()
+        self.writer.write_block(self.generate_OID())
         self.writer.write_blanks(2)
 
-        assignments = topological_sort(self.sema_module.assignments)
-        for assignment in assignments:
-            self.writer.write_block(self.generate_decl(assignment))
-            self.writer.write_blanks(2)
+        assignment_components = dependency_sort(self.sema_module.assignments)
+        for component in assignment_components:
+            for assignment in component:
+                self.writer.write_block(self.generate_decl(assignment))
+                self.writer.write_blanks(2)
 
-    def generate_expr(self, t):
-        generator = self.expr_generators[type(t)]
-        return generator(t)
+            for assignment in component:
+                details = self.generate_definition(assignment)
+                if details:
+                    self.writer.write_block(details)
+                    self.writer.write_blanks(2)
+
+    def generate_definition(self, assignment):
+        assert isinstance(assignment, (ValueAssignment, TypeAssignment))
+
+        if isinstance(assignment, ValueAssignment):
+            return None  # Nothing to do here.
+
+        assigned_type, type_decl = assignment.type_name, assignment.type_decl
+        return self.generate_defn(assigned_type, type_decl)
 
     def generate_decl(self, t):
         generator = self.decl_generators[type(t)]
         return generator(t)
+
+    def generate_expr(self, t):
+        generator = self.inline_generators[type(t)]
+        return generator(t)
+
+    def generate_defn(self, class_name, t):
+        generator = self.defn_generators[type(t)]
+        return generator(class_name, t)
 
     def decl_type_assignment(self, assignment):
         fragment = self.writer.get_fragment()
@@ -117,177 +164,11 @@ class Pyasn1Backend(object):
 
         base_type = _translate_type(type_decl.type_name)
         fragment.write_line('class %s(%s):' % (assigned_type, base_type))
-
         fragment.push_indent()
-        fragment.write_block(self.generate_decl(type_decl))
+        fragment.write_line('pass')
         fragment.pop_indent()
 
         return str(fragment)
-
-    def expr_simple_type(self, t):
-        type_expr = _translate_type(t.type_name) + '()'
-        if t.constraint:
-            type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
-
-        return type_expr
-
-    def decl_simple_type(self, t):
-        if t.constraint:
-            return 'subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (t.constraint.min_value, t.constraint.max_value)
-        else:
-            return 'pass'
-
-    def expr_userdefined_type(self, t):
-        return t.type_name + '()'
-
-    def decl_userdefined_type(self, t):
-        return 'pass'
-
-    def decl_constructed_type(self, t):
-        fragment = self.writer.get_fragment()
-
-        fragment.write_line('componentType = namedtype.NamedTypes(')
-
-        fragment.push_indent()
-        fragment.write_block(self.expr_component_types(t.components))
-        fragment.pop_indent()
-
-        fragment.write_line(')')
-
-        return str(fragment)
-
-    def expr_constructed_type(self, t):
-        fragment = self.writer.get_fragment()
-
-        class_name = _translate_type(t.type_name)
-
-        fragment.write_line('%s(componentType=namedtype.NamedTypes(' % class_name)
-
-        fragment.push_indent()
-        fragment.write_block(self.expr_component_types(t.components))
-        fragment.pop_indent()
-
-        fragment.write_line('))')
-
-        return str(fragment)
-
-    def expr_component_types(self, components):
-        fragment = self.writer.get_fragment()
-
-        component_exprs = []
-        for c in components:
-            if not isinstance(c, ExtensionMarker):
-                component_exprs.append(self.generate_expr(c))
-
-        fragment.write_enumeration(component_exprs)
-
-        return str(fragment)
-
-    def expr_tagged_type(self, t):
-        tag_type = 'implicitTag' if t.implicit else 'explicitTag'
-        type_expr = self.generate_expr(t.type_decl)
-        type_expr += '.subtype(%s=%s)' % (tag_type, self.build_tag_expr(t))
-
-        return type_expr
-
-    def decl_tagged_type(self, t):
-        fragment = self.writer.get_fragment()
-
-        tag_type = 'tagImplicitly' if t.implicit else 'tagExplicitly'
-        base_type = _translate_type(t.type_decl.type_name)
-        fragment.write_line('tagSet = %s.tagSet.%s(%s)' % (base_type, tag_type, self.build_tag_expr(t)))
-        fragment.write_line(self.generate_decl(t.type_decl))  # possibly 'pass'. but that's OK in a decl
-
-        return str(fragment)
-
-    def build_tag_expr(self, tag_def):
-        context = _translate_tag_class(tag_def.class_name)
-
-        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl)
-        if isinstance(tagged_type_decl, ConstructedType):
-            tag_format = 'tag.tagFormatConstructed'
-        else:
-            tag_format = 'tag.tagFormatSimple'
-
-        return 'tag.Tag(%s, %s, %s)' % (context, tag_format, tag_def.class_number)
-
-    def expr_component_type(self, t):
-        if t.components_of_type:
-            # COMPONENTS OF works like a literal include, so just
-            # expand all components of the referenced type.
-            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type)
-            included_content = self.expr_component_types(included_type_decl.components)
-
-            # Strip trailing newline from expr_component_types
-            # to make the list line up
-            return included_content.strip()
-
-        if t.optional:
-            return "namedtype.OptionalNamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
-        elif t.default_value is not None:
-            type_expr = self.generate_expr(t.type_decl)
-            type_expr += '.subtype(value=%s)' % _translate_value(t.default_value)
-
-            return "namedtype.DefaultedNamedType('%s', %s)" % (t.identifier, type_expr)
-        else:
-            return "namedtype.NamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
-
-    def expr_named_type(self, t):
-        return "namedtype.NamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
-
-    def decl_value_list_type(self, t):
-        fragment = self.writer.get_fragment()
-
-        if t.named_values:
-            fragment.write_line('namedValues = namedval.NamedValues(')
-            fragment.push_indent()
-
-            named_values = ['(\'%s\', %s)' % (v.identifier, v.value) for v in t.named_values if not isinstance(v, ExtensionMarker)]
-            fragment.write_enumeration(named_values)
-
-            fragment.pop_indent()
-            fragment.write_line(')')
-        else:
-            fragment.write_line('pass')
-
-        return str(fragment)
-
-    def expr_value_list_type(self, t):
-        class_name = _translate_type(t.type_name)
-        if t.named_values:
-            named_values = ['(\'%s\', %s)' % (v.identifier, v.value) for v in t.named_values if not isinstance(v, ExtensionMarker)]
-            return '%s(namedValues=namedval.NamedValues(%s))' % (class_name, ', '.join(named_values))
-        else:
-            return class_name + '()'
-
-    def decl_bitstring_type(self, t):
-        fragment = self.writer.get_fragment()
-
-        if t.named_bits:
-            fragment.write_line('namedValues = namedval.NamedValues(')
-            fragment.push_indent()
-
-            named_bit_list = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_bits))
-            fragment.write_enumeration(named_bit_list)
-
-            fragment.pop_indent()
-            fragment.write_line(')')
-        else:
-            fragment.write_line('pass')
-
-        return str(fragment)
-
-    def expr_sequenceof_type(self, t):
-        return 'univ.SequenceOf(componentType=%s)' % self.generate_expr(t.type_decl)
-
-    def decl_sequenceof_type(self, t):
-        return 'componentType = %s' % self.generate_expr(t.type_decl)
-
-    def expr_setof_type(self, t):
-        return 'univ.SetOf(componentType=%s)' % self.generate_expr(t.type_decl)
-
-    def decl_setof_type(self, t):
-        return 'componentType = %s' % self.generate_expr(t.type_decl)
 
     def decl_value_assignment(self, assignment):
         assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
@@ -305,6 +186,168 @@ class Pyasn1Backend(object):
             value_constructor = '%s(%s)' % (value_type, value)
 
         return '%s = %s' % (assigned_value, value_constructor)
+
+    def defn_simple_type(self, class_name, t):
+        if t.constraint:
+            return '%s.subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (class_name, t.constraint.min_value, t.constraint.max_value)
+
+        return None
+
+    def defn_referenced_type(self, class_name, t):
+        return None
+
+    def defn_constructed_type(self, class_name, t):
+        fragment = self.writer.get_fragment()
+
+        fragment.write_line('%s.componentType = namedtype.NamedTypes(' % class_name)
+        fragment.push_indent()
+        fragment.write_block(self.inline_component_types(t.components))
+        fragment.pop_indent()
+        fragment.write_line(')')
+
+        return str(fragment)
+
+    def defn_tagged_type(self, class_name, t):
+        fragment = self.writer.get_fragment()
+
+        tag_type = 'tagImplicitly' if t.implicit else 'tagExplicitly'
+        base_type = _translate_type(t.type_decl.type_name)
+
+        fragment.write_line('%s.tagSet = %s.tagSet.%s(%s)' % (class_name, base_type, tag_type, self.build_tag_expr(t)))
+        nested_dfn = self.generate_defn(class_name, t.type_decl)
+        if nested_dfn:
+            fragment.write_line(nested_dfn)
+
+        return str(fragment)
+
+    def defn_value_list_type(self, class_name, t):
+        if t.named_values:
+            fragment = self.writer.get_fragment()
+            fragment.write_line('%s.namedValues = namedval.NamedValues(' % class_name)
+            fragment.push_indent()
+
+            named_values = ['(\'%s\', %s)' % (v.identifier, v.value) for v in t.named_values if not isinstance(v, ExtensionMarker)]
+            fragment.write_enumeration(named_values)
+
+            fragment.pop_indent()
+            fragment.write_line(')')
+            return str(fragment)
+
+        return None
+
+    def defn_bitstring_type(self, class_name, t):
+        if t.named_bits:
+            fragment = self.writer.get_fragment()
+            fragment.write_line('%s.namedValues = namedval.NamedValues(' % class_name)
+            fragment.push_indent()
+
+            named_bit_list = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_bits))
+            fragment.write_enumeration(named_bit_list)
+
+            fragment.pop_indent()
+            fragment.write_line(')')
+            return str(fragment)
+
+        return None
+
+    def defn_sequenceof_type(self, class_name, t):
+        return '%s.componentType = %s' % (class_name, self.generate_expr(t.type_decl))
+
+    def defn_setof_type(self, class_name, t):
+        return '%s.componentType = %s' % (class_name, self.generate_expr(t.type_decl))
+
+    def inline_simple_type(self, t):
+        type_expr = _translate_type(t.type_name) + '()'
+        if t.constraint:
+            type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
+
+        return type_expr
+
+    def inline_referenced_type(self, t):
+        return t.type_name + '()'
+
+    def inline_constructed_type(self, t):
+        fragment = self.writer.get_fragment()
+
+        class_name = _translate_type(t.type_name)
+
+        fragment.write_line('%s(componentType=namedtype.NamedTypes(' % class_name)
+
+        fragment.push_indent()
+        fragment.write_block(self.inline_component_types(t.components))
+        fragment.pop_indent()
+
+        fragment.write_line('))')
+
+        return str(fragment)
+
+    def inline_component_types(self, components):
+        fragment = self.writer.get_fragment()
+
+        component_exprs = []
+        for c in components:
+            if not isinstance(c, ExtensionMarker):
+                component_exprs.append(self.generate_expr(c))
+
+        fragment.write_enumeration(component_exprs)
+
+        return str(fragment)
+
+    def inline_tagged_type(self, t):
+        tag_type = 'implicitTag' if t.implicit else 'explicitTag'
+        type_expr = self.generate_expr(t.type_decl)
+        type_expr += '.subtype(%s=%s)' % (tag_type, self.build_tag_expr(t))
+
+        return type_expr
+
+    def build_tag_expr(self, tag_def):
+        context = _translate_tag_class(tag_def.class_name)
+
+        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl)
+        if isinstance(tagged_type_decl, ConstructedType):
+            tag_format = 'tag.tagFormatConstructed'
+        else:
+            tag_format = 'tag.tagFormatSimple'
+
+        return 'tag.Tag(%s, %s, %s)' % (context, tag_format, tag_def.class_number)
+
+    def inline_component_type(self, t):
+        if t.components_of_type:
+            # COMPONENTS OF works like a literal include, so just
+            # expand all components of the referenced type.
+            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type)
+            included_content = self.inline_component_types(included_type_decl.components)
+
+            # Strip trailing newline from inline_component_types
+            # to make the list line up
+            return included_content.strip()
+
+        if t.optional:
+            return "namedtype.OptionalNamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
+        elif t.default_value is not None:
+            type_expr = self.generate_expr(t.type_decl)
+            type_expr += '.subtype(value=%s)' % _translate_value(t.default_value)
+
+            return "namedtype.DefaultedNamedType('%s', %s)" % (t.identifier, type_expr)
+        else:
+            return "namedtype.NamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
+
+    def inline_named_type(self, t):
+        return "namedtype.NamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
+
+    def inline_value_list_type(self, t):
+        class_name = _translate_type(t.type_name)
+        if t.named_values:
+            named_values = ['(\'%s\', %s)' % (v.identifier, v.value) for v in t.named_values if not isinstance(v, ExtensionMarker)]
+            return '%s(namedValues=namedval.NamedValues(%s))' % (class_name, ', '.join(named_values))
+        else:
+            return class_name + '()'
+
+    def inline_sequenceof_type(self, t):
+        return 'univ.SequenceOf(componentType=%s)' % self.generate_expr(t.type_decl)
+
+    def inline_setof_type(self, t):
+        return 'univ.SetOf(componentType=%s)' % self.generate_expr(t.type_decl)
 
     def build_object_identifier_value(self, t):
         objid_components = []
@@ -325,25 +368,29 @@ class Pyasn1Backend(object):
         return '_OID(%s)' % ', '.join(objid_components)
 
     def generate_OID(self):
-        self.writer.write_line('def _OID(*components):')
-        self.writer.push_indent()
-        self.writer.write_line('output = []')
-        self.writer.write_line('for x in tuple(components):')
-        self.writer.push_indent()
-        self.writer.write_line('if isinstance(x, univ.ObjectIdentifier):')
-        self.writer.push_indent()
-        self.writer.write_line('output.extend(list(x))')
-        self.writer.pop_indent()
-        self.writer.write_line('else:')
-        self.writer.push_indent()
-        self.writer.write_line('output.append(int(x))')
-        self.writer.pop_indent()
-        self.writer.pop_indent()
-        self.writer.write_blanks(1)
-        self.writer.write_line('return univ.ObjectIdentifier(output)')
-        self.writer.pop_indent()
+        fragment = self.writer.get_fragment()
 
-        self.writer.pop_indent()
+        fragment.write_line('def _OID(*components):')
+        fragment.push_indent()
+        fragment.write_line('output = []')
+        fragment.write_line('for x in tuple(components):')
+        fragment.push_indent()
+        fragment.write_line('if isinstance(x, univ.ObjectIdentifier):')
+        fragment.push_indent()
+        fragment.write_line('output.extend(list(x))')
+        fragment.pop_indent()
+        fragment.write_line('else:')
+        fragment.push_indent()
+        fragment.write_line('output.append(int(x))')
+        fragment.pop_indent()
+        fragment.pop_indent()
+        fragment.write_blanks(1)
+        fragment.write_line('return univ.ObjectIdentifier(output)')
+        fragment.pop_indent()
+
+        fragment.pop_indent()
+
+        return str(fragment)
 
 
 def generate_pyasn1(sema_module, out_stream):
