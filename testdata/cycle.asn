@@ -1,0 +1,15 @@
+CYCLIC DEFINITIONS ::=
+BEGIN
+
+  Data ::= CHOICE {
+        a [1] INTEGER,
+        b [2] DataSequence
+  }
+
+  DataSequence ::= SEQUENCE OF Data
+
+  Result ::= DataResult
+
+  DataResult ::= SEQUENCE OF Data
+
+END
