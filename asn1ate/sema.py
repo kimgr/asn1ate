@@ -440,7 +440,14 @@ class SimpleType(SemaNode):
 
 class ReferencedType(SemaNode):
     def __init__(self, elements):
-        self.type_name = elements[0]
+        # TODO: Module references are not resolved at the moment,
+        # and I'm not sure how to handle them.
+        if len(elements) > 1 and elements[0].ty == 'ModuleReference':
+            self.module_reference = elements[0].elements[0]
+            self.type_name = elements[1]
+        else:
+            self.module_reference = None
+            self.type_name = elements[0]
 
     def reference_name(self):
         return self.type_name

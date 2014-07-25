@@ -218,7 +218,9 @@ def _build_asn1_grammar():
     extension_default = EXTENSIBILITY_IMPLIED | empty
 
     # types
-    defined_type = Unique(typereference)  # todo: consider other defined types from 13.1
+    # todo: consider other defined types from 13.1
+    external_type_reference = module_reference + Suppress('.') + typereference
+    defined_type = external_type_reference | typereference
     referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
 
     # values
