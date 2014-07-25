@@ -460,7 +460,14 @@ class ReferencedType(SemaNode):
 
 class ReferencedValue(SemaNode):
     def __init__(self, elements):
-        self.name = elements[0]
+        # TODO: Module references are not resolved at the moment,
+        # and I'm not sure how to handle them.
+        if len(elements) > 1 and elements[0].ty == 'ModuleReference':
+            self.module_reference = elements[0].elements[0]
+            self.name = elements[1]
+        else:
+            self.module_reference = None
+            self.name = elements[0]
 
     def reference_name(self):
         return self.name

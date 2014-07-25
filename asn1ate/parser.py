@@ -186,8 +186,9 @@ def _build_asn1_grammar():
     cstring_value = dblQuotedString
 
     builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value | cstring_value
-    defined_value = Unique(valuereference) # todo: more options from 13.1
-    referenced_value = Unique(defined_value) # todo: more options from 16.11
+    external_value_reference = module_reference + Suppress('.') + valuereference
+    defined_value = external_value_reference | valuereference  # todo: more options from 13.1
+    referenced_value = Unique(defined_value)  # todo: more options from 16.11
 
     # object identifier value
     name_form = Unique(identifier)

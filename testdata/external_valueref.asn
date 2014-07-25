@@ -1,0 +1,7 @@
+M1 DEFINITIONS ::=
+BEGIN
+  v1 INTEGER ::= 100
+  v2 INTEGER ::= v1
+
+  v3 INTEGER ::= M1.v1
+END
