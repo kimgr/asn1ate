@@ -10,7 +10,5 @@ BEGIN
     quux SET OF Foo	 -- user-defined type
   }
 
-  -- With size constraint
-  Sized ::= SET SIZE(1..100) OF INTEGER
-  SizedWithParens ::= SET (SIZE(1..100)) OF INTEGER
+  -- Constraints handled in size_constraint.asn
 END

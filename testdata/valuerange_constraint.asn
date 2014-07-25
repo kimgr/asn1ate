@@ -1,0 +1,12 @@
+TEST DEFINITIONS ::=
+BEGIN
+  -- Value range constraints apply to the following types.
+  min INTEGER ::= 128
+  max INTEGER ::= 256
+  ConstraintedInteger1 ::= INTEGER(1..100)
+  ConstraintedInteger2 ::= INTEGER(min..max)
+  -- This is not yet translated in codegen
+  -- ConstraintedInteger3 ::= INTEGER(MIN..MAX)
+
+  -- TODO: Add tests for REAL types once we have them in place.
+END

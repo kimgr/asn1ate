@@ -1,0 +1,25 @@
+TEST DEFINITIONS ::=
+BEGIN
+  min INTEGER ::= 128
+  max INTEGER ::= 256
+
+  -- Size constraints apply to the following types.
+  ConstrainedOctetStr1 ::= OCTET STRING (SIZE(32))
+  ConstrainedOctetStr2 ::= OCTET STRING (SIZE(16..32))
+  ConstrainedOctetStr3 ::= OCTET STRING (SIZE(min..max))
+
+  ConstrainedBitString1 ::= BIT STRING { one(1), two(2) } (SIZE(6))
+
+  -- TypeWithConstraint syntax for SET OF and SEQUENCE OF
+  SizedSetOf ::= SET SIZE(1..100) OF INTEGER
+  SizedSetOfWithParens ::= SET (SIZE(1..100)) OF INTEGER
+
+  SizedSequenceOf ::= SEQUENCE SIZE(1..100) OF INTEGER
+  SizedSequenceOfWithParens ::= SEQUENCE (SIZE(1..100)) OF INTEGER
+
+  
+  -- TODO: MIN/MAX is not yet translated in codegen.
+  -- ConstrainedOctetStr4 ::= OCTET STRING (SIZE(MIN..MAX))
+
+  -- TODO: Add tests for REAL types once we have them in place.
+END

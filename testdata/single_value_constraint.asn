@@ -1,0 +1,13 @@
+TEST DEFINITIONS ::=
+BEGIN
+  value INTEGER ::= 128
+
+  -- Single-value constraints apply to all types.
+  ConstrainedInteger1 ::= INTEGER (50)
+  ConstrainedInteger2 ::= INTEGER (value)
+  ConstrainedInteger3 ::= INTEGER { one(10), two(20) } (10)
+
+  ConstrainedBitString1 ::= BIT STRING { one(1), two(2) } (1)
+
+  -- TODO: Add tests for the rest of the types as we need them.
+END

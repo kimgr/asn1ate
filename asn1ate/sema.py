@@ -426,8 +426,9 @@ class SimpleType(SemaNode):
     def __init__(self, elements):
         self.constraint = None
         self.type_name = elements[0]
-        if len(elements) > 1 and elements[1].ty == 'Constraint':
-            self.constraint = Constraint(elements[1].elements)
+        if len(elements) > 1:
+            _assert_annotated_token(elements[1])
+            self.constraint = _create_sema_node(elements[1])
 
     def __str__(self):
         if self.constraint is None:
@@ -478,12 +479,20 @@ class ReferencedValue(SemaNode):
     __repr__ = __str__
 
 
-class Constraint(SemaNode):
+class SingleValueConstraint(SemaNode):
     def __init__(self, elements):
-        min_value, max_value = elements
+        self.value = _maybe_create_sema_node(elements[0])
 
-        self.min_value = _maybe_create_sema_node(min_value)
-        self.max_value = _maybe_create_sema_node(max_value)
+    def __str__(self):
+        return '(%s)' % self.value
+
+    __repr__ = __str__
+
+
+class ValueRangeConstraint(SemaNode):
+    def __init__(self, elements):
+        self.min_value = _maybe_create_sema_node(elements[0])
+        self.max_value = _maybe_create_sema_node(elements[1])
 
     def __str__(self):
         return '(%s..%s)' % (self.min_value, self.max_value)
@@ -491,10 +500,14 @@ class Constraint(SemaNode):
     __repr__ = __str__
 
 
-class SizeConstraint(Constraint):
-    """ Size constraints have the same form as any value range constraints."""
+class SizeConstraint(SemaNode):
+    """ Size constraints nest single-value or range constraints to denote valid sizes. """
+    def __init__(self, elements):
+        self.nested = _create_sema_node(elements[0])
+        assert isinstance(self.nested, (ValueRangeConstraint, SingleValueConstraint))
+
     def __str__(self):
-        return 'SIZE(%s..%s)' % (self.min_value, self.max_value)
+        return 'SIZE%s' % (self.nested)
 
     __repr__ = __str__
 
@@ -564,6 +577,9 @@ class NamedType(SemaNode):
 class ValueListType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
+        self.named_values = None
+        self.constraint = None
+
         if len(elements) > 1:
             self.named_values = [_create_sema_node(token) for token in elements[1]]
             for idx, n in enumerate(self.named_values):
@@ -572,15 +588,20 @@ class ValueListType(SemaNode):
                         n.value = str(0)
                     else:
                         n.value = str(int(self.named_values[idx-1].value) + 1)
-        else:
-            self.named_values = None
+
+        if len(elements) > 2:
+            self.constraint = _create_sema_node(elements[2])
 
     def __str__(self):
+        named_value_list = ''
+        constraint = ''
         if self.named_values:
-            named_value_list = ', '.join(map(str, self.named_values))
-            return '%s { %s }' % (self.type_name, named_value_list)
-        else:
-            return '%s' % self.type_name
+            named_value_list = ' { %s }' % ', '.join(map(str, self.named_values))
+
+        if self.constraint:
+            constraint = ' %s' % self.constraint
+
+        return '%s%s%s' % (self.type_name, named_value_list, constraint)
 
     __repr__ = __str__
 
@@ -744,8 +765,12 @@ def _create_sema_node(token):
         return SetOfType(token.elements)
     elif token.ty == 'ExtensionMarker':
         return ExtensionMarker(token.elements)
+    elif token.ty == 'SingleValueConstraint':
+        return SingleValueConstraint(token.elements)
     elif token.ty == 'SizeConstraint':
         return SizeConstraint(token.elements)
+    elif token.ty == 'ValueRangeConstraint':
+        return ValueRangeConstraint(token.elements)
     elif token.ty == 'ObjectIdentifierValue':
         return ObjectIdentifierValue(token.elements)
     elif token.ty == 'NameForm':

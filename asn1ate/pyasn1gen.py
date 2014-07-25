@@ -189,7 +189,7 @@ class Pyasn1Backend(object):
 
     def defn_simple_type(self, class_name, t):
         if t.constraint:
-            return '%s.subtypeSpec = constraint.ValueRangeConstraint(%s, %s)' % (class_name, t.constraint.min_value, t.constraint.max_value)
+            return '%s.subtypeSpec = %s' % (class_name, self.build_constraint_expr(t.constraint))
 
         return None
 
@@ -259,7 +259,7 @@ class Pyasn1Backend(object):
     def inline_simple_type(self, t):
         type_expr = _translate_type(t.type_name) + '()'
         if t.constraint:
-            type_expr += '.subtype(subtypeSpec=constraint.ValueRangeConstraint(%s, %s))' % (t.constraint.min_value, t.constraint.max_value)
+            type_expr += '.subtype(subtypeSpec=%s)' % self.build_constraint_expr(t.constraint)
 
         return type_expr
 
@@ -310,6 +310,26 @@ class Pyasn1Backend(object):
             tag_format = 'tag.tagFormatSimple'
 
         return 'tag.Tag(%s, %s, %s)' % (context, tag_format, tag_def.class_number)
+
+    def build_constraint_expr(self, constraint):
+        def unpack_size_constraint(nested):
+            if isinstance(nested, SingleValueConstraint):
+                return nested.value, nested.value
+            elif isinstance(nested, ValueRangeConstraint):
+                return nested.min_value, nested.max_value
+            else:
+                assert False, "Unrecognized nested size constraint type: %s" % type(constraint.nested).__name__
+
+        if isinstance(constraint, SingleValueConstraint):
+            return 'constraint.SingleValueConstraint(%s)' % (constraint.value)
+        elif isinstance(constraint, SizeConstraint):
+            min_value, max_value = unpack_size_constraint(constraint.nested)
+            return 'constraint.ValueRangeConstraint(%s, %s)' % (min_value, max_value)
+        elif isinstance (constraint, ValueRangeConstraint):
+            return 'constraint.ValueRangeConstraint(%s, %s)' % (constraint.min_value,
+                                                                constraint.max_value)
+        else:
+            assert False, "Unrecognized constraint type: %s" % type(constraint).__name__
 
     def inline_component_type(self, t):
         if t.components_of_type:
