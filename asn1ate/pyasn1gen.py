@@ -175,7 +175,7 @@ class Pyasn1Backend(object):
 
     def decl_value_assignment(self, assignment):
         assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
-        assigned_value = _translate_value(assigned_value)
+        assigned_value = _sanitize_identifier(assigned_value)
 
         if isinstance(value, ObjectIdentifierValue):
             value_constructor = self.build_object_identifier_value(value)
@@ -187,7 +187,7 @@ class Pyasn1Backend(object):
             value_constructor = '%s(hexValue=\'%s\')' % (value_type, value.value)
         else:
             value_type = _translate_type(type_decl.type_name)
-            value_constructor = '%s(%s)' % (value_type, _translate_value(str(value)))
+            value_constructor = '%s(%s)' % (value_type, _translate_value(value))
 
         return '%s = %s' % (assigned_value, value_constructor)
 
@@ -464,9 +464,10 @@ def _translate_type(type_name):
     """ Translate ASN.1 built-in types to pyasn1 equivalents.
     Non-builtins are not translated.
     """
-    translated = _ASN1_BUILTIN_TYPES.get(type_name, type_name)
-    sanitized = translated.replace('-', '_')
-    return sanitized
+    assert isinstance(type_name, str), "Type name must be a string."
+    type_name = _sanitize_identifier(type_name)
+
+    return _ASN1_BUILTIN_TYPES.get(type_name, type_name)
 
 
 def _translate_tag_class(tag_class):
@@ -481,14 +482,29 @@ def _translate_value(value):
     """ Translate ASN.1 built-in values to Python equivalents.
     Unrecognized values are not translated.
     """
-    value = str(value)
+    if isinstance(value, ReferencedValue) or _heuristic_is_identifier(value):
+        value = _sanitize_identifier(value)
 
-    translated =  _ASN1_BUILTIN_VALUES.get(value, value)
-    sanitized = translated.replace('-', '_')
-    if sanitized in keyword.kwlist:
-        sanitized += '_'
+    return _ASN1_BUILTIN_VALUES.get(value, value)
 
-    return sanitized
+
+def _heuristic_is_identifier(value):
+    """ Return True if this value is likely an identifier.
+    """
+    first = str(value)[0]
+    return first != '-' and not first.isdigit()
+
+
+def _sanitize_identifier(name):
+    """ Sanitize ASN.1 type and value identifiers so that they're
+    valid Python identifiers.
+    """
+    name = str(name)
+    name = name.replace('-', '_')
+    if name in keyword.kwlist:
+        name += '_'
+
+    return name
 
 
 # Simplistic command-line driver

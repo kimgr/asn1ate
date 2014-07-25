@@ -28,4 +28,7 @@ BEGIN
 
   -- Referenced value inside constraint
   Constrained ::= INTEGER (with-dash .. with-dash)
+
+  -- Negative numbers should not be sanitized
+  negative INTEGER ::= -123
 END
