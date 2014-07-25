@@ -1,0 +1,31 @@
+Test DEFINITIONS ::=
+BEGIN
+  -- Assigned type name
+  With-Dash ::= INTEGER
+
+  -- Referenced type name
+  NoDash ::= With-Dash
+
+  -- Value using referenced type
+  v1 With-Dash ::= 120
+
+  -- Assigned value name
+  with-dash INTEGER ::= 60
+
+  -- Simple referenced value name
+  nodash With-Dash ::= with-dash
+
+  -- Constructed type with bad named type components
+  Seq-Dash ::= SEQUENCE {
+    dash-member With-Dash
+  }
+
+  -- Object identifier components
+  v4 OBJECT IDENTIFIER ::= {723 with-dash with-dash(33)}
+
+  -- Python keyword value reference
+  import INTEGER ::= 123
+
+  -- Referenced value inside constraint
+  Constrained ::= INTEGER (with-dash .. with-dash)
+END

@@ -26,6 +26,7 @@
 from __future__ import print_function  # Python 2 compatibility
 
 import sys
+import keyword
 from asn1ate import parser
 from asn1ate.support import pygen
 from asn1ate.sema import *
@@ -143,6 +144,7 @@ class Pyasn1Backend(object):
             return None  # Nothing to do here.
 
         assigned_type, type_decl = assignment.type_name, assignment.type_decl
+        assigned_type = _translate_type(assigned_type)
         return self.generate_defn(assigned_type, type_decl)
 
     def generate_decl(self, t):
@@ -162,6 +164,7 @@ class Pyasn1Backend(object):
 
         assigned_type, type_decl = assignment.type_name, assignment.type_decl
 
+        assigned_type = _translate_type(assigned_type)
         base_type = _translate_type(type_decl.type_name)
         fragment.write_line('class %s(%s):' % (assigned_type, base_type))
         fragment.push_indent()
@@ -172,6 +175,7 @@ class Pyasn1Backend(object):
 
     def decl_value_assignment(self, assignment):
         assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
+        assigned_value = _translate_value(assigned_value)
 
         if isinstance(value, ObjectIdentifierValue):
             value_constructor = self.build_object_identifier_value(value)
@@ -183,7 +187,7 @@ class Pyasn1Backend(object):
             value_constructor = '%s(hexValue=\'%s\')' % (value_type, value.value)
         else:
             value_type = _translate_type(type_decl.type_name)
-            value_constructor = '%s(%s)' % (value_type, value)
+            value_constructor = '%s(%s)' % (value_type, _translate_value(str(value)))
 
         return '%s = %s' % (assigned_value, value_constructor)
 
@@ -264,7 +268,7 @@ class Pyasn1Backend(object):
         return type_expr
 
     def inline_referenced_type(self, t):
-        return t.type_name + '()'
+        return _translate_type(t.type_name) + '()'
 
     def inline_constructed_type(self, t):
         fragment = self.writer.get_fragment()
@@ -314,20 +318,20 @@ class Pyasn1Backend(object):
     def build_constraint_expr(self, constraint):
         def unpack_size_constraint(nested):
             if isinstance(nested, SingleValueConstraint):
-                return nested.value, nested.value
+                return _translate_value(nested.value), _translate_value(nested.value)
             elif isinstance(nested, ValueRangeConstraint):
-                return nested.min_value, nested.max_value
+                return _translate_value(nested.min_value), _translate_value(nested.max_value)
             else:
                 assert False, "Unrecognized nested size constraint type: %s" % type(constraint.nested).__name__
 
         if isinstance(constraint, SingleValueConstraint):
-            return 'constraint.SingleValueConstraint(%s)' % (constraint.value)
+            return 'constraint.SingleValueConstraint(%s)' % (_translate_value(constraint.value))
         elif isinstance(constraint, SizeConstraint):
             min_value, max_value = unpack_size_constraint(constraint.nested)
-            return 'constraint.ValueRangeConstraint(%s, %s)' % (min_value, max_value)
+            return 'constraint.ValueRangeConstraint(%s, %s)' % (_translate_value(min_value), _translate_value(max_value))
         elif isinstance (constraint, ValueRangeConstraint):
-            return 'constraint.ValueRangeConstraint(%s, %s)' % (constraint.min_value,
-                                                                constraint.max_value)
+            return 'constraint.ValueRangeConstraint(%s, %s)' % (_translate_value(constraint.min_value),
+                                                                _translate_value(constraint.max_value))
         else:
             assert False, "Unrecognized constraint type: %s" % type(constraint).__name__
 
@@ -377,7 +381,7 @@ class Pyasn1Backend(object):
                 if c.name in REGISTERED_OID_NAMES:
                     objid_components.append(str(REGISTERED_OID_NAMES[c.name]))
                 else:
-                    objid_components.append(c.name)
+                    objid_components.append(_translate_value(c.name))
             elif isinstance(c, NumberForm):
                 objid_components.append(str(c.value))
             elif isinstance(c, NameAndNumberForm):
@@ -460,7 +464,9 @@ def _translate_type(type_name):
     """ Translate ASN.1 built-in types to pyasn1 equivalents.
     Non-builtins are not translated.
     """
-    return _ASN1_BUILTIN_TYPES.get(type_name, type_name)
+    translated = _ASN1_BUILTIN_TYPES.get(type_name, type_name)
+    sanitized = translated.replace('-', '_')
+    return sanitized
 
 
 def _translate_tag_class(tag_class):
@@ -475,7 +481,14 @@ def _translate_value(value):
     """ Translate ASN.1 built-in values to Python equivalents.
     Unrecognized values are not translated.
     """
-    return _ASN1_BUILTIN_VALUES.get(value, value)
+    value = str(value)
+
+    translated =  _ASN1_BUILTIN_VALUES.get(value, value)
+    sanitized = translated.replace('-', '_')
+    if sanitized in keyword.kwlist:
+        sanitized += '_'
+
+    return sanitized
 
 
 # Simplistic command-line driver

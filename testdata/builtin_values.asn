@@ -1,0 +1,6 @@
+Test DEFINITIONS ::=
+BEGIN
+  -- TRUE and FALSE
+  trueVal BOOLEAN ::= TRUE
+  falseVal BOOLEAN ::= FALSE
+END
