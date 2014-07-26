@@ -4,8 +4,13 @@ BEGIN
   trueVal BOOLEAN ::= TRUE
   falseVal BOOLEAN ::= FALSE
 
+  -- REAL values
   realVal REAL ::= 3.14
   intRealVal REAL ::= 6
   expVal REAL ::= 2.73E12
   intExpVal REAL ::= 4E9
+
+  -- OCTET STRING values, both binary and hex.
+  hexoct OCTET STRING ::= '0123ABCD'H
+  binoct OCTET STRING ::= '01010101'B
 END
