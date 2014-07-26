@@ -8,5 +8,7 @@ BEGIN
   -- This is not yet translated in codegen
   -- ConstraintedInteger3 ::= INTEGER(MIN..MAX)
 
-  -- TODO: Add tests for REAL types once we have them in place.
+  realValue REAL ::= 3.14
+  ConstrainedReal1 ::= REAL (0.12 .. 6.28)
+  ConstrainedReal2 ::= REAL (realValue .. 9.21)
 END

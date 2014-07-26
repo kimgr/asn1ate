@@ -186,6 +186,10 @@ def _build_asn1_grammar():
     exponent = (Literal('e') | Literal('E')) + signed_number
     real_value = Combine(signed_number + Optional(Literal('.') + Optional(number)) + Optional(exponent))
 
+    # In value range constraints, decimal points must be followed by number, or
+    # the grammar becomes ambiguous: ([1.].100) vs ([1]..[100])
+    constraint_real_value = Combine(signed_number + Optional(Literal('.') + number) + Optional(exponent))
+
     builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value | cstring_value
     external_value_reference = module_reference + Suppress('.') + valuereference
     defined_value = external_value_reference | valuereference  # todo: more options from 13.1
@@ -234,8 +238,8 @@ def _build_asn1_grammar():
 
     # constraints
     # todo: consider the full subtype and general constraint syntax described in 45.*
-    lower_bound = (signed_number | referenced_value | MIN)
-    upper_bound = (signed_number | referenced_value | MAX)
+    lower_bound = (constraint_real_value | signed_number | referenced_value | MIN)
+    upper_bound = (constraint_real_value | signed_number | referenced_value | MAX)
     single_value_constraint = Suppress('(') + value + Suppress(')')
     value_range_constraint = Suppress('(') + lower_bound + Suppress('..') + upper_bound + Suppress(')')
     # TODO: Include contained subtype constraint here if we ever implement it.
@@ -282,7 +286,7 @@ def _build_asn1_grammar():
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
     # todo: consider other builtins from 16.2
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint)
+    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type
