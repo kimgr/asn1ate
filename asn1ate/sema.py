@@ -611,8 +611,7 @@ class BitStringType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
         self.named_bits = [_create_sema_node(token) for token in elements[1]]
-        if elements[2]:
-            self.constraint = _create_sema_node(elements[2])
+        self.constraint = _maybe_create_sema_node(elements[2])
 
     def __str__(self):
         named_bit_list = ''
