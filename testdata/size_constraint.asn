@@ -9,6 +9,7 @@ BEGIN
   ConstrainedOctetStr3 ::= OCTET STRING (SIZE(min..max))
 
   ConstrainedBitString1 ::= BIT STRING { one(1), two(2) } (SIZE(6))
+  ConstrainedBitString2 ::= BIT STRING (SIZE(6))
 
   -- TypeWithConstraint syntax for SET OF and SEQUENCE OF
   SizedSetOf ::= SET SIZE(1..100) OF INTEGER

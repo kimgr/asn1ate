@@ -5,6 +5,7 @@ BEGIN
   Null ::= NULL
   Int ::= INTEGER
   Real ::= REAL
+  BitString0 ::= BIT STRING
 
   RestrictedInteger ::= INTEGER {
     v1(1),

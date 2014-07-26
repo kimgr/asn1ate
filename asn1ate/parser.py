@@ -261,7 +261,7 @@ def _build_asn1_grammar():
     setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
-    bitstring_type = BIT_STRING + braced_list(named_number) + Optional(single_value_constraint | size_constraint)
+    bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(single_value_constraint | size_constraint, default=None)
     plain_integer_type = INTEGER + Optional(single_value_constraint)
     restricted_integer_type = INTEGER + braced_list(named_number) + Optional(single_value_constraint)
     boolean_type = BOOLEAN

@@ -595,6 +595,7 @@ class ValueListType(SemaNode):
     def __str__(self):
         named_value_list = ''
         constraint = ''
+
         if self.named_values:
             named_value_list = ' { %s }' % ', '.join(map(str, self.named_values))
 
@@ -609,17 +610,21 @@ class ValueListType(SemaNode):
 class BitStringType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
-        if len(elements) > 1:
-            self.named_bits = [_create_sema_node(token) for token in elements[1]]
-        else:
-            self.named_bits = None
+        self.named_bits = [_create_sema_node(token) for token in elements[1]]
+        if elements[2]:
+            self.constraint = _create_sema_node(elements[2])
 
     def __str__(self):
+        named_bit_list = ''
+        constraint = ''
+
         if self.named_bits:
-            named_bit_list = ', '.join(map(str, self.named_bits))
-            return '%s { %s }' % (self.type_name, named_bit_list)
-        else:
-            return '%s' % self.type_name
+            named_bit_list = ' { %s }' % ', '.join(map(str, self.named_bits))
+
+        if self.constraint:
+            constraint = ' %s' % self.constraint
+
+        return '%s%s%s' % (self.type_name, named_bit_list, constraint)
 
     __repr__ = __str__
 
