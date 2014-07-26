@@ -3,4 +3,9 @@ BEGIN
   -- TRUE and FALSE
   trueVal BOOLEAN ::= TRUE
   falseVal BOOLEAN ::= FALSE
+
+  realVal REAL ::= 3.14
+  intRealVal REAL ::= 6
+  expVal REAL ::= 2.73E12
+  intExpVal REAL ::= 4E9
 END

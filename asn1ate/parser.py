@@ -178,12 +178,14 @@ def _build_asn1_grammar():
     # values
     # BUG: These are badly specified and cause the grammar to break if used generally.
     # todo: consider more literals from 16.9
-    real_value = Regex(r'-?\d+(\.\d*)?')  # todo: this doesn't really follow the spec
     boolean_value = TRUE | FALSE
     bitstring_value = bstring | hstring  # todo: consider more forms from 21.9
     integer_value = signed_number
     null_value = NULL
     cstring_value = dblQuotedString
+
+    exponent = (Literal('e') | Literal('E')) + signed_number
+    real_value = Combine(signed_number + Optional(Literal('.') + Optional(number)) + Optional(exponent))
 
     builtin_value = boolean_value | bitstring_value | real_value | integer_value | null_value | cstring_value
     external_value_reference = module_reference + Suppress('.') + valuereference
