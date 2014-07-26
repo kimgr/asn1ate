@@ -120,10 +120,11 @@ class Pyasn1Backend(object):
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
         self.writer.write_blanks(2)
 
-        # TODO: Only generate _OID if sema_module
-        # contains object identifier values.
-        self.writer.write_block(self.generate_OID())
-        self.writer.write_blanks(2)
+        # Generate _OID if sema_module contains any object identifier values.
+        oids = [n for n in self.sema_module.descendants() if isinstance(n, ObjectIdentifierValue)]
+        if oids:
+            self.writer.write_block(self.generate_OID())
+            self.writer.write_blanks(2)
 
         assignment_components = dependency_sort(self.sema_module.assignments)
         for component in assignment_components:
