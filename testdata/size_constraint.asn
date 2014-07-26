@@ -18,7 +18,6 @@ BEGIN
   SizedSequenceOf ::= SEQUENCE SIZE(1..100) OF INTEGER
   SizedSequenceOfWithParens ::= SEQUENCE (SIZE(1..100)) OF INTEGER
 
-  
   -- TODO: MIN/MAX is not yet translated in codegen.
   -- ConstrainedOctetStr4 ::= OCTET STRING (SIZE(MIN..MAX))
 
