@@ -176,7 +176,6 @@ def _build_asn1_grammar():
     reference = valuereference | typereference  # TODO: consider object references from 12.1
 
     # values
-    # BUG: These are badly specified and cause the grammar to break if used generally.
     # todo: consider more literals from 16.9
     boolean_value = TRUE | FALSE
     bitstring_value = bstring | hstring  # todo: consider more forms from 21.9
