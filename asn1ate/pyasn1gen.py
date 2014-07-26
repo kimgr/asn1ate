@@ -329,7 +329,7 @@ class Pyasn1Backend(object):
             return 'constraint.SingleValueConstraint(%s)' % (_translate_value(constraint.value))
         elif isinstance(constraint, SizeConstraint):
             min_value, max_value = unpack_size_constraint(constraint.nested)
-            return 'constraint.ValueRangeConstraint(%s, %s)' % (_translate_value(min_value), _translate_value(max_value))
+            return 'constraint.ValueSizeConstraint(%s, %s)' % (_translate_value(min_value), _translate_value(max_value))
         elif isinstance (constraint, ValueRangeConstraint):
             return 'constraint.ValueRangeConstraint(%s, %s)' % (_translate_value(constraint.min_value),
                                                                 _translate_value(constraint.max_value))
