@@ -25,7 +25,7 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, empty, srange, dblQuotedString, Or, CaselessLiteral
+from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, srange, dblQuotedString, Or, CaselessLiteral
 
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
@@ -218,10 +218,10 @@ def _build_asn1_grammar():
     class_ = UNIVERSAL | APPLICATION | PRIVATE
     class_number = Unique(number) # todo: consider defined values from 30.1
     tag = Suppress('[') + Optional(class_) + class_number + Suppress(']')
-    tag_default = EXPLICIT_TAGS | IMPLICIT_TAGS | AUTOMATIC_TAGS | empty
+    tag_default = Optional(EXPLICIT_TAGS | IMPLICIT_TAGS | AUTOMATIC_TAGS)
 
     # extensions
-    extension_default = EXTENSIBILITY_IMPLIED | empty
+    extension_default = Optional(EXTENSIBILITY_IMPLIED)
 
     # types
     # todo: consider other defined types from 13.1
