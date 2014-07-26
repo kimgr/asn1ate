@@ -25,7 +25,7 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, alphanums, empty, srange, dblQuotedString, Or
+from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, empty, srange, dblQuotedString, Or, CaselessLiteral
 
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
@@ -183,7 +183,7 @@ def _build_asn1_grammar():
     null_value = NULL
     cstring_value = dblQuotedString
 
-    exponent = (Literal('e') | Literal('E')) + signed_number
+    exponent = CaselessLiteral('e') + signed_number
     real_value = Combine(signed_number + Optional(Literal('.') + Optional(number)) + Optional(exponent))
 
     # In value range constraints, decimal points must be followed by number, or
