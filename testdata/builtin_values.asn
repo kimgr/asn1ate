@@ -13,4 +13,8 @@ BEGIN
   -- OCTET STRING values, both binary and hex.
   hexoct OCTET STRING ::= '0123ABCD'H
   binoct OCTET STRING ::= '01010101'B
+
+  -- BIT STRING values, binary and hex.
+  hexbit BIT STRING ::= 'ABBA'H
+  binbit BIT STRING ::= '0101'B
 END

@@ -177,20 +177,8 @@ class Pyasn1Backend(object):
     def decl_value_assignment(self, assignment):
         assigned_value, type_decl, value = assignment.value_name, assignment.type_decl, assignment.value
         assigned_value = _sanitize_identifier(assigned_value)
-
-        if isinstance(value, ObjectIdentifierValue):
-            value_constructor = self.build_object_identifier_value(value)
-        elif isinstance(value, BinaryStringValue):
-            value_type = _translate_type(type_decl.type_name)
-            value_constructor = '%s(binValue=\'%s\')' % (value_type, value.value)
-        elif isinstance(value, HexStringValue):
-            value_type = _translate_type(type_decl.type_name)
-            value_constructor = '%s(hexValue=\'%s\')' % (value_type, value.value)
-        else:
-            value_type = _translate_type(type_decl.type_name)
-            value_constructor = '%s(%s)' % (value_type, _translate_value(value))
-
-        return '%s = %s' % (assigned_value, value_constructor)
+        construct_expr = self.build_value_construct_expr(type_decl, value)
+        return '%s = %s' % (assigned_value, construct_expr)
 
     def defn_simple_type(self, class_name, t):
         if t.constraint:
@@ -335,6 +323,35 @@ class Pyasn1Backend(object):
                                                                 _translate_value(constraint.max_value))
         else:
             assert False, "Unrecognized constraint type: %s" % type(constraint).__name__
+
+    def build_value_construct_expr(self, type_decl, value):
+        """ Build a valid construct-expression for values, depending on
+        the target pyasn1 type.
+        """
+
+        def build_value_expr(type_name, value):
+            """ Special treatment for bstring and hstring values,
+            which use different construction depending on target type.
+            """
+            if isinstance(value, BinaryStringValue):
+                if type_name == 'OCTET STRING':
+                    return 'binValue=\'%s\'' % value.value
+                else:
+                    return '"\'%s\'B"' % value.value
+            elif isinstance(value, HexStringValue):
+                if type_name == 'OCTET STRING':
+                    return 'hexValue=\'%s\'' % value.value
+                else:
+                    return '"\'%s\'H"' % value.value
+            else:
+                return _translate_value(value)
+
+        if isinstance(value, ObjectIdentifierValue):
+            return self.build_object_identifier_value(value)
+        else:
+            value_type = _translate_type(type_decl.type_name)
+            root_type = self.sema_module.resolve_type_decl(type_decl)
+            return '%s(%s)' % (value_type, build_value_expr(root_type.type_name, value))
 
     def inline_component_type(self, t):
         if t.components_of_type:
