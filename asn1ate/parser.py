@@ -227,7 +227,6 @@ def _build_asn1_grammar():
     # todo: consider other defined types from 13.1
     external_type_reference = module_reference + Suppress('.') + typereference
     defined_type = external_type_reference | typereference
-    referenced_type = Unique(defined_type)  # todo: consider other ref:d types from 16.3
 
     # values
 
@@ -265,6 +264,7 @@ def _build_asn1_grammar():
     sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint, default=None) + Suppress(OF) + (type_ | named_type)
     setof_type = Suppress(SET) + Optional(size_constraint, default=None) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
+    selection_type = identifier + Suppress('<') + type_
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
     bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(single_value_constraint | size_constraint, default=None)
     plain_integer_type = INTEGER
@@ -290,6 +290,8 @@ def _build_asn1_grammar():
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type
+
+    referenced_type = defined_type | selection_type  # todo: consider other ref:d types from 16.3
 
     type_ << (builtin_type | referenced_type)
 
@@ -366,7 +368,8 @@ def _build_asn1_grammar():
     assignment_list.setParseAction(annotate('AssignmentList'))
     bstring.setParseAction(annotate('BinaryStringValue'))
     hstring.setParseAction(annotate('HexStringValue'))
-    referenced_type.setParseAction(annotate('ReferencedType'))
+    defined_type.setParseAction(annotate('DefinedType'))
+    selection_type.setParseAction(annotate('SelectionType'))
     referenced_value.setParseAction(annotate('ReferencedValue'))
 
     start = OneOrMore(module_definition)

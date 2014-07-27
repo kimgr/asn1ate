@@ -96,16 +96,18 @@ class Pyasn1Backend(object):
             SequenceOfType: self.defn_collection_type,
             SetOfType: self.defn_collection_type,
             TaggedType: self.defn_tagged_type,
+            SelectionType: self.defn_selection_type,
             SimpleType: self.defn_simple_type,
-            ReferencedType: self.defn_referenced_type,
+            DefinedType: self.defn_defined_type,
             ValueListType: self.defn_value_list_type,
             BitStringType: self.defn_bitstring_type,
         }
 
         self.inline_generators = {
             TaggedType: self.inline_tagged_type,
+            SelectionType: self.inline_selection_type,
             SimpleType: self.inline_simple_type,
-            ReferencedType: self.inline_referenced_type,
+            DefinedType: self.inline_defined_type,
             ComponentType: self.inline_component_type,
             NamedType: self.inline_named_type,
             SequenceOfType: self.inline_sequenceof_type,
@@ -165,6 +167,9 @@ class Pyasn1Backend(object):
 
         assigned_type, type_decl = assignment.type_name, assignment.type_decl
 
+        if isinstance(type_decl, SelectionType):
+            type_decl = self.sema_module.resolve_selection_type(type_decl)
+
         assigned_type = _translate_type(assigned_type)
         base_type = _translate_type(type_decl.type_name)
         fragment.write_line('class %s(%s):' % (assigned_type, base_type))
@@ -186,7 +191,7 @@ class Pyasn1Backend(object):
 
         return None
 
-    def defn_referenced_type(self, class_name, t):
+    def defn_defined_type(self, class_name, t):
         return None
 
     def defn_constructed_type(self, class_name, t):
@@ -212,6 +217,9 @@ class Pyasn1Backend(object):
             fragment.write_line(nested_dfn)
 
         return str(fragment)
+
+    def defn_selection_type(self, class_name, t):
+        return None
 
     def defn_value_list_type(self, class_name, t):
         fragment = self.writer.get_fragment()
@@ -263,7 +271,7 @@ class Pyasn1Backend(object):
 
         return type_expr
 
-    def inline_referenced_type(self, t):
+    def inline_defined_type(self, t):
         return _translate_type(t.type_name) + '()'
 
     def inline_constructed_type(self, t):
@@ -299,6 +307,12 @@ class Pyasn1Backend(object):
         type_expr += '.subtype(%s=%s)' % (tag_type, self.build_tag_expr(t))
 
         return type_expr
+
+    def inline_selection_type(self, t):
+        selected_type = self.sema_module.resolve_selection_type(t)
+        assert selected_type is not None, "Found no member %s in %s" % (t.identifier, t.type_decl)
+
+        return self.generate_expr(selected_type)
 
     def build_tag_expr(self, tag_def):
         context = _translate_tag_class(tag_def.class_name)

@@ -261,6 +261,19 @@ class Module(SemaNode):
         else:
             return type_decl
 
+    def get_type_decl(self, type_name):
+        user_types = self.user_types()
+        return user_types[type_name]
+
+    def resolve_selection_type(self, selection_type_decl):
+        assert isinstance(selection_type_decl, SelectionType), "Expected SelectionType, was %s" % type(selection_type_decl).__name__
+
+        choice_type = self.get_type_decl(selection_type_decl.type_decl.type_name)
+        for named_type in choice_type.components:
+            if named_type.identifier == selection_type_decl.identifier:
+                return named_type.type_decl
+
+        return None
 
     def __str__(self):
         return '%s DEFINITIONS ::=\n' % self.name \
@@ -433,6 +446,10 @@ class SimpleType(SemaNode):
 
 
 class ReferencedType(SemaNode):
+    pass
+
+
+class DefinedType(ReferencedType):
     def __init__(self, elements):
         # TODO: Module references are not resolved at the moment,
         # and I'm not sure how to handle them.
@@ -448,6 +465,24 @@ class ReferencedType(SemaNode):
 
     def __str__(self):
         return self.type_name
+
+    __repr__ = __str__
+
+
+class SelectionType(ReferencedType):
+    def __init__(self, elements):
+        self.identifier = elements[0].elements[0]
+        self.type_decl = _create_sema_node(elements[1])
+
+    @property
+    def type_name(self):
+        return self.type_decl.type_name
+
+    def reference_name(self):
+        return self.type_name
+
+    def __str__(self):
+        return '%s < %s' % (self.identifier, self.type_name)
 
     __repr__ = __str__
 
@@ -742,8 +777,10 @@ def _create_sema_node(token):
         return _create_sema_node(token.elements[0])
     elif token.ty == 'SimpleType':
         return SimpleType(token.elements)
-    elif token.ty == 'ReferencedType':
-        return ReferencedType(token.elements)
+    elif token.ty == 'DefinedType':
+        return DefinedType(token.elements)
+    elif token.ty == 'SelectionType':
+        return SelectionType(token.elements)
     elif token.ty == 'ReferencedValue':
         return ReferencedValue(token.elements)
     elif token.ty == 'TaggedType':

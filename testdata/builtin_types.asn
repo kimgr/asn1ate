@@ -43,4 +43,11 @@ BEGIN
   -- Collection types
   SequenceOf ::= SEQUENCE OF INTEGER
   SetOf ::= SET OF INTEGER
+
+  -- Selection type
+  Selection ::= a < Choice
+  SelectedSequence ::= SEQUENCE {
+    a a < Choice,
+    b b < Choice
+  }
 END
