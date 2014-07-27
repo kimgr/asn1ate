@@ -262,13 +262,13 @@ def _build_asn1_grammar():
 
     set_type = SET + braced_list(component_type | extension_marker)
     sequence_type = SEQUENCE + braced_list(component_type | extension_marker)
-    sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
-    setof_type = Suppress(SET) + Optional(size_constraint) + Suppress(OF) + (type_ | named_type)
+    sequenceof_type = Suppress(SEQUENCE) + Optional(size_constraint, default=None) + Suppress(OF) + (type_ | named_type)
+    setof_type = Suppress(SET) + Optional(size_constraint, default=None) + Suppress(OF) + (type_ | named_type)
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
     bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(single_value_constraint | size_constraint, default=None)
     plain_integer_type = INTEGER
-    restricted_integer_type = INTEGER + braced_list(named_number) + Optional(single_value_constraint)
+    restricted_integer_type = INTEGER + braced_list(named_number) + Optional(single_value_constraint, default=None)
     boolean_type = BOOLEAN
     real_type = REAL
     null_type = NULL

@@ -349,15 +349,8 @@ class CollectionType(SemaNode):
     def __init__(self, kind, elements):
         self.kind = kind
         self.type_name = self.kind + ' OF'
-
-        if elements[0].ty == 'Type':
-            self.size_constraint = None
-            self.type_decl = _create_sema_node(elements[0])
-        elif elements[0].ty == 'SizeConstraint':
-            self.size_constraint = _create_sema_node(elements[0])
-            self.type_decl = _create_sema_node(elements[1])
-        else:
-            assert False, 'Unknown form of %s OF declaration: %s' % (self.kind, elements)
+        self.size_constraint = _maybe_create_sema_node(elements[0])
+        self.type_decl = _create_sema_node(elements[1])
 
     def __str__(self):
         if self.size_constraint:
@@ -576,21 +569,19 @@ class NamedType(SemaNode):
 
 class ValueListType(SemaNode):
     def __init__(self, elements):
-        self.type_name = elements[0]
-        self.named_values = None
         self.constraint = None
+        self.type_name = elements[0]
 
-        if len(elements) > 1:
-            self.named_values = [_create_sema_node(token) for token in elements[1]]
-            for idx, n in enumerate(self.named_values):
-                if isinstance(n, NamedValue) and n.value is None:
-                    if idx == 0:
-                        n.value = str(0)
-                    else:
-                        n.value = str(int(self.named_values[idx-1].value) + 1)
+        self.named_values = [_create_sema_node(token) for token in elements[1]]
+        for idx, n in enumerate(self.named_values):
+            if isinstance(n, NamedValue) and n.value is None:
+                if idx == 0:
+                    n.value = str(0)
+                else:
+                    n.value = str(int(self.named_values[idx-1].value) + 1)
 
         if len(elements) > 2:
-            self.constraint = _create_sema_node(elements[2])
+            self.constraint = _maybe_create_sema_node(elements[2])
 
     def __str__(self):
         named_value_list = ''

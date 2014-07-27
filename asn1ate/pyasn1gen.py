@@ -93,13 +93,13 @@ class Pyasn1Backend(object):
             ChoiceType: self.defn_constructed_type,
             SequenceType: self.defn_constructed_type,
             SetType: self.defn_constructed_type,
+            SequenceOfType: self.defn_collection_type,
+            SetOfType: self.defn_collection_type,
             TaggedType: self.defn_tagged_type,
             SimpleType: self.defn_simple_type,
             ReferencedType: self.defn_referenced_type,
             ValueListType: self.defn_value_list_type,
             BitStringType: self.defn_bitstring_type,
-            SequenceOfType: self.defn_sequenceof_type,
-            SetOfType: self.defn_setof_type,
         }
 
         self.inline_generators = {
@@ -214,8 +214,9 @@ class Pyasn1Backend(object):
         return str(fragment)
 
     def defn_value_list_type(self, class_name, t):
+        fragment = self.writer.get_fragment()
+
         if t.named_values:
-            fragment = self.writer.get_fragment()
             fragment.write_line('%s.namedValues = namedval.NamedValues(' % class_name)
             fragment.push_indent()
 
@@ -224,30 +225,36 @@ class Pyasn1Backend(object):
 
             fragment.pop_indent()
             fragment.write_line(')')
-            return str(fragment)
 
-        return None
+        if t.constraint:
+            fragment.write_line('%s.subtypeSpec=%s' % (class_name, self.build_constraint_expr(t.constraint)))
+
+        return str(fragment)
 
     def defn_bitstring_type(self, class_name, t):
+        fragment = self.writer.get_fragment()
+
         if t.named_bits:
-            fragment = self.writer.get_fragment()
             fragment.write_line('%s.namedValues = namedval.NamedValues(' % class_name)
             fragment.push_indent()
-
-            named_bit_list = list(map(lambda v: '(\'%s\', %s)' % (v.identifier, v.value), t.named_bits))
-            fragment.write_enumeration(named_bit_list)
-
+            named_bits = ['(\'%s\', %s)' % (b.identifier, b.value) for b in t.named_bits]
+            fragment.write_enumeration(named_bits)
             fragment.pop_indent()
             fragment.write_line(')')
-            return str(fragment)
 
-        return None
+        if t.constraint:
+            fragment.write_line('%s.subtypeSpec=%s' % (class_name, self.build_constraint_expr(t.constraint)))
 
-    def defn_sequenceof_type(self, class_name, t):
-        return '%s.componentType = %s' % (class_name, self.generate_expr(t.type_decl))
+        return str(fragment)
 
-    def defn_setof_type(self, class_name, t):
-        return '%s.componentType = %s' % (class_name, self.generate_expr(t.type_decl))
+    def defn_collection_type(self, class_name, t):
+        fragment = self.writer.get_fragment()
+        fragment.write_line('%s.componentType = %s' % (class_name, self.generate_expr(t.type_decl)))
+
+        if t.size_constraint:
+            fragment.write_line('%s.subtypeSpec=%s' % (class_name, self.build_constraint_expr(t.size_constraint)))
+
+        return str(fragment)
 
     def inline_simple_type(self, t):
         type_expr = _translate_type(t.type_name) + '()'
