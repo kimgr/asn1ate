@@ -475,6 +475,7 @@ _ASN1_BUILTIN_VALUES = {
 
 
 _ASN1_BUILTIN_TYPES = {
+    'ANY': 'univ.Any',
     'INTEGER': 'univ.Integer',
     'BOOLEAN': 'univ.Boolean',
     'NULL': 'univ.Null',

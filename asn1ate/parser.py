@@ -95,6 +95,8 @@ def _build_asn1_grammar():
         return annotation
 
     # Reserved words
+    ANY = Keyword('ANY')
+    DEFINED_BY = Keyword('DEFINED BY')
     DEFINITIONS = Keyword('DEFINITIONS')
     BEGIN = Keyword('BEGIN')
     END = Keyword('END')
@@ -285,8 +287,12 @@ def _build_asn1_grammar():
     characterstring_type = (restricted_characterstring_type | unrestricted_characterstring_type) + Optional(size_constraint)
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
+    # ANY type
+    any_defined_by = Suppress(DEFINED_BY) + Suppress(identifier)
+    any_type = ANY + Optional(any_defined_by)
+
     # todo: consider other builtins from 16.2
-    simple_type = (boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
+    simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type
