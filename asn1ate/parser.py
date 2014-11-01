@@ -288,8 +288,7 @@ def _build_asn1_grammar():
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
     # ANY type
-    any_defined_by = Suppress(DEFINED_BY) + Suppress(identifier)
-    any_type = ANY + Optional(any_defined_by)
+    any_type = ANY + Optional(Suppress(DEFINED_BY + identifier))
 
     # todo: consider other builtins from 16.2
     simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)

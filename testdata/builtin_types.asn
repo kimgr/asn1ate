@@ -50,12 +50,11 @@ BEGIN
     a a < Choice,
     b b < Choice
   }
-  
-  -- ANY type
 
+  -- ANY type
   AnyType ::= ANY
   AnySeq ::= SEQUENCE {
-     a  INTEGER,
+     a INTEGER,
      b ANY DEFINED BY a
   }
 END
