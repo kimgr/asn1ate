@@ -494,6 +494,7 @@ _ASN1_BUILTIN_TYPES = {
     'NumericString': 'char.NumericString',
     'PrintableString': 'char.PrintableString',
     'IA5String': 'char.IA5String',
+    'GraphicString': 'char.GraphicString',
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',
     'ObjectDescriptor': 'useful.ObjectDescriptor',  # In pyasn1 r1.2

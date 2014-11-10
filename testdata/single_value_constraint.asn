@@ -14,5 +14,6 @@ BEGIN
   ConstrainedReal2 ::= REAL (realValue)
   ConstrainedReal3 ::= REAL (4E9)
 
-  -- TODO: Add tests for the rest of the types as we need them.
+  Alias ::= OCTET STRING
+  ConstrainedAlias ::= Alias (SIZE(8))
 END

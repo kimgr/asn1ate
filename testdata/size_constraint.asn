@@ -21,5 +21,8 @@ BEGIN
   -- TODO: MIN/MAX is not yet translated in codegen.
   -- ConstrainedOctetStr4 ::= OCTET STRING (SIZE(MIN..MAX))
 
+  Alias ::= OCTET STRING
+  ConstrainedAlias ::= Alias (SIZE(1..8))
+
   -- TODO: Add tests for REAL types once we have them in place.
 END

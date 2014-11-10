@@ -8,5 +8,6 @@ BEGIN
   NumStr ::= NumericString
   PrintStr ::= PrintableString
   IA5Str ::= IA5String
+  GraphStr ::= GraphicString
   -- TODO: More string types.
 END

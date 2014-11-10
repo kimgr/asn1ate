@@ -225,11 +225,6 @@ def _build_asn1_grammar():
     # extensions
     extension_default = Optional(EXTENSIBILITY_IMPLIED)
 
-    # types
-    # todo: consider other defined types from 13.1
-    external_type_reference = module_reference + Suppress('.') + typereference
-    defined_type = external_type_reference | typereference
-
     # values
 
     # Forward-declare these, they can only be fully defined once
@@ -245,6 +240,10 @@ def _build_asn1_grammar():
     value_range_constraint = Suppress('(') + lower_bound + Suppress('..') + upper_bound + Suppress(')')
     # TODO: Include contained subtype constraint here if we ever implement it.
     size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + (single_value_constraint | value_range_constraint) + Optional(Suppress(')'))
+
+    # types
+    # todo: consider other defined types from 13.1
+    defined_type = Optional(module_reference + Suppress('.'), default=None) + typereference + Optional(size_constraint, default=None)
 
     # TODO: consider exception syntax from 24.1
     extension_marker = Unique(ELLIPSIS)
