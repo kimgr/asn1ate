@@ -34,10 +34,39 @@ Usage
 The immediate use of ``asn1ate`` is to generate ``pyasn1`` definitions from
 ASN.1 definitions. The command to do this is::
 
-  $ python .../asn1ate/pyasn1gen.py source.asn1
+  $ asn1ate source.asn1
 
 It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout.
 
+Install
+-------
+
+Installation runs in a virtuakenv. To create a virtualenv run:
+  
+   $ mkvirtualenv <virtualenv_name>
+
+To install the requirements in the virtualenv:
+
+  $ pip install -r requirements.txt
+
+This will install all the requirements.
+
+To install ans1ate into the virtualenv:
+
+  $ pip install -e .
+
+Now the asn1ate command can be run from the command line:
+
+  $ asn1ate --help
+
+See command line help for detailed description on howto run asn1ate.
+
+Install-dev
+-----------
+
+Use the requirements-dev.txt file for this:
+
+  $ pip install -r requirements-dev.txt
 
 Dependencies
 ------------

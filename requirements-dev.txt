@@ -1,0 +1,2 @@
+-r requirements.txt
+pyasn1>=0.1.7

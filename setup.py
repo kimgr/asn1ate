@@ -19,7 +19,11 @@ setup(
     platforms=['any'],
     requires=[
         'pyparsing (>=2.0.0)',
+        'click (>=3.3)',
     ],
+    entry_points={
+        'console_scripts': ['asn1ate=asn1ate.cli:main']
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

@@ -1,0 +1,2 @@
+pyparsing>=0.1.7
+click>=3.3
