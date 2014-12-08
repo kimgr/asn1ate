@@ -38,35 +38,22 @@ ASN.1 definitions. The command to do this is::
 
 It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout.
 
-Install
--------
 
-Installation runs in a virtuakenv. To create a virtualenv run:
+Virtualenv
+----------
+
+To use virtualenv:
   
    $ mkvirtualenv <virtualenv_name>
-
-To install the requirements in the virtualenv:
-
-  $ pip install -r requirements.txt
-
-This will install all the requirements.
-
-To install ans1ate into the virtualenv:
-
-  $ pip install -e .
+   $ pip install -r requirements.txt
+   $ pip install -e .
 
 Now the asn1ate command can be run from the command line:
 
   $ asn1ate --help
 
-See command line help for detailed description on howto run asn1ate.
+See help for command line options fr details.
 
-Install-dev
------------
-
-Use the requirements-dev.txt file for this:
-
-  $ pip install -r requirements-dev.txt
 
 Dependencies
 ------------
