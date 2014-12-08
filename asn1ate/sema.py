@@ -453,18 +453,19 @@ class DefinedType(ReferencedType):
     def __init__(self, elements):
         # TODO: Module references are not resolved at the moment,
         # and I'm not sure how to handle them.
-        if len(elements) > 1 and elements[0].ty == 'ModuleReference':
-            self.module_reference = elements[0].elements[0]
-            self.type_name = elements[1]
-        else:
-            self.module_reference = None
-            self.type_name = elements[0]
+        module_ref, type_ref, size_constraint = elements
+        self.type_name = type_ref
+        if size_constraint:
+            self.constraint = _create_sema_node(size_constraint)
 
     def reference_name(self):
         return self.type_name
 
     def __str__(self):
-        return self.type_name
+        if self.constraint is None:
+            return self.type_name
+
+        return '%s %s' % (self.type_name, self.constraint)
 
     __repr__ = __str__
 
