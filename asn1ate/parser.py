@@ -85,8 +85,11 @@ def _build_asn1_grammar():
         identifier = Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)  # todo: more rigorous? trailing hyphens and -- forbidden
         return identifier
 
-    def braced_list(element_rule):
-        return Suppress('{') + Group(delimitedList(element_rule)) + Suppress('}')
+    from collections import namedtuple
+    Braces = namedtuple('Braces', ['open', 'close'])
+
+    def braced_list(element_rule, braces=Braces('{', '}'), delim=','):
+        return Suppress(braces.open) + Group(delimitedList(element_rule, delim=delim)) + Suppress(braces.close)
 
     def annotate(name):
         def annotation(t):
@@ -236,8 +239,9 @@ def _build_asn1_grammar():
     # todo: consider the full subtype and general constraint syntax described in 45.*
     lower_bound = (constraint_real_value | signed_number | referenced_value | MIN)
     upper_bound = (constraint_real_value | signed_number | referenced_value | MAX)
-    single_value_constraint = Suppress('(') + value + Suppress(')')
+    # single_value_constraint = Suppress('(') + value + Suppress(')')
     value_range_constraint = Suppress('(') + lower_bound + Suppress('..') + upper_bound + Suppress(')')
+    single_value_constraint = braced_list(value, Braces('(', ')'), delim='|')
     # TODO: Include contained subtype constraint here if we ever implement it.
     size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + (single_value_constraint | value_range_constraint) + Optional(Suppress(')'))
 
@@ -268,7 +272,7 @@ def _build_asn1_grammar():
     selection_type = identifier + Suppress('<') + type_
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
     bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(single_value_constraint | size_constraint, default=None)
-    plain_integer_type = INTEGER
+    integer_type = INTEGER # + Optional(value_range_constraint | single_value_constraint)
     restricted_integer_type = INTEGER + braced_list(named_number) + Optional(single_value_constraint, default=None)
     boolean_type = BOOLEAN
     real_type = REAL
@@ -290,7 +294,7 @@ def _build_asn1_grammar():
     any_type = ANY + Optional(Suppress(DEFINED_BY + identifier))
 
     # todo: consider other builtins from 16.2
-    simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
+    simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type

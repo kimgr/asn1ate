@@ -4,7 +4,10 @@ BEGIN
   Bool ::= BOOLEAN
   Null ::= NULL
   Int ::= INTEGER
+  IntegerRange ::= INTEGER(1..3)
+  IntegerSingleValue ::= INTEGER(1|3)
   Real ::= REAL
+  RealRange ::= REAL(2.1..3.14)
   BitString0 ::= BIT STRING
 
   RestrictedInteger ::= INTEGER {
@@ -39,6 +42,7 @@ BEGIN
     a INTEGER,
     b BOOLEAN
   }
+
 
   -- Collection types
   SequenceOf ::= SEQUENCE OF INTEGER

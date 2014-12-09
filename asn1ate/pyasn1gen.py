@@ -335,7 +335,7 @@ class Pyasn1Backend(object):
                 assert False, "Unrecognized nested size constraint type: %s" % type(constraint.nested).__name__
 
         if isinstance(constraint, SingleValueConstraint):
-            return 'constraint.SingleValueConstraint(%s)' % (_translate_value(constraint.value))
+            return 'constraint.SingleValueConstraint(%s)' % ','.join([ _translate_value(v) for v in constraint.value])
         elif isinstance(constraint, SizeConstraint):
             min_value, max_value = unpack_size_constraint(constraint.nested)
             return 'constraint.ValueSizeConstraint(%s, %s)' % (_translate_value(min_value), _translate_value(max_value))
