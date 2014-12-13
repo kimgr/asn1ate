@@ -116,6 +116,7 @@ class Pyasn1Backend(object):
             ChoiceType: self.inline_constructed_type,
             SequenceType: self.inline_constructed_type,
             SetType: self.inline_constructed_type,
+            BitStringType: self.inline_bitstring_type,
         }
 
     def generate_code(self):
@@ -238,6 +239,9 @@ class Pyasn1Backend(object):
             fragment.write_line('%s.subtypeSpec=%s' % (class_name, self.build_constraint_expr(t.constraint)))
 
         return str(fragment)
+
+    def inline_bitstring_type(self, t):
+        return self.inline_simple_type(t)
 
     def defn_bitstring_type(self, class_name, t):
         fragment = self.writer.get_fragment()
