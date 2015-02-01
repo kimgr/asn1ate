@@ -32,7 +32,8 @@ BEGIN
 
   Sequence ::= SEQUENCE {
     a INTEGER,
-    b BOOLEAN
+    b BOOLEAN,
+    c BIT STRING
   }
 
   Set ::= SET {
