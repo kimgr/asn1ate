@@ -220,10 +220,10 @@ def _build_asn1_grammar():
     class_ = UNIVERSAL | APPLICATION | PRIVATE
     class_number = Unique(number) # todo: consider defined values from 30.1
     tag = Suppress('[') + Optional(class_) + class_number + Suppress(']')
-    tag_default = Optional(EXPLICIT_TAGS | IMPLICIT_TAGS | AUTOMATIC_TAGS)
+    tag_default = EXPLICIT_TAGS | IMPLICIT_TAGS | AUTOMATIC_TAGS
 
     # extensions
-    extension_default = Optional(EXTENSIBILITY_IMPLIED)
+    extension_default = Unique(EXTENSIBILITY_IMPLIED)
 
     # values
 
@@ -253,7 +253,7 @@ def _build_asn1_grammar():
     component_type_components_of = Suppress(COMPONENTS_OF) + type_
     component_type = component_type_components_of | component_type_optional | component_type_default | named_type
 
-    tagged_type = tag + Optional(IMPLICIT | EXPLICIT) + type_
+    tagged_type = tag + Optional(IMPLICIT | EXPLICIT, default=None) + type_
 
     named_number_value = Suppress('(') + signed_number + Suppress(')')
     named_number = identifier + named_number_value
@@ -322,9 +322,9 @@ def _build_asn1_grammar():
     imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
 
     module_body = (exports + imports + assignment_list)
-    module_defaults = Suppress(tag_default + extension_default)  # we don't want these in the AST
     module_identifier = module_reference + definitive_identifier
-    module_definition = module_identifier + DEFINITIONS + module_defaults + '::=' + BEGIN + module_body + END
+    module_definition = module_identifier + Suppress(DEFINITIONS) + Optional(tag_default, default=None) + \
+                        Optional(extension_default, default=None) + Suppress('::=') + Suppress(BEGIN) + module_body + Suppress(END)
 
     module_definition.ignore(comment)
 

@@ -181,6 +181,14 @@ REGISTERED_OID_NAMES = {
     'registration-procedures': 17
 }
 
+
+class TagImplicity(object):
+    """ Tag implicit/explicit enumeration """
+    IMPLICIT = 0
+    EXPLICIT = 1
+    AUTOMATIC = 2
+
+
 """
 Sema nodes
 
@@ -232,13 +240,26 @@ class SemaNode(object):
 
 
 class Module(SemaNode):
+
     def __init__(self, elements):
         self._user_types = {}
 
-        module_reference, _, _, _, _, module_body, _ = elements
+        module_reference, definitive_identifier, tag_default, extension_default, module_body = elements
         exports, imports, assignments = module_body.elements
 
         self.name = module_reference.elements[0]
+
+        if tag_default == 'IMPLICIT TAGS':
+            self.tag_default = TagImplicity.IMPLICIT
+        elif tag_default == 'EXPLICIT TAGS':
+            self.tag_default = TagImplicity.EXPLICIT
+        elif tag_default == 'AUTOMATIC TAGS':
+            self.tag_default = TagImplicity.AUTOMATIC
+        else:
+            assert tag_default is None, 'Unexpected tag default: %s' % tag_default
+            # Tag default was not specified, default to explicit
+            self.tag_default = TagImplicity.EXPLICIT
+
         self.assignments = [_create_sema_node(token) for token in assignments.elements]
 
     def user_types(self):
@@ -251,8 +272,8 @@ class Module(SemaNode):
         return self._user_types
 
     def resolve_type_decl(self, type_decl):
-        """ Recursively resolve user-defined types to their
-        built-in declaration.
+        """ Recursively resolve user-defined types to their built-in
+        declaration.
         """
         user_types = self.user_types()
 
@@ -274,6 +295,26 @@ class Module(SemaNode):
                 return named_type.type_decl
 
         return None
+
+    def resolve_tag_implicity(self, tag_implicity, tagged_type_decl):
+        """ The implicity for a tag depends on three things:
+        * Any written implicity on the tag decl itself (``tag_implicity``)
+        * The module's tag default (kept in ``self.tag_default``)
+        * Details of the tagged type according to X.680, 30.6c (not implemented,
+          but should be doable based on ``tagged_type_decl``)
+        """
+        if tag_implicity is not None:
+            return tag_implicity
+
+        # No tag implicity specified, use module-default
+        if self.tag_default is None:
+            # Explicit is default if nothing
+            return TagImplicity.EXPLICIT
+        elif self.tag_default == TagImplicity.AUTOMATIC:
+            # TODO: Expand according to rules for automatic tagging.
+            return TagImplicity.IMPLICIT
+
+        return self.tag_default
 
     def __str__(self):
         return '%s DEFINITIONS ::=\n' % self.name \
@@ -386,17 +427,10 @@ class SetOfType(CollectionType):
 
 class TaggedType(SemaNode):
     def __init__(self, elements):
+        tag_token, implicity, type_token = elements
+
         self.class_name = None
         self.class_number = None
-        self.implicit = False
-
-        tag_token = elements[0]
-        if type(elements[1]) is parser.AnnotatedToken:
-            type_token = elements[1]
-        else:
-            self.implicit = elements[1] == 'IMPLICIT'
-            type_token = elements[2]
-
         for tag_element in tag_token.elements:
             if tag_element.ty == 'TagClassNumber':
                 self.class_number = tag_element.elements[0]
@@ -404,6 +438,13 @@ class TaggedType(SemaNode):
                 self.class_name = tag_element.elements[0]
             else:
                 assert False, 'Unknown tag element: %s' % tag_element
+
+        if implicity == 'IMPLICIT':
+            self.implicity = TagImplicity.IMPLICIT
+        elif implicity == 'EXPLICIT':
+            self.implicity = TagImplicity.EXPLICIT
+        elif implicity is None:
+            self.implicity = None  # Module-default or automatic
 
         self.type_decl = _create_sema_node(type_token)
 
@@ -418,8 +459,12 @@ class TaggedType(SemaNode):
         class_spec.append(self.class_number)
 
         result = '[%s] ' % ' '.join(class_spec)
-        if self.implicit:
+        if self.implicity == TagImplicity.IMPLICIT:
             result += 'IMPLICIT '
+        elif self.implicity == TagImplicity.EXPLICIT:
+            result += 'EXPLICIT '
+        else:
+            pass  # module-default
 
         result += str(self.type_decl)
 

@@ -1,0 +1,40 @@
+ExplicitModule DEFINITIONS EXPLICIT TAGS ::=
+BEGIN
+
+Sequence ::= SEQUENCE
+{
+    field1 [0] INTEGER,
+    field2 [1] BOOLEAN,
+    field3 [2] EXPLICIT INTEGER,
+    field4 [3] IMPLICIT BOOLEAN
+}
+
+END
+
+ImplicitModule DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+Sequence ::= SEQUENCE
+{
+    field1 [0] INTEGER,
+    field2 [1] BOOLEAN,
+    field3 [2] EXPLICIT INTEGER,
+    field4 [3] IMPLICIT BOOLEAN
+}
+
+END
+
+
+-- AUTOMATIC TAGS is considered the same as IMPLICIT for now.
+AutomaticModule DEFINITIONS AUTOMATIC TAGS ::=
+BEGIN
+
+Sequence ::= SEQUENCE
+{
+    field1 [0] INTEGER,
+    field2 [1] BOOLEAN,
+    field3 [2] EXPLICIT INTEGER,
+    field4 [3] IMPLICIT BOOLEAN
+}
+
+END

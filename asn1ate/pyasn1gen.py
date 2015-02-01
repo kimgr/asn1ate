@@ -208,10 +208,17 @@ class Pyasn1Backend(object):
     def defn_tagged_type(self, class_name, t):
         fragment = self.writer.get_fragment()
 
-        tag_type = 'tagImplicitly' if t.implicit else 'tagExplicitly'
+        implicity = self.sema_module.resolve_tag_implicity(t.implicity, t.type_decl)
+        if implicity == TagImplicity.IMPLICIT:
+            tag_implicity = 'tagImplicitly'
+        elif implicity == TagImplicity.EXPLICIT:
+            tag_implicity = 'tagExplicitly'
+        else:
+            assert False, "Unexpected implicity: %s" % implicity
+
         base_type = _translate_type(t.type_decl.type_name)
 
-        fragment.write_line('%s.tagSet = %s.tagSet.%s(%s)' % (class_name, base_type, tag_type, self.build_tag_expr(t)))
+        fragment.write_line('%s.tagSet = %s.tagSet.%s(%s)' % (class_name, base_type, tag_implicity, self.build_tag_expr(t)))
         nested_dfn = self.generate_defn(class_name, t.type_decl)
         if nested_dfn:
             fragment.write_line(nested_dfn)
@@ -302,9 +309,16 @@ class Pyasn1Backend(object):
         return str(fragment)
 
     def inline_tagged_type(self, t):
-        tag_type = 'implicitTag' if t.implicit else 'explicitTag'
+        implicity = self.sema_module.resolve_tag_implicity(t.implicity, t.type_decl)
+        if implicity == TagImplicity.IMPLICIT:
+            tag_implicity = 'implicitTag'
+        elif implicity == TagImplicity.EXPLICIT:
+            tag_implicity = 'explicitTag'
+        else:
+            assert False, "Unexpected implicity: %s" % implicity
+
         type_expr = self.generate_expr(t.type_decl)
-        type_expr += '.subtype(%s=%s)' % (tag_type, self.build_tag_expr(t))
+        type_expr += '.subtype(%s=%s)' % (tag_implicity, self.build_tag_expr(t))
 
         return type_expr
 
