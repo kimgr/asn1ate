@@ -25,7 +25,8 @@ This is very much an alpha-quality prototype. Things that need doing:
   - Reference syntax is not accepted at all (ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12.asn, line 74)
 
 * Improve parser error handling/reporting
-* Allow for semantic analysis, e.g. validity check, warnings for problematic constructs, etc.
+* Allow for semantic analysis, e.g. validity check, warnings for problematic
+  constructs, etc.
 
 
 Usage
@@ -45,7 +46,11 @@ Dependencies
 The only third-party dependency is ``pyparsing``.
 
 Although ``asn1ate`` was initially developed on Python 3.2, it has been tested
-with Python 2.7.3 and should port to older Python versions easily.
+with Python 2.7 and should port to older Python versions easily. Latest release
+tested with:
+
+* Python 3.4.0
+* Python 2.7.3
 
 
 Design notes
