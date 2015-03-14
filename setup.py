@@ -5,7 +5,7 @@ from distutils.core import setup
 
 setup(
     name='asn1ate',
-    version='0.4.1',
+    version='0.5',
     description='ASN.1 translation library.',
     author='Kim Gräsman',
     author_email='kim.grasman@gmail.com',
