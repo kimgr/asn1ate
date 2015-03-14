@@ -1,5 +1,5 @@
 asn1ate -- ASN.1 translation library.
-Copyright 2013 Schneider Electric Buildings AB
+Copyright 2013-2015 Schneider Electric Buildings AB
 
 Introduction
 ------------

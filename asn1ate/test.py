@@ -1,4 +1,4 @@
-# Copyright (c) 2013, Schneider Electric Buildings AB
+# Copyright (c) 2013-2015, Schneider Electric Buildings AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
