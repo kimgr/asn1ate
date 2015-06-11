@@ -516,6 +516,7 @@ _ASN1_BUILTIN_TYPES = {
     'GeneralizedTime': 'useful.GeneralizedTime',
     'UTCTime': 'useful.UTCTime',
     'ObjectDescriptor': 'useful.ObjectDescriptor',  # In pyasn1 r1.2
+    'VisibleString': 'char.VisibleString',
 }
 
 

@@ -9,5 +9,6 @@ BEGIN
   PrintStr ::= PrintableString
   IA5Str ::= IA5String
   GraphStr ::= GraphicString
+  VisibleStr ::= VisibleString
   -- TODO: More string types.
 END
