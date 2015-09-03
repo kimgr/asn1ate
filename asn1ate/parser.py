@@ -94,6 +94,48 @@ def _build_asn1_grammar():
 
         return annotation
 
+    def auto_tag(t):
+        tag_number = 0
+        # First search for any existing tags
+        # If there are tags then auto-tagging does not apply
+        components = t.asList()[0].elements[1]
+        for component in components:
+            if component.ty == "ComponentType":
+                elements = component.elements[0].elements # Sequence and set types
+            else:
+                elements = component.elements # Choice type
+            for element in elements:
+                if element.ty == "Type":
+                    for e in element.elements:
+                        if e.ty == "TaggedType":
+                            return
+        
+        for component in components:
+            # Convert each one into a tagged type
+            if component.ty == "ComponentType":
+                elements = component.elements[0].elements # Sequence and set types
+            else:
+                elements = component.elements # Choice type
+            for element in elements:
+                if element.ty == "Type":
+                    for e, idx in zip(element.elements, range(len(element.elements))):
+                        tagged_element = AnnotatedToken("TaggedType", [AnnotatedToken("Tag", [
+                                AnnotatedToken("TagClassNumber", [str(tag_number),]),]), None, e,])
+
+                        element.elements[idx] = tagged_element
+            tag_number = tag_number + 1
+
+    def enable_auto_tags():
+        sequence_type.addParseAction(auto_tag)
+        set_type.addParseAction(auto_tag)
+        choice_type.addParseAction(auto_tag)
+    
+    def disable_auto_tags():
+        # Restore default actions
+        sequence_type.setParseAction(annotate('SequenceType'))
+        set_type.setParseAction(annotate('SetType'))
+        choice_type.setParseAction(annotate('ChoiceType'))
+
     # Reserved words
     ANY = Keyword('ANY')
     DEFINED_BY = Keyword('DEFINED BY')
@@ -375,6 +417,10 @@ def _build_asn1_grammar():
     defined_type.setParseAction(annotate('DefinedType'))
     selection_type.setParseAction(annotate('SelectionType'))
     referenced_value.setParseAction(annotate('ReferencedValue'))
+
+    AUTOMATIC_TAGS.setParseAction(enable_auto_tags)
+    END.setParseAction(disable_auto_tags)
+   
 
     start = OneOrMore(module_definition)
     return start

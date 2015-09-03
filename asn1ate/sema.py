@@ -310,9 +310,12 @@ class Module(SemaNode):
         if self.tag_default is None:
             # Explicit is default if nothing
             return TagImplicity.EXPLICIT
-        elif self.tag_default == TagImplicity.AUTOMATIC:
-            # TODO: Expand according to rules for automatic tagging.
-            return TagImplicity.IMPLICIT
+        elif self.tag_default == TagImplicity.AUTOMATIC or self.tag_default == TagImplicity.IMPLICIT:
+            # CHOICE tags must always be EXPLICIT
+            if type(self.resolve_type_decl(tagged_type_decl)) is ChoiceType:
+                return TagImplicity.EXPLICIT
+            else:
+                return TagImplicity.IMPLICIT
 
         return self.tag_default
 
