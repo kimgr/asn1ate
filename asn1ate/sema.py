@@ -271,14 +271,24 @@ class Module(SemaNode):
 
         return self._user_types
 
-    def resolve_type_decl(self, type_decl):
+    def resolve_type_decl(self, type_decl, referenced_modules):
         """ Recursively resolve user-defined types to their built-in
         declaration.
         """
-        user_types = self.user_types()
-
         if isinstance(type_decl, ReferencedType):
-            return self.resolve_type_decl(user_types[type_decl.type_name])
+            module = None
+            if not type_decl.module_name or type_decl.module_name == self.name:
+                module = self
+            else:
+                # Find the referenced module
+                for ref_mod in referenced_modules:
+                    if ref_mod.name == type_decl.module_name:
+                        module = ref_mod
+                        break
+            if not module:
+                raise Exception('Unrecognized referenced module %s in %s.' % (type_decl.module_name,
+                                                                              [module.name for module in referenced_modules]))
+            return module.resolve_type_decl(module.user_types()[type_decl.type_name], referenced_modules)
         else:
             return type_decl
 
@@ -496,9 +506,12 @@ class ReferencedType(SemaNode):
 
 class DefinedType(ReferencedType):
     def __init__(self, elements):
-        # TODO: Module references are not resolved at the moment,
-        # and I'm not sure how to handle them.
+        self.constraint = None
+        self.module_name = None
+
         module_ref, type_ref, size_constraint = elements
+        if module_ref:
+            self.module_name = module_ref.elements[0]
         self.type_name = type_ref
         if size_constraint:
             self.constraint = _create_sema_node(size_constraint)
@@ -535,8 +548,6 @@ class SelectionType(ReferencedType):
 
 class ReferencedValue(SemaNode):
     def __init__(self, elements):
-        # TODO: Module references are not resolved at the moment,
-        # and I'm not sure how to handle them.
         if len(elements) > 1 and elements[0].ty == 'ModuleReference':
             self.module_reference = elements[0].elements[0]
             self.name = elements[1]
@@ -548,7 +559,9 @@ class ReferencedValue(SemaNode):
         return self.name
 
     def __str__(self):
-        return self.name
+        if not self.module_reference:
+            return self.name
+        return '%s.%s' % (self.module_reference, self.name)
 
     __repr__ = __str__
 

@@ -6,6 +6,8 @@ OneSequence ::= SEQUENCE {
     second BOOLEAN
 }
 
+value INTEGER ::= 123
+
 END
 
 
@@ -16,5 +18,12 @@ AnotherSequence ::= SEQUENCE {
     first INTEGER,
     second BOOLEAN
 }
+
+YetAnotherSequence ::= SEQUENCE {
+    first [0] Module1.OneSequence,
+    second [1] AnotherSequence
+}
+
+anothervalue INTEGER ::= Module1.value
 
 END

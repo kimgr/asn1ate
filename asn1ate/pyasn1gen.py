@@ -26,6 +26,7 @@
 from __future__ import print_function  # Python 2 compatibility
 
 import sys
+import argparse
 import keyword
 from asn1ate import parser
 from asn1ate.support import pygen
@@ -80,8 +81,9 @@ class Pyasn1Backend(object):
     type assignment involves a constructed type, it is filled with inline
     definitions.
     """
-    def __init__(self, sema_module, out_stream):
+    def __init__(self, sema_module, out_stream, referenced_modules):
         self.sema_module = sema_module
+        self.referenced_modules = referenced_modules
         self.writer = pygen.PythonWriter(out_stream)
 
         self.decl_generators = {
@@ -121,6 +123,9 @@ class Pyasn1Backend(object):
 
     def generate_code(self):
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
+        for module in self.referenced_modules:
+            if not module is self.sema_module:
+                self.writer.write_line('import ' + _sanitize_module(module.name))
         self.writer.write_blanks(2)
 
         # Generate _OID if sema_module contains any object identifier values.
@@ -283,7 +288,10 @@ class Pyasn1Backend(object):
         return type_expr
 
     def inline_defined_type(self, t):
-        return _translate_type(t.type_name) + '()'
+        translated_type = _translate_type(t.type_name) + '()'
+        if t.module_name and t.module_name != self.sema_module.name:
+            translated_type = _sanitize_module(t.module_name) + '.' + translated_type
+        return translated_type 
 
     def inline_constructed_type(self, t):
         fragment = self.writer.get_fragment()
@@ -335,7 +343,7 @@ class Pyasn1Backend(object):
     def build_tag_expr(self, tag_def):
         context = _translate_tag_class(tag_def.class_name)
 
-        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl)
+        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl, self.referenced_modules)
         if isinstance(tagged_type_decl, ConstructedType):
             tag_format = 'tag.tagFormatConstructed'
         else:
@@ -389,14 +397,14 @@ class Pyasn1Backend(object):
             return self.build_object_identifier_value(value)
         else:
             value_type = _translate_type(type_decl.type_name)
-            root_type = self.sema_module.resolve_type_decl(type_decl)
+            root_type = self.sema_module.resolve_type_decl(type_decl, self.referenced_modules)
             return '%s(%s)' % (value_type, build_value_expr(root_type.type_name, value))
 
     def inline_component_type(self, t):
         if t.components_of_type:
             # COMPONENTS OF works like a literal include, so just
             # expand all components of the referenced type.
-            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type)
+            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type, self.referenced_modules)
             included_content = self.inline_component_types(included_type_decl.components)
 
             # Strip trailing newline from inline_component_types
@@ -474,8 +482,8 @@ class Pyasn1Backend(object):
         return str(fragment)
 
 
-def generate_pyasn1(sema_module, out_stream):
-    return Pyasn1Backend(sema_module, out_stream).generate_code()
+def generate_pyasn1(sema_module, out_stream, referenced_modules):
+    return Pyasn1Backend(sema_module, out_stream, referenced_modules).generate_code()
 
 
 # Translation tables from ASN.1 primitives to pyasn1 primitives
@@ -567,23 +575,40 @@ def _sanitize_identifier(name):
     return name
 
 
+def _sanitize_module(name):
+    """ Sanitize ASN.1 module identifiers so that they're PEP8 compliant identifiers.
+    """
+    return _sanitize_identifier(name).lower()
+
 # Simplistic command-line driver
-def main(args):
-    with open(args[0]) as f:
-        asn1def = f.read()
+def main():
+    arg_parser = argparse.ArgumentParser(description='Generate Python classes from an ASN.1 definition file. Output to stdout by default.')
+    arg_parser.add_argument('file', metavar='file', type=argparse.FileType('r'),
+                            help='the ASN.1 file to process')
+    arg_parser.add_argument('--split', action='store_true',
+                            help='output multiple modules to separate files')
+    args = arg_parser.parse_args()
+    asn1def = args.file.read()
 
     parse_tree = parser.parse_asn1(asn1def)
 
     modules = build_semantic_model(parse_tree)
-    if len(modules) > 1:
+    if len(modules) > 1 and not args.split:
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
+    output_file = sys.stdout
     for module in modules:
-        print(pygen.auto_generated_header())
-        generate_pyasn1(module, sys.stdout)
+        try:
+            if args.split:
+                output_file = open(_sanitize_module(module.name) + '.py', 'w')
+            print(pygen.auto_generated_header(), file=output_file)
+            generate_pyasn1(module, output_file, modules)
+        finally:
+            if output_file != sys.stdout:
+                output_file.close()
 
     return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
