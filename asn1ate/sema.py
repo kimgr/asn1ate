@@ -35,6 +35,15 @@ def build_semantic_model(parse_result):
         _assert_annotated_token(token)
         root.append(_create_sema_node(token))
 
+    # Head back through the model to act on any automatic tagging
+    # Objects in root must be Modules by definition of the parser
+    for module in root:
+        if module.tag_default == TagImplicity.AUTOMATIC:
+            # Automatic tagging is on - wrap the members of constructed types
+            for descendant in module.descendants():
+                if isinstance(descendant, ConstructedType):
+                    descendant.auto_tag()
+
     return root
 
 
@@ -376,6 +385,17 @@ class ConstructedType(SemaNode):
         self.type_name = type_name
         self.components = [_create_sema_node(token) for token in component_tokens]
 
+    def auto_tag(self):
+        # Constructed types can have ExtensionMarkers as components - ignore them
+        component_types = [c.type_decl for c in self.components if hasattr(c, 'type_decl')]
+        already_tagged = any(isinstance(c, TaggedType) for c in component_types)
+        if not already_tagged:
+            # Wrap components in TaggedTypes
+            for tag_number, child in enumerate([c for c in self.children() if hasattr(c, 'type_decl')]):
+                element = child.type_decl
+                tagged_type = TaggedType((None, tag_number, None, element))
+                child.type_decl = tagged_type
+
     def __str__(self):
         component_type_list = ', '.join(map(str, self.components))
         return '%s { %s }' % (self.type_name, component_type_list)
@@ -427,17 +447,22 @@ class SetOfType(CollectionType):
 
 class TaggedType(SemaNode):
     def __init__(self, elements):
-        tag_token, implicity, type_token = elements
-
         self.class_name = None
         self.class_number = None
-        for tag_element in tag_token.elements:
-            if tag_element.ty == 'TagClassNumber':
-                self.class_number = tag_element.elements[0]
-            elif tag_element.ty == 'TagClass':
-                self.class_name = tag_element.elements[0]
-            else:
-                assert False, 'Unknown tag element: %s' % tag_element
+        if len(elements) == 3:
+            tag_token, implicity, type_token = elements
+            for tag_element in tag_token.elements:
+                if tag_element.ty == 'TagClassNumber':
+                    self.class_number = tag_element.elements[0]
+                elif tag_element.ty == 'TagClass':
+                    self.class_name = tag_element.elements[0]
+                else:
+                    assert False, 'Unknown tag element: %s' % tag_element
+            self.type_decl = _create_sema_node(type_token)
+        elif len(elements) == 4:
+            self.class_name, self.class_number, implicity, self.type_decl = elements
+        else:
+            assert False, 'Incorrect number of elements passed to TaggedType'
 
         if implicity == 'IMPLICIT':
             self.implicity = TagImplicity.IMPLICIT
@@ -445,8 +470,6 @@ class TaggedType(SemaNode):
             self.implicity = TagImplicity.EXPLICIT
         elif implicity is None:
             self.implicity = None  # Module-default or automatic
-
-        self.type_decl = _create_sema_node(type_token)
 
     @property
     def type_name(self):
