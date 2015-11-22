@@ -310,11 +310,15 @@ class Module(SemaNode):
         """ The implicity for a tag depends on three things:
         * Any written implicity on the tag decl itself (``tag_implicity``)
         * The module's tag default (kept in ``self.tag_default``)
-        * Details of the tagged type according to X.680, 30.6c (not implemented,
-          but should be doable based on ``tagged_type_decl``)
+        * Details of the tagged type according to X.680, 30.6c (``tagged_type_decl``)
         """
         if tag_implicity is not None:
             return tag_implicity
+
+        # Tagged CHOICEs must always be explicit if the default is implicit, automatic or empty
+        # See X.680, 30.6c
+        if isinstance(tagged_type_decl, ChoiceType):
+            return TagImplicity.EXPLICIT
 
         # No tag implicity specified, use module-default
         if self.tag_default is None:
