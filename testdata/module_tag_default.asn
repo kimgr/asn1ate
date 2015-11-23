@@ -11,6 +11,7 @@ Sequence ::= SEQUENCE
 
 END
 
+-- IMPLICIT TAGS should result in EXPLICIT for CHOICE.
 ImplicitModule DEFINITIONS IMPLICIT TAGS ::=
 BEGIN
 
@@ -19,22 +20,72 @@ Sequence ::= SEQUENCE
     field1 [0] INTEGER,
     field2 [1] BOOLEAN,
     field3 [2] EXPLICIT INTEGER,
-    field4 [3] IMPLICIT BOOLEAN
+    field4 [3] IMPLICIT BOOLEAN,
+    field5 [4] CHOICE { a INTEGER,
+                    b BOOLEAN
+                  }
 }
 
 END
 
-
--- AUTOMATIC TAGS is considered the same as IMPLICIT for now.
+-- AUTOMATIC TAGS should result in implicit tags being added in order.
 AutomaticModule DEFINITIONS AUTOMATIC TAGS ::=
 BEGIN
 
 Sequence ::= SEQUENCE
 {
-    field1 [0] INTEGER,
-    field2 [1] BOOLEAN,
-    field3 [2] EXPLICIT INTEGER,
-    field4 [3] IMPLICIT BOOLEAN
+    field1 INTEGER,
+    field2 BOOLEAN,
+    field3 INTEGER,
+    field4 BOOLEAN
 }
 
 END
+
+-- AUTOMATIC TAGS should not be applied if a tag exists.
+AutomaticModule DEFINITIONS AUTOMATIC TAGS ::=
+BEGIN
+
+Sequence ::= SEQUENCE
+{
+    field1 INTEGER,
+    field2 BOOLEAN,
+    field3 [2] INTEGER,
+    field4 BOOLEAN
+}
+
+END
+
+-- AUTOMATIC TAGS should nest. CHOICE is tagged EXPLICIT.
+-- Defined types are still EXPLICIT if they are a CHOICE.
+AutomaticModule DEFINITIONS AUTOMATIC TAGS ::=
+BEGIN
+
+Sequence ::= SEQUENCE
+{
+    field1 INTEGER,
+    field2 CHOICE { a INTEGER,
+                    b BOOLEAN
+                  }, 
+    field3 SEQUENCE { x INTEGER,
+                      y BOOLEAN
+                    },
+    field4 SET { p INTEGER,
+                 q BOOLEAN
+               },
+    field5 BOOLEAN
+}
+
+Choice ::= CHOICE
+{
+    field1 INTEGER,
+    field2 BOOLEAN
+}
+
+Sequence2 ::= SEQUENCE {
+    field1 Choice,
+    field2 BOOLEAN
+}
+
+END
+
