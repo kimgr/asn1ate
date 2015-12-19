@@ -525,6 +525,11 @@ _ASN1_BUILTIN_TYPES = {
     'UTCTime': 'useful.UTCTime',
     'ObjectDescriptor': 'useful.ObjectDescriptor',  # In pyasn1 r1.2
     'VisibleString': 'char.VisibleString',
+    'TeletexString': 'char.TeletexString',
+    'UniversalString': 'char.UniversalString',
+    'BMPString': 'char.BMPString',
+    'T61String': 'char.T61String',
+    'VideotexString': 'char.VideotexString',
 }
 
 

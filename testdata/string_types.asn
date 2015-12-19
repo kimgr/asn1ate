@@ -10,5 +10,10 @@ BEGIN
   IA5Str ::= IA5String
   GraphStr ::= GraphicString
   VisibleStr ::= VisibleString
+  TeletexStr ::= TeletexString
+  UniversalStr ::= UniversalString
+  BMPStr ::= BMPString
+  T61Str ::= T61String
+  VideotexStr ::= VideotexString
   -- TODO: More string types.
 END
