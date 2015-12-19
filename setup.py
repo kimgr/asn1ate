@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+try:
+    from setuptools import setup
+except:
+    from distutils.core import setup
 
 setup(
     name='asn1ate',
@@ -17,8 +20,8 @@ setup(
         'asn1ate.support',
     ],
     platforms=['any'],
-    requires=[
-        'pyparsing (>=2.0.0)',
+    install_requires=[
+        'pyparsing>=2.0.0',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -28,5 +31,10 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Code Generators',
-    ]
+    ],
+    entry_points={
+        'console_scripts': [
+            'asn1ate = asn1ate.pyasn1gen:main'
+            ]
+    },
 )
