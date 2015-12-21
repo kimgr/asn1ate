@@ -15,5 +15,4 @@ BEGIN
   BMPStr ::= BMPString
   T61Str ::= T61String
   VideotexStr ::= VideotexString
-  -- TODO: More string types.
 END
