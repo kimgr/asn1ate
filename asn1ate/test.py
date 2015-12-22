@@ -61,7 +61,7 @@ def main():
     if args.gen:
         for module in modules:
             print(pygen.auto_generated_header(args.file))
-            pyasn1gen.generate_pyasn1(module, sys.stdout)
+            pyasn1gen.generate_pyasn1(module, sys.stdout, modules)
 
     return 0
 
