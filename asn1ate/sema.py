@@ -163,7 +163,7 @@ def dependency_sort(assignments):
             component = tuple(connected_component)
             result.append(component)
 
-    for node in graph:
+    for node in sorted(graph.keys(), key=lambda a: a.reference_name()):
         if node not in lowlinks:
             strongconnect(node)
 
