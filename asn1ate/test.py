@@ -27,7 +27,7 @@ from __future__ import print_function  # Python 2 compatibility
 
 import sys
 import argparse # Requires Python 2.7 or later, but that's OK for a test driver
-from asn1ate import parser, sema, pyasn1gen
+from asn1ate import parser, sema, pyasn1gen, __version__
 from asn1ate.support import pygen
 
 def parse_args():
@@ -60,7 +60,7 @@ def main():
 
     if args.gen:
         for module in modules:
-            print(pygen.auto_generated_header(args.file))
+            print(pygen.auto_generated_header(args.file, __version__))
             pyasn1gen.generate_pyasn1(module, sys.stdout, modules)
 
     return 0

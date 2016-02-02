@@ -28,7 +28,7 @@ from __future__ import print_function  # Python 2 compatibility
 import sys
 import argparse
 import keyword
-from asn1ate import parser
+from asn1ate import parser, __version__
 from asn1ate.support import pygen
 from asn1ate.sema import *
 
@@ -588,12 +588,13 @@ def _sanitize_module(name):
 # Simplistic command-line driver
 def main():
     arg_parser = argparse.ArgumentParser(description='Generate Python classes from an ASN.1 definition file. Output to stdout by default.')
-    arg_parser.add_argument('file', metavar='file', type=argparse.FileType('r'),
-                            help='the ASN.1 file to process')
+    arg_parser.add_argument('file', help='the ASN.1 file to process')
     arg_parser.add_argument('--split', action='store_true',
                             help='output multiple modules to separate files')
     args = arg_parser.parse_args()
-    asn1def = args.file.read()
+
+    with open(args.file, 'r') as input:
+        asn1def = input.read()
 
     parse_tree = parser.parse_asn1(asn1def)
 
@@ -606,7 +607,8 @@ def main():
         try:
             if args.split:
                 output_file = open(_sanitize_module(module.name) + '.py', 'w')
-            print(pygen.auto_generated_header(), file=output_file)
+            print(pygen.auto_generated_header(args.file, __version__),
+                  file=output_file)
             generate_pyasn1(module, output_file, modules)
         finally:
             if output_file != sys.stdout:
