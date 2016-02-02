@@ -1,14 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 try:
     from setuptools import setup
 except:
     from distutils.core import setup
 
+
+def get_version():
+    version_file = os.path.join(os.path.dirname(__file__),
+                                'asn1ate', '__init__.py')
+
+    environment = {}
+    with open(version_file) as fp:
+        exec(fp.read(), environment)
+
+    return environment['__version__']
+
+
 setup(
     name='asn1ate',
-    version='0.5.1.dev',
+    version=get_version(),
     description='ASN.1 translation library.',
     author='Kim Gräsman',
     author_email='kim.grasman@gmail.com',
