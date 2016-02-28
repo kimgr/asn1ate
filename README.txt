@@ -6,7 +6,8 @@ Introduction
 
 ``asn1ate`` is a Python library for translating ASN.1 into other forms.
 It is intended for code generation from formal ASN.1 definitions, and a
-code generator for ``pyasn1`` is included.
+code generator for ``pyasn1`` is included.  Additional code for the
+``Quick DER`` format was added later.
 
 ``asn1ate`` is released under a 3-clause BSD license. For details, see
 LICENSE.txt.
@@ -29,8 +30,8 @@ This is very much an alpha-quality prototype. Things that need doing:
   constructs, etc.
 
 
-Usage
------
+Usage with pyasn1
+-----------------
 
 The immediate use of ``asn1ate`` is to generate ``pyasn1`` definitions from
 ASN.1 definitions. The command to do this is::
@@ -38,6 +39,25 @@ ASN.1 definitions. The command to do this is::
   $ python .../asn1ate/pyasn1gen.py source.asn1
 
 It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout.
+
+
+Usage with Quick DER
+--------------------
+
+Quick DER is a library found on https://github.com/vanrein/quick-der
+A separate generator exists in ``asn1ate`` to create the parser bytecode
+and overlay structures for this format.  The command to do this is::
+
+  $ python .../asn1ate/asn2quickder.py source.asn1
+
+It will store an include file suitable for use with ``Quick DER`` in ``source.h``,
+which is the source file name with its extension changed to ``.h``.
+
+This tool can be used for your private ASN.1 projects, but one purpose of
+Quick DER is also to have a developer's toolkit with precompiled header
+files that can simply be included as
+
+  #include <quick-der/rfc5280.h>
 
 
 Dependencies
@@ -67,6 +87,8 @@ driver, a parser, a semantic model and a convention for code generators.
 * ``pyasn1gen.py`` -- a code generator to transform a semantic model into
   ``pyasn1`` syntax. This can be used as a script in which case it will dump
   output to stdout.
+* ``asn2quickder.py`` -- a code generator to transform a semantic model into
+  ``Quick DER`` include file syntax.  This can be used as a command.
 
 The ASN.1 parser is very ad-hoc, I've experimented with the grammar until I
 found something that accepted our proprietary ASN.1 definition. It's based on
