@@ -22,7 +22,7 @@ from asn1ate.sema import *
 
 def toCsym (name):
 	"""Replace unsupported characters in ASN.1 symbol names"""
-	return str (name).replace (' ', '_').replace ('-', '_')
+	return str (name).replace (' ', '').replace ('-', '_')
 
 
 class QuickDERgen ():
@@ -63,25 +63,33 @@ class QuickDERgen ():
 		# Setup function maps
 		ik.ovly_funmap = {
 			DefinedType: ik.ovlyDefinedType,
+			ValueAssignment: ik.ignore_node,
 			TypeAssignment: ik.ovlyTypeAssignment,
 			TaggedType: ik.ovlyTaggedType,
 			SimpleType: ik.ovlySimpleType,
+			BitStringType: ik.ovlySimpleType,
+			ValueListType: ik.ovlySimpleType,
 			SequenceType: ik.ovlyConstructedType,
 			SetType: ik.ovlyConstructedType,
 			ChoiceType: ik.ovlyConstructedType,
 			SequenceOfType: ik.ovlySimpleType,	# var sized
 			SetOfType: ik.ovlySimpleType,		# var sized
+			ComponentType: ik.ovlySimpleType,  #TODO#
 		}
 		ik.pack_funmap = {
 			DefinedType: ik.packDefinedType,
+			ValueAssignment: ik.ignore_node,
 			TypeAssignment: ik.packTypeAssignment,
 			TaggedType: ik.packTaggedType,
 			SimpleType: ik.packSimpleType,
+			BitStringType: ik.packSimpleType,
+			ValueListType: ik.ovlySimpleType,
 			SequenceType: ik.packSequenceType,
 			SetType: ik.packSetType,
 			ChoiceType: ik.packChoiceType,
 			SequenceOfType: ik.packSequenceOfType,
 			SetOfType: ik.packSetOfType,
+			ComponentType: ik.packSimpleType,  #TODO#
 		}
 
 	def newcomma (ik, comma, firstcomma=''):
@@ -96,30 +104,38 @@ class QuickDERgen ():
 		ik.outfile.close ()
 
 	def generate_head (ik):
-		ik.wout ('/*\n * asn2quickder output for ' + ik.semamod.name + ' -- automatically generated\n *\n * For information on Quick `n\' Easy DER, see https://github.com/vanrein/quick-der\n *\n */\n\n\n#include <quick-der/api.h>\n\n\n')
-		ik.wout ('/* This module ' + toCsym (ik.semamod.name) + ' depends on:\n')
+		ik.wout ('/*\n * asn2quickder output for ' + ik.semamod.name + ' -- automatically generated\n *\n * For information on Quick `n\' Easy DER, see https://github.com/vanrein/quick-der\n *\n * For information on the code generator, see https://github.com/vanrein/asn2quickder\n *\n */\n\n\n#include <quick-der/api.h>\n\n\n')
+		# ik.wout ('/* This module ' + toCsym (ik.semamod.name) + ' depends on:\n')
+		# for rm in ik.refmods:
+		# 	ik.wout (' *   ' + toCsym (rm.name) + '\n')
+		# if len (ik.refmods) == 0:
+		# 	ik.wout (' *   (no other modules)\n')
+		# ik.wout (' */\n\n')
+		closer = ''
 		for rm in ik.refmods:
-			ik.wout (' *   ' + toCsym (rm.name) + '\n')
-		if len (ik.refmods) == 0:
-			ik.wout (' *   (no other modules)\n')
-		ik.wout (' */\n\n')
+			rmfn = toCsym (rm.rsplit ('.', 1) [0])
+			ik.wout ('#include <quick-der/' + rmfn + '\n')
+			closer = '\n\n'
+		ik.wout (closer)
 
 	def generate_tail (ik):
 		ik.wout ('\n\n/* asn2quickder output for ' + ik.semamod.name + ' ends here */\n')
 
 	def generate_ovly (ik):
 		ik.wout ('\n\n/* Overlay structures with ASN.1 derived nesting and labelling */\n\n')
-		for node in ik.semamod.assignments:
-			ik.generate_ovly_node (node)
+		for assigncompos in dependency_sort (ik.semamod.assignments):
+			for assign in assigncompos:
+				ik.generate_ovly_node (assign)
 
 	def generate_pack (ik):
 		ik.wout ('\n\n/* Parser definitions in terms of ASN.1 derived bytecode instructions */\n\n')
-		for node in ik.semamod.assignments:
-			tnm = type (node)
-			if tnm in ik.pack_funmap:
-				ik.pack_funmap [tnm] (node)
-			else:
-				print 'No pack generator for ' + str (tnm)
+		for assigncompos in dependency_sort (ik.semamod.assignments):
+			for assign in assigncompos:
+				tnm = type (assign)
+				if tnm in ik.pack_funmap:
+					ik.pack_funmap [tnm] (assign)
+				else:
+					print 'No pack generator for ' + str (tnm)
 
 	def generate_ovly_node (ik, node):
 		tnm = type (node)
@@ -127,6 +143,7 @@ class QuickDERgen ():
 			ik.ovly_funmap [tnm] (node)
 		else:
 			print 'No overlay generator for ' + str (tnm)
+			raise Exception ('RAISED WHERE?')
 
 	def generate_pack_node (ik, node):
 		tnm = type (node)
@@ -135,11 +152,13 @@ class QuickDERgen ():
 		else:
 			print 'No pack generator for ' + str (tnm)
 
+	def ignore_node (ik, node):
+		pass
 
 	def ovlyTypeAssignment (ik, node):
 		ik.wout ('typedef ')
 		ik.generate_ovly_node (node.type_decl)
-		ik.wout (' ' + ik.unit + '_' + toCsym (node.type_name) + '_ovly;\n\n')
+		ik.wout (' DER_OVLY_' + ik.unit + '_' + toCsym (node.type_name) + ';\n\n')
 
 	def packTypeAssignment (ik, node):
 		ik.wout ('#define DER_PACK_' + ik.unit + '_' + toCsym (node.type_name))
@@ -149,7 +168,7 @@ class QuickDERgen ():
 
 	def ovlyDefinedType (ik, node):
 		mod = node.module_name or ik.unit
-		ik.wout (toCsym (mod) + '_' + toCsym (node.type_name) + '_ovly')
+		ik.wout ('DER_OVLY_' + toCsym (mod) + '_' + toCsym (node.type_name))
 
 	def packDefinedType (ik, node):
 		mod = node.module_name or ik.unit
@@ -161,7 +180,7 @@ class QuickDERgen ():
 
 	def packSimpleType (ik, node):
 		ik.comma ()
-		ik.wout ('DER_PACK_STORE | DER_TAG_' + node.type_name.replace (' ', '_').upper ())
+		ik.wout ('DER_PACK_STORE | DER_TAG_' + node.type_name.replace (' ', '').upper ())
 
 	def ovlyTaggedType (ik, node):
 		# tag = str (node) 
@@ -186,19 +205,31 @@ class QuickDERgen ():
 	def ovlyConstructedType (ik, node):
 		ik.wout ('struct {\n');
 		for comp in node.components:
+			if isinstance (comp, ExtensionMarker):
+				ik.wout ('\t/* ...extensions... */\n')
+				continue
+			if isinstance (comp, ComponentType) and comp.components_of_type is not None:
+				ik.wout ('\t/* TODO: COMPONENTS OF TYPE ' + str (comp.components_of_type) + ' */\n')
+				continue
 			ik.wout ('\t')
 			ik.generate_ovly_node (comp.type_decl)
-			ik.wout (' ' + toCsym (comp.identifier) + '; -- ' + str (comp.type_decl) + '\n')
+			ik.wout (' ' + toCsym (comp.identifier) + '; // ' + str (comp.type_decl) + '\n')
 		ik.wout ('}')
 
 	def packSequenceType (ik, node):
 		ik.comma ()
 		ik.wout ('DER_PACK_ENTER | DER_TAG_SEQUENCE')
 		for comp in node.components:
+			if isinstance (comp, ExtensionMarker):
+				ik.comma ()
+				ik.wout ('/* ...ASN.1 extensions... */')
+				continue
 			if comp.optional:
 				ik.comma ()
 				ik.wout ('DER_PACK_OPTIONAL')
-			ik.generate_pack_node (comp.type_decl)
+			if comp.type_decl is not None:
+				# TODO: None would be due to components_of_type
+				ik.generate_pack_node (comp.type_decl)
 		ik.comma ()
 		ik.wout ('DER_PACK_LEAVE')
 
@@ -206,31 +237,40 @@ class QuickDERgen ():
 		ik.comma ()
 		ik.wout ('DER_PACK_ENTER | DER_TAG_SET')
 		for comp in node.components:
+			if isinstance (comp, ExtensionMarker):
+				ik.comma ()
+				ik.wout ('/* ...extensions... */')
+				continue
 			if comp.optional:
 				ik.comma ()
 				ik.wout ('DER_PACK_OPTIONAL')
-			ik.generate_pack_node (comp.type_decl)
+			if comp.type_decl is not None:
+				# TODO: None would be due to components_of_type
+				ik.generate_pack_node (comp.type_decl)
 		ik.comma ()
 		ik.wout ('DER_PACK_LEAVE')
 
 	def packChoiceType (ik, node):
 		ik.comma ()
-		ik.wout ('DER_TAG_CHOICE_BEGIN')
+		ik.wout ('DER_PACK_CHOICE_BEGIN')
 		for comp in node.components:
-			if comp.optional:
+			if isinstance (comp, ExtensionMarker):
 				ik.comma ()
-				ik.wout ('DER_PACK_OPTIONAL')
-			ik.generate_pack_node (comp.type_decl)
+				ik.wout ('/* ...extensions... */')
+				continue
+			if comp.type_decl is not None:
+				# TODO: None would be due to components_of_type
+				ik.generate_pack_node (comp.type_decl)
 		ik.comma ()
-		ik.wout ('DER_TAG_CHOICE_BEGIN')
+		ik.wout ('DER_PACK_CHOICE_END')
 
 	def packSequenceOfType (ik, node):
 		ik.comma ()
-		ik.wout ('DER_TAG_STORE | DER_TAG_SEQUENCE')
+		ik.wout ('DER_PACK_STORE | DER_TAG_SEQUENCE')
 
 	def packSetOfType (ik, node):
 		ik.comma ()
-		ik.wout ('DER_TAG_STORE | DER_TAG_SEQUENCE')
+		ik.wout ('DER_PACK_STORE | DER_TAG_SEQUENCE')
 
 
 """The main program asn2quickder is called with one or more .asn1 files,
