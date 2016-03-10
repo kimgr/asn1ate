@@ -112,10 +112,24 @@ class QuickDERgen ():
 		# 	ik.wout (' *   (no other modules)\n')
 		# ik.wout (' */\n\n')
 		closer = ''
-		for rm in ik.refmods:
-			rmfn = toCsym (rm.rsplit ('.', 1) [0])
-			ik.wout ('#include <quick-der/' + rmfn + '\n')
+		for rm in ik.semamod.imports.module2symbols.keys ():
+			rmfn = toCsym (rm.rsplit ('.', 1) [0]).lower ()
+			ik.wout ('#include <quick-der/' + rmfn + '.h>\n')
 			closer = '\n\n'
+		ik.wout (closer)
+		closer = ''
+		for rm in ik.semamod.imports.module2symbols.keys ():
+			rmfn = toCsym (rm.rsplit ('.', 1) [0]).lower ()
+			for sym in ik.semamod.imports.module2symbols [rm]:
+				ik.wout ('typedef DER_OVLY_' + toCsym (rmfn) + '_' + toCsym (sym) + ' DER_OVLY_' + toCsym (ik.unit) + '_' + toCsym (sym) + ';\n')
+				closer = '\n\n'
+		ik.wout (closer)
+		closer = ''
+		for rm in ik.semamod.imports.module2symbols.keys ():
+			rmfn = toCsym (rm.rsplit ('.', 1) [0]).lower ()
+			for sym in ik.semamod.imports.module2symbols [rm]:
+				ik.wout ('#define DER_PACK_' + toCsym (ik.unit) + '_' + toCsym (sym) + ' DER_PACK_' + toCsym (rmfn) + '_' + toCsym (sym) + '\n')
+				closer = '\n\n'
 		ik.wout (closer)
 
 	def generate_tail (ik):
