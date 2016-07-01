@@ -295,8 +295,8 @@ mods = []
 for file in sys.argv [1:]:
     print('Parsing', file)
     with open(file, 'r') as asn1fh:
-        asn1tree = parser.parse_asn1(asn1fh.read())
-    asn1tree = parser.parse_asn1(asn1txt)
+	asn1txt  = asn1fh.read ()
+        asn1tree = parser.parse_asn1(asn1txt)
     print('Building semantic model for', file)
     asn1sem = build_semantic_model(asn1tree)
     mods.insert(0, asn1sem [0])
