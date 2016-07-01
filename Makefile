@@ -29,21 +29,21 @@ LIBS=__init__ parser sema support/pygen
 all: $(foreach lib,$(LIBS),$(SUBDIR)/$(lib).pyc)
 
 %.pyc: %.py
-	PYTHONPATH=$(SUBDIR)/.. python -c 'import asn1ate.$(basename $(subst /,.,$(subst $(SUBDIR)/,,$<)))'
+	PYTHONPATH=$(SUBDIR)/..:$(PYTHONPATH) python -c 'import asn1ate.$(basename $(subst /,.,$(subst $(SUBDIR)/,,$<)))'
 
 %.pyo: %.pyc
-	PYTHONPATH=$(SUBDIR)/.. python -O $<
+	PYTHONPATH=$(SUBDIR)/..:$(PYTHONPATH) python -O $<
 
 clean:
 	rm -f $(foreach lib,$(LIBS),$(SUBDIR)/$(lib).pyc)
 	rm -f $(foreach lib,$(LIBS),$(SUBDIR)/$(lib).pyo)
 
 install: all
-	mkdir -p '$(DESTDIR)$(PREFIX)/lib/asn2quickder/asn1ate/support'
+	mkdir -p '$(DESTDIR)/$(PREFIX)/lib/asn2quickder/asn1ate/support'
 	$(foreach file,$(LIBS),install $(SUBDIR)/$(file).py  '$(DESTDIR)$(PREFIX)/lib/asn2quickder/asn1ate/$(file).py'  &&) echo 'Python library files installed'
 	$(foreach file,$(LIBS),install $(SUBDIR)/$(file).pyc '$(DESTDIR)$(PREFIX)/lib/asn2quickder/asn1ate/$(file).pyc' &&) echo 'Python optimised library files installed'
 	$(foreach file,$(BINS),install $(SUBDIR)/$(file).py  '$(DESTDIR)$(PREFIX)/lib/asn2quickder/asn1ate/$(file).py'  &&) echo 'Python binary files installed'
-	( echo '#!/bin/sh' ; echo 'PYTHONPATH='"'"'$(PREFIX)/lib/asn2quickder'"'"' python '"'"'$(PREFIX)/lib/asn2quickder/asn1ate/asn2quickder.py'"'"' "$$@"' ) > '$(DESTDIR)$(PREFIX)/bin/asn2quickder'
+	( echo '#!/bin/sh' ; echo 'PYTHONPATH='"'"'$(DESTDIR)/$(PREFIX)/lib/asn2quickder:$(PYTHONPATH)'"'"' python '"'"'$(DESTDIR)/$(PREFIX)/lib/asn2quickder/asn1ate/asn2quickder.py'"'"' "$$@"' ) > '$(DESTDIR)$(PREFIX)/bin/asn2quickder'
 	chmod ugo+x '$(DESTDIR)$(PREFIX)/bin/asn2quickder'
 
 uninstall:
