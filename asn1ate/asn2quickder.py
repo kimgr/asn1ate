@@ -170,7 +170,7 @@ class QuickDERgen():
 
     def packTypeAssignment(self, node):
         self.wout('#define DER_PACK_' + self.unit + '_' + toCsym(node.type_name))
-        self.newcomma(', \\\\\n\t', ' \\\\\n\t')
+        self.newcomma(', \\\n\t', ' \\\n\t')
         self.generate_pack_node(node.type_decl)
         self.wout('\n\n')
 
@@ -204,7 +204,7 @@ class QuickDERgen():
         #TODO# Need to push down node.implicity == TagImplicity.IMPLICIT
         #TODO# Need to process tag class
         self.comma()
-        self.wout('DER_PACK_ENTER | DER_' +(node.class_name or 'CONTEXT') + '_TAG(' + node.class_number + ')')
+        self.wout('DER_PACK_ENTER | DER_TAG_' +(node.class_name or 'CONTEXT') + '(' + node.class_number + ')')
         self.generate_pack_node(node.type_decl)
         self.comma()
         self.wout('DER_PACK_LEAVE')
