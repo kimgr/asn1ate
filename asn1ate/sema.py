@@ -722,15 +722,16 @@ class ValueListType(SemaNode):
 
 
 class Imports(SemaNode):
-    def __init__(self,elements):
+    def __init__(self, elements):
 	self.module2symbols = { }
-	for i in range (0,len(elements),2):
+	for i in range (0, len(elements), 2):
 		self.module2symbols [elements [i+1].elements[0]] = set (elements [i])
-	print 'Imported from', self.module2symbols.keys ()
 
-class Exports(Imports):
-    def __init__(self,elements):
-	Imports.__init__ (self, elements)
+class Exports(SemaNode):
+    def __init__(self, elements):
+	self.module2symbols = { }
+	for i in range (0, len(elements), 2):
+		self.module2symbols [elements [i+1].elements[0]] = set (elements [i])
 
 
 class BitStringType(SemaNode):

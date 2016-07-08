@@ -5,9 +5,8 @@ Introduction
 ------------
 
 ``asn1ate`` is a Python library for translating ASN.1 into other forms.
-It is intended for code generation from formal ASN.1 definitions, and a
-code generator for ``pyasn1`` is included.  Additional code for the
-``Quick DER`` format was added later.
+It is intended for code generation from formal ASN.1 definitions, and
+code generators for ``pyasn1`` as well as ``Quick DER`` are included.
 
 ``asn1ate`` is released under a 3-clause BSD license. For details, see
 LICENSE.txt.
@@ -53,11 +52,16 @@ and overlay structures for this format.  The command to do this is::
 It will store an include file suitable for use with ``Quick DER`` in ``source.h``,
 which is the source file name with its extension changed to ``.h``.
 
-This tool can be used for your private ASN.1 projects, but one purpose of
-Quick DER is also to have a developer's toolkit with precompiled header
-files that can simply be included as
+This tool can be used for your personal ASN.1 projects, but one purpose of
+Quick DER is to supply developers with a toolkit that installs header files
+for commonly used DER formats, that can be simply included as
 
   #include <quick-der/rfc5280.h>
+
+When building Quick DER, such header files are constructed for the ASN.1
+files included in the Quick DER package, and they are installed alongside
+the rest of Quick DER.  That use of the `asn2quickder` backend could be
+considered a "build-time" dependency of Quick DER.
 
 
 Dependencies
