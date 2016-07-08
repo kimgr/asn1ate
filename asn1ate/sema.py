@@ -270,8 +270,8 @@ class Module(SemaNode):
             self.tag_default = TagImplicity.EXPLICIT
 
         self.assignments = [_create_sema_node(token) for token in assignments.elements]
-	self.imports = _create_sema_node (imports)
-	self.exports = _create_sema_node (exports)
+	self.imports = _create_sema_node(imports)
+	self.exports = _create_sema_node(exports)
 
     def user_types(self):
         if not self._user_types:
@@ -724,14 +724,14 @@ class ValueListType(SemaNode):
 class Imports(SemaNode):
     def __init__(self, elements):
 	self.module2symbols = { }
-	for i in range (0, len(elements), 2):
-		self.module2symbols [elements [i+1].elements[0]] = set (elements [i])
+	for i in range(0, len(elements), 2):
+		self.module2symbols [elements [i+1].elements[0]] = set(elements [i])
 
 class Exports(SemaNode):
     def __init__(self, elements):
 	self.module2symbols = { }
-	for i in range (0, len(elements), 2):
-		self.module2symbols [elements [i+1].elements[0]] = set (elements [i])
+	for i in range(0, len(elements), 2):
+		self.module2symbols [elements [i+1].elements[0]] = set(elements [i])
 
 
 class BitStringType(SemaNode):
