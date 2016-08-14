@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 try:
     from setuptools import setup
 except:
@@ -48,6 +49,6 @@ setup(
     entry_points={
         'console_scripts': [
             'asn1ate = asn1ate.pyasn1gen:main'
-            ]
-    },
+        ]
+    }
 )
