@@ -84,9 +84,8 @@ class AnnotatedToken(object):
 def _build_asn1_grammar():
     def build_identifier(prefix_pattern):
         identifier_suffix = Optional(Word(srange('[-0-9a-zA-Z]')))
-        identifier = Combine(Word(srange(prefix_pattern),
-                                  exact=1) + identifier_suffix)  # todo: more rigorous? trailing hyphens and -- forbidden
-        return identifier
+        # todo: more rigorous? trailing hyphens and -- forbidden
+        return Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)
 
     def braced_list(element_rule):
         return Suppress('{') + Group(delimitedList(element_rule)) + Suppress('}')
@@ -242,13 +241,11 @@ def _build_asn1_grammar():
     single_value_constraint = Suppress('(') + value + Suppress(')')
     value_range_constraint = Suppress('(') + lower_bound + Suppress('..') + upper_bound + Suppress(')')
     # TODO: Include contained subtype constraint here if we ever implement it.
-    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + (
-        single_value_constraint | value_range_constraint) + Optional(Suppress(')'))
+    size_constraint = Optional(Suppress('(')) + Suppress(SIZE) + (single_value_constraint | value_range_constraint) + Optional(Suppress(')'))
 
     # types
     # todo: consider other defined types from 13.1
-    defined_type = Optional(module_reference + Suppress('.'), default=None) + typereference + Optional(size_constraint,
-                                                                                                       default=None)
+    defined_type = Optional(module_reference + Suppress('.'), default=None) + typereference + Optional(size_constraint, default=None)
 
     # TODO: consider exception syntax from 24.1
     extension_marker = Unique(ELLIPSIS)
@@ -272,8 +269,7 @@ def _build_asn1_grammar():
     choice_type = CHOICE + braced_list(named_type | extension_marker)
     selection_type = identifier + Suppress('<') + type_
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
-    bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(
-        single_value_constraint | size_constraint, default=None)
+    bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(single_value_constraint | size_constraint, default=None)
     plain_integer_type = INTEGER
     restricted_integer_type = INTEGER + braced_list(named_number) + Optional(single_value_constraint, default=None)
     boolean_type = BOOLEAN
@@ -289,17 +285,14 @@ def _build_asn1_grammar():
                                       T61String | UniversalString | \
                                       UTF8String | VideotexString | \
                                       VisibleString
-    characterstring_type = (restricted_characterstring_type | unrestricted_characterstring_type) + Optional(
-        size_constraint)
+    characterstring_type = (restricted_characterstring_type | unrestricted_characterstring_type) + Optional(size_constraint)
     useful_type = GeneralizedTime | UTCTime | ObjectDescriptor
 
     # ANY type
     any_type = ANY + Optional(Suppress(DEFINED_BY + identifier))
 
     # todo: consider other builtins from 16.2
-    simple_type = (
-                      any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(
-        value_range_constraint | single_value_constraint)
+    simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type
@@ -333,8 +326,8 @@ def _build_asn1_grammar():
     module_body = (exports + imports + assignment_list)
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + Suppress(DEFINITIONS) + Optional(tag_default, default=None) + \
-                        Optional(extension_default, default=None) + Suppress('::=') + Suppress(
-        BEGIN) + module_body + Suppress(END)
+                        Optional(extension_default, default=None) + Suppress('::=') + \
+                        Suppress(BEGIN) + module_body + Suppress(END)
 
     module_definition.ignore(comment)
 
