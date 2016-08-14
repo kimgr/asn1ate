@@ -15,7 +15,7 @@ def get_version():
 
     environment = {}
     with open(version_file) as fp:
-        exec (fp.read(), environment)
+        exec(fp.read(), environment)
 
     return environment['__version__']
 

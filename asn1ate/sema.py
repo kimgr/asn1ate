@@ -918,7 +918,7 @@ def _create_sema_node(token):
 
 def _assert_annotated_token(obj):
     if type(obj) is not parser.AnnotatedToken:
-        raise Exception('Object %r is not in annotated token' % obj)
+        raise Exception('Object %r is not an annotated token' % obj)
 
 
 # HACK: Generate unique names for unnamed members
