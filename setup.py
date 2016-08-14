@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 try:
     from setuptools import setup
 except:
@@ -14,7 +15,7 @@ def get_version():
 
     environment = {}
     with open(version_file) as fp:
-        exec(fp.read(), environment)
+        exec (fp.read(), environment)
 
     return environment['__version__']
 
@@ -48,6 +49,6 @@ setup(
     entry_points={
         'console_scripts': [
             'asn1ate = asn1ate.pyasn1gen:main'
-            ]
-    },
+        ]
+    }
 )
