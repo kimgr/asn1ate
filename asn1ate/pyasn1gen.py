@@ -28,7 +28,7 @@ from __future__ import print_function  # Python 2 compatibility
 import sys
 import argparse
 import keyword
-from asn1ate import __version__
+from asn1ate import parser, __version__
 from asn1ate.support import pygen
 from asn1ate.sema import *
 
