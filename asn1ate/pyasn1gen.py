@@ -149,7 +149,7 @@ class Pyasn1Backend(object):
 
     def generate_definition(self, assignment):
         if not isinstance(assignment, (ValueAssignment, TypeAssignment)):
-            raise Exception('Unexpected assignment type %s' % type(assignment))
+            raise Exception('Unexpected assignment type %s' % assignment.__class__.__name__)
 
         if isinstance(assignment, ValueAssignment):
             return None  # Nothing to do here.
@@ -363,7 +363,7 @@ class Pyasn1Backend(object):
             elif isinstance(nested, ValueRangeConstraint):
                 return _translate_value(nested.min_value), _translate_value(nested.max_value)
             else:
-                raise Exception('Unrecognized nested size constraint type: %s' % type(constraint.nested).__name__)
+                raise Exception('Unrecognized nested size constraint type: %s' % nested.__class__.__name__)
 
         if isinstance(constraint, SingleValueConstraint):
             return 'constraint.SingleValueConstraint(%s)' % (_translate_value(constraint.value))
@@ -374,7 +374,7 @@ class Pyasn1Backend(object):
             return 'constraint.ValueRangeConstraint(%s, %s)' % (_translate_value(constraint.min_value),
                                                                 _translate_value(constraint.max_value))
         else:
-            raise Exception('Unrecognized constraint type: %s' % type(constraint).__name__)
+            raise Exception('Unrecognized constraint type: %s' % constraint.__class__.__name__)
 
     def build_value_construct_expr(self, type_decl, value):
         """ Build a valid construct-expression for values, depending on
@@ -458,7 +458,7 @@ class Pyasn1Backend(object):
             elif isinstance(c, NameAndNumberForm):
                 objid_components.append(str(c.number.value))
             else:
-                raise Exception('Unexpected component type %s' % type(c))
+                raise Exception('Unexpected component type %s' % c.__class__.__name__)
 
         return '_OID(%s)' % ', '.join(objid_components)
 

@@ -310,7 +310,7 @@ class Module(SemaNode):
 
     def resolve_selection_type(self, selection_type_decl):
         if not isinstance(selection_type_decl, SelectionType):
-            raise Exception("Expected SelectionType, was %s" % type(selection_type_decl).__name__)
+            raise Exception("Expected SelectionType, was %s" % selection_type_decl.__class__.__name__)
 
         choice_type = self.get_type_decl(selection_type_decl.type_decl.type_name)
         for named_type in choice_type.components:
@@ -627,7 +627,7 @@ class SizeConstraint(SemaNode):
     def __init__(self, elements):
         self.nested = _create_sema_node(elements[0])
         if not isinstance(self.nested, (ValueRangeConstraint, SingleValueConstraint)):
-            raise Exception('Unexpected size constraint type %s' % type(self.nested))
+            raise Exception('Unexpected size constraint type %s' % self.nested.__class__.__name__)
 
     def __str__(self):
         return 'SIZE%s' % self.nested
