@@ -216,7 +216,7 @@ class Pyasn1Backend(object):
     def defn_tagged_type(self, class_name, t):
         fragment = self.writer.get_fragment()
 
-        implicitness = self.sema_module.resolve_tag_implicity(t.implicity, t.type_decl)
+        implicitness = self.sema_module.resolve_tag_implicitness(t.implicitness, t.type_decl)
         if implicitness == TagImplicitness.IMPLICIT:
             tag_implicitness = 'tagImplicitly'
         elif implicitness == TagImplicitness.EXPLICIT:
@@ -325,7 +325,7 @@ class Pyasn1Backend(object):
         return str(fragment)
 
     def inline_tagged_type(self, t):
-        implicitness = self.sema_module.resolve_tag_implicity(t.implicity, t.type_decl)
+        implicitness = self.sema_module.resolve_tag_implicitness(t.implicitness, t.type_decl)
         if implicitness == TagImplicitness.IMPLICIT:
             tag_implicitness = 'implicitTag'
         elif implicitness == TagImplicitness.EXPLICIT:

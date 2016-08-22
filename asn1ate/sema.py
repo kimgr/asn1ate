@@ -319,21 +319,21 @@ class Module(SemaNode):
 
         return None
 
-    def resolve_tag_implicity(self, tag_implicity, tagged_type_decl):
-        """ The implicity for a tag depends on three things:
-        * Any written implicity on the tag decl itself (``tag_implicity``)
+    def resolve_tag_implicitness(self, tag_implicitness, tagged_type_decl):
+        """ The implicitness for a tag depends on three things:
+        * Any written implicitness on the tag decl itself (``tag_implicitness``)
         * The module's tag default (kept in ``self.tag_default``)
         * Details of the tagged type according to X.680, 30.6c (``tagged_type_decl``)
         """
-        if tag_implicity is not None:
-            return tag_implicity
+        if tag_implicitness is not None:
+            return tag_implicitness
 
         # Tagged CHOICEs must always be explicit if the default is implicit, automatic or empty
         # See X.680, 30.6c
         if isinstance(tagged_type_decl, ChoiceType):
             return TagImplicitness.EXPLICIT
 
-        # No tag implicity specified, use module-default
+        # No tag implicitness specified, use module-default
         if self.tag_default is None:
             # Explicit is default if nothing
             return TagImplicitness.EXPLICIT
@@ -471,7 +471,7 @@ class TaggedType(SemaNode):
         self.class_name = None
         self.class_number = None
         if len(elements) == 3:
-            tag_token, implicity, type_token = elements
+            tag_token, implicitness, type_token = elements
             for tag_element in tag_token.elements:
                 if tag_element.ty == 'TagClassNumber':
                     self.class_number = tag_element.elements[0]
@@ -481,16 +481,16 @@ class TaggedType(SemaNode):
                     raise Exception('Unknown tag element: %s' % tag_element)
             self.type_decl = _create_sema_node(type_token)
         elif len(elements) == 4:
-            self.class_name, self.class_number, implicity, self.type_decl = elements
+            self.class_name, self.class_number, implicitness, self.type_decl = elements
         else:
             raise Exception('Incorrect number of elements passed to TaggedType')
 
-        if implicity == 'IMPLICIT':
-            self.implicity = TagImplicitness.IMPLICIT
-        elif implicity == 'EXPLICIT':
-            self.implicity = TagImplicitness.EXPLICIT
-        elif implicity is None:
-            self.implicity = None  # Module-default or automatic
+        if implicitness == 'IMPLICIT':
+            self.implicitness = TagImplicitness.IMPLICIT
+        elif implicitness == 'EXPLICIT':
+            self.implicitness = TagImplicitness.EXPLICIT
+        elif implicitness is None:
+            self.implicitness = None  # Module-default or automatic
 
     @property
     def type_name(self):
@@ -503,9 +503,9 @@ class TaggedType(SemaNode):
         class_spec.append(self.class_number)
 
         result = '[%s] ' % ' '.join(class_spec)
-        if self.implicity == TagImplicitness.IMPLICIT:
+        if self.implicitness == TagImplicitness.IMPLICIT:
             result += 'IMPLICIT '
-        elif self.implicity == TagImplicitness.EXPLICIT:
+        elif self.implicitness == TagImplicitness.EXPLICIT:
             result += 'EXPLICIT '
         else:
             pass  # module-default
