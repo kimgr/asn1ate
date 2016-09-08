@@ -88,7 +88,8 @@ def _build_asn1_grammar():
         return Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)
 
     def braced_list(element_rule):
-        return Suppress('{') + Group(delimitedList(element_rule)) + Suppress('}')
+        elements_rule = Optional(delimitedList(element_rule))
+        return Suppress('{') + Group(elements_rule) + Suppress('}')
 
     def annotate(name):
         def annotation(t):
