@@ -403,15 +403,18 @@ class ConstructedType(SemaNode):
     def __init__(self, elements):
         type_name, component_tokens = elements
         self.type_name = type_name
-        self.components = [_create_sema_node(token) for token in component_tokens]
+        self.components = [_create_sema_node(token)
+                           for token in component_tokens]
 
     def auto_tag(self):
-        # Constructed types can have ExtensionMarkers as components - ignore them
-        component_types = [c.type_decl for c in self.components if hasattr(c, 'type_decl')]
+        # Constructed types can have ExtensionMarkers as components, ignore them
+        component_types = [c.type_decl for c in self.components
+                           if hasattr(c, 'type_decl')]
         already_tagged = any(isinstance(c, TaggedType) for c in component_types)
         if not already_tagged:
             # Wrap components in TaggedTypes
-            for tag_number, child in enumerate([c for c in self.children() if hasattr(c, 'type_decl')]):
+            for tag_number, child in enumerate([c for c in self.children()
+                                                if hasattr(c, 'type_decl')]):
                 element = child.type_decl
                 tagged_type = TaggedType((None, tag_number, None, element))
                 child.type_decl = tagged_type
