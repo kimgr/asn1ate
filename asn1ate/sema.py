@@ -416,7 +416,7 @@ class ConstructedType(SemaNode):
             for tag_number, child in enumerate([c for c in self.children()
                                                 if hasattr(c, 'type_decl')]):
                 element = child.type_decl
-                tagged_type = TaggedType((None, tag_number, None, element))
+                tagged_type = TaggedType((None, str(tag_number), None, element))
                 child.type_decl = tagged_type
 
     def __str__(self):
