@@ -439,7 +439,11 @@ class Pyasn1Backend(object):
             return class_name + '()'
 
     def inline_sequenceof_type(self, t):
-        return 'univ.SequenceOf(componentType=%s)' % self.generate_expr(t.type_decl)
+        expr = 'univ.SequenceOf(componentType=%s)' % self.generate_expr(t.type_decl)
+        if t.size_constraint:
+            expr += '.subtype(subtypeSpec=%s)' % \
+                    self.build_constraint_expr(t.size_constraint)
+        return expr
 
     def inline_setof_type(self, t):
         return 'univ.SetOf(componentType=%s)' % self.generate_expr(t.type_decl)
