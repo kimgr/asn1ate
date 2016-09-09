@@ -10,5 +10,11 @@ BEGIN
     quux SET OF Foo	 -- user-defined type
   }
 
-  -- Constraints handled in size_constraint.asn
+  -- Constrained
+  Baz ::= SEQUENCE SIZE(2..5) OF INTEGER
+
+  Boo ::= SEQUENCE
+  {
+    monk SEQUENCE SIZE(0..10) OF INTEGER
+  }
 END
