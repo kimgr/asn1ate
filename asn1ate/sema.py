@@ -343,6 +343,8 @@ class Module(SemaNode):
 
     def __str__(self):
         return '%s DEFINITIONS ::=\n' % self.name \
+	    + str (self.exports) + '\n' \
+	    + str (self.imports) + '\n' \
             + 'BEGIN\n' \
             + '\n'.join(map(str, self.assignments)) + '\n' \
             + 'END\n'
@@ -723,15 +725,35 @@ class ValueListType(SemaNode):
 
 class Imports(SemaNode):
     def __init__(self, elements):
-	self.module2symbols = { }
+	self.symbols_imported = { }
 	for i in range(0, len(elements), 2):
-		self.module2symbols [elements [i+1].elements[0]] = set(elements [i])
+	    mod = elements [i+1].elements[0]
+	    old = self.symbols_imported.get(mod, set())
+	    new = old.union(set(elements [i]))
+	    self.symbols_imported [mod] = new
+
+    def __str__ (self):
+	clauses = set ()
+	for mod in self.symbols_imported.keys ():
+	    clauses.add (','.join (self.symbols_imported [mod]) + ' FROM ' + mod)
+	if len (clauses) == 0:
+	    return ''
+	else:
+	    return 'IMPORTS ' + ' '.join (clauses) + ';'
+	    
 
 class Exports(SemaNode):
     def __init__(self, elements):
-	self.module2symbols = { }
-	for i in range(0, len(elements), 2):
-		self.module2symbols [elements [i+1].elements[0]] = set(elements [i])
+	if len (elements) == 0:
+	    self.symbols_exported = set ()
+	else:
+	    self.symbols_exported = set (elements [0])
+
+    def __str__(self):
+	if len (self.symbols_exported) == 0:
+	    return ''
+	else:
+	    return 'EXPORTS ' + ','.join (self.symbols_exported) + ';'
 
 
 class BitStringType(SemaNode):
