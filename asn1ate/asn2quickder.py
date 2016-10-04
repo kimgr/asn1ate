@@ -68,9 +68,9 @@ class QuickDERgen():
     def __init__(self, semamod, outfn, refmods):
         self.semamod = semamod
         self.refmods = refmods
-        if outfn [-2:] == '.h':
+	self.unit, outext = os.path.splitext (outfn)
+        if outext == '.h':
             raise Exception('File cannot overwrite itself -- use another extension than .h for input files')
-        self.unit = tosym(outfn.rsplit('.', 1) [0])
         self.outfile = open(self.unit + '.h', 'w')
         # Setup function maps
         self.overlay_funmap = {
@@ -136,22 +136,24 @@ class QuickDERgen():
         self.writeln('')
         self.writeln('')
         closer = ''
-        for rm in self.semamod.imports.module2symbols.keys():
-            rmfn = tosym(rm.rsplit('.', 1) [0]).lower()
+	rmfns = set ()
+        for rm in self.semamod.imports.symbols_imported.keys():
+            rmfns.add (tosym(rm.rsplit('.', 1) [0]).lower())
+	for rmfn in rmfns:
             self.writeln('#include <quick-der/' + rmfn + '.h>')
             closer = '\n\n'
         self.write(closer)
         closer = ''
-        for rm in self.semamod.imports.module2symbols.keys():
+        for rm in self.semamod.imports.symbols_imported.keys():
             rmfn = tosym(rm.rsplit('.', 1) [0]).lower()
-            for sym in self.semamod.imports.module2symbols [rm]:
+            for sym in self.semamod.imports.symbols_imported [rm]:
                 self.writeln('typedef DER_OVLY_' + tosym(rmfn) + '_' + tosym(sym) + ' DER_OVLY_' + tosym(self.unit) + '_' + tosym(sym) + ';')
                 closer = '\n\n'
         self.write(closer)
         closer = ''
-        for rm in self.semamod.imports.module2symbols.keys():
+        for rm in self.semamod.imports.symbols_imported.keys():
             rmfn = tosym(rm.rsplit('.', 1) [0]).lower()
-            for sym in self.semamod.imports.module2symbols [rm]:
+            for sym in self.semamod.imports.symbols_imported [rm]:
                 self.writeln('#define DER_PACK_' + tosym(self.unit) + '_' + tosym(sym) + ' DER_PACK_' + tosym(rmfn) + '_' + tosym(sym) + '')
                 closer = '\n\n'
         self.write(closer)
