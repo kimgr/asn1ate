@@ -740,11 +740,15 @@ class ValueListType(SemaNode):
 class Imports(SemaNode):
     def __init__(self, elements):
 	self.symbols_imported = { }
-	for i in range(0, len(elements), 2):
-	    mod = elements [i+1].elements[0]
+	i = 1
+	while i < len(elements):
+	    mod = elements [i].elements[0]
 	    old = self.symbols_imported.get(mod, set())
-	    new = old.union(set(elements [i]))
+	    new = old.union(set(elements [i-1]))
 	    self.symbols_imported [mod] = new
+	    i = i + 2
+	    while i < len(elements) and type(elements[i-1]) != type([]):
+		i = i + 1
 
     def __str__ (self):
 	clauses = set ()
