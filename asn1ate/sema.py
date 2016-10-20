@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015, Schneider Electric Buildings AB
+# Copyright (c) 2013-2016, Schneider Electric Buildings AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ def build_semantic_model(parse_result):
     # Head back through the model to act on any automatic tagging
     # Objects in root must be Modules by definition of the parser
     for module in root:
-        if module.tag_default == TagImplicity.AUTOMATIC:
+        if module.tag_default == TagImplicitness.AUTOMATIC:
             # Automatic tagging is on - wrap the members of constructed types
             for descendant in module.descendants():
                 if isinstance(descendant, ConstructedType):
@@ -158,7 +158,8 @@ def dependency_sort(assignments):
             while True:
                 successor = stack.pop()
                 connected_component.append(successor)
-                if successor == node: break
+                if successor == node:
+                    break
 
             component = tuple(connected_component)
             result.append(component)
@@ -191,7 +192,7 @@ REGISTERED_OID_NAMES = {
 }
 
 
-class TagImplicity(object):
+class TagImplicitness(object):
     """ Tag implicit/explicit enumeration """
     IMPLICIT = 0
     EXPLICIT = 1
@@ -214,6 +215,7 @@ All nodes that somehow denote a referenced type or value, either definitions
 etc) must have a method called ``reference_name``.
 """
 
+
 class SemaNode(object):
     """ Base class for all sema nodes. """
 
@@ -231,7 +233,7 @@ class SemaNode(object):
 
         # Expand SemaNodes out of list members, but do not recurse
         # through lists of lists.
-        list_members = [m for m  in members if isinstance(m, list)]
+        list_members = [m for m in members if isinstance(m, list)]
         for m in list_members:
             children.extend(n for n in m if isinstance(n, SemaNode))
 
@@ -249,7 +251,6 @@ class SemaNode(object):
 
 
 class Module(SemaNode):
-
     def __init__(self, elements):
         self._user_types = {}
 
@@ -259,15 +260,16 @@ class Module(SemaNode):
         self.name = module_reference.elements[0]
 
         if tag_default == 'IMPLICIT TAGS':
-            self.tag_default = TagImplicity.IMPLICIT
+            self.tag_default = TagImplicitness.IMPLICIT
         elif tag_default == 'EXPLICIT TAGS':
-            self.tag_default = TagImplicity.EXPLICIT
+            self.tag_default = TagImplicitness.EXPLICIT
         elif tag_default == 'AUTOMATIC TAGS':
-            self.tag_default = TagImplicity.AUTOMATIC
+            self.tag_default = TagImplicitness.AUTOMATIC
         else:
-            assert tag_default is None, 'Unexpected tag default: %s' % tag_default
+            if tag_default is not None:
+                raise Exception('Unexpected tag default: %s' % tag_default)
             # Tag default was not specified, default to explicit
-            self.tag_default = TagImplicity.EXPLICIT
+            self.tag_default = TagImplicitness.EXPLICIT
 
         self.assignments = [_create_sema_node(token) for token in assignments.elements]
 	self.imports = _create_sema_node(imports)
@@ -298,7 +300,8 @@ class Module(SemaNode):
                         break
             if not module:
                 raise Exception('Unrecognized referenced module %s in %s.' % (type_decl.module_name,
-                                                                              [module.name for module in referenced_modules]))
+                                                                              [module.name for module in
+                                                                               referenced_modules]))
             return module.resolve_type_decl(module.user_types()[type_decl.type_name], referenced_modules)
         else:
             return type_decl
@@ -308,7 +311,8 @@ class Module(SemaNode):
         return user_types[type_name]
 
     def resolve_selection_type(self, selection_type_decl):
-        assert isinstance(selection_type_decl, SelectionType), "Expected SelectionType, was %s" % type(selection_type_decl).__name__
+        if not isinstance(selection_type_decl, SelectionType):
+            raise Exception("Expected SelectionType, was %s" % selection_type_decl.__class__.__name__)
 
         choice_type = self.get_type_decl(selection_type_decl.type_decl.type_name)
         for named_type in choice_type.components:
@@ -317,27 +321,27 @@ class Module(SemaNode):
 
         return None
 
-    def resolve_tag_implicity(self, tag_implicity, tagged_type_decl):
-        """ The implicity for a tag depends on three things:
-        * Any written implicity on the tag decl itself (``tag_implicity``)
+    def resolve_tag_implicitness(self, tag_implicitness, tagged_type_decl):
+        """ The implicitness for a tag depends on three things:
+        * Any written implicitness on the tag decl itself (``tag_implicitness``)
         * The module's tag default (kept in ``self.tag_default``)
         * Details of the tagged type according to X.680, 30.6c (``tagged_type_decl``)
         """
-        if tag_implicity is not None:
-            return tag_implicity
+        if tag_implicitness is not None:
+            return tag_implicitness
 
         # Tagged CHOICEs must always be explicit if the default is implicit, automatic or empty
         # See X.680, 30.6c
         if isinstance(tagged_type_decl, ChoiceType):
-            return TagImplicity.EXPLICIT
+            return TagImplicitness.EXPLICIT
 
-        # No tag implicity specified, use module-default
+        # No tag implicitness specified, use module-default
         if self.tag_default is None:
             # Explicit is default if nothing
-            return TagImplicity.EXPLICIT
-        elif self.tag_default == TagImplicity.AUTOMATIC:
+            return TagImplicitness.EXPLICIT
+        elif self.tag_default == TagImplicitness.AUTOMATIC:
             # TODO: Expand according to rules for automatic tagging.
-            return TagImplicity.IMPLICIT
+            return TagImplicitness.IMPLICIT
 
         return self.tag_default
 
@@ -366,7 +370,8 @@ class Assignment(SemaNode):
 
 class TypeAssignment(Assignment):
     def __init__(self, elements):
-        assert(len(elements) == 3)
+        if len(elements) != 3:
+            raise Exception('Malformed type assignment')
         type_name, _, type_decl = elements
         self.type_name = type_name
         self.type_decl = _create_sema_node(type_decl)
@@ -398,20 +403,24 @@ class ValueAssignment(Assignment):
 
 class ConstructedType(SemaNode):
     """ Base type for SEQUENCE, SET and CHOICE. """
+
     def __init__(self, elements):
         type_name, component_tokens = elements
         self.type_name = type_name
-        self.components = [_create_sema_node(token) for token in component_tokens]
+        self.components = [_create_sema_node(token)
+                           for token in component_tokens]
 
     def auto_tag(self):
-        # Constructed types can have ExtensionMarkers as components - ignore them
-        component_types = [c.type_decl for c in self.components if hasattr(c, 'type_decl')]
+        # Constructed types can have ExtensionMarkers as components, ignore them
+        component_types = [c.type_decl for c in self.components
+                           if hasattr(c, 'type_decl')]
         already_tagged = any(isinstance(c, TaggedType) for c in component_types)
         if not already_tagged:
             # Wrap components in TaggedTypes
-            for tag_number, child in enumerate([c for c in self.children() if hasattr(c, 'type_decl')]):
+            for tag_number, child in enumerate([c for c in self.children()
+                                                if hasattr(c, 'type_decl')]):
                 element = child.type_decl
-                tagged_type = TaggedType((None, tag_number, None, element))
+                tagged_type = TaggedType((None, str(tag_number), None, element))
                 child.type_decl = tagged_type
 
     def __str__(self):
@@ -438,6 +447,7 @@ class SetType(ConstructedType):
 
 class CollectionType(SemaNode):
     """ Base type for SET OF and SEQUENCE OF. """
+
     def __init__(self, kind, elements):
         self.kind = kind
         self.type_name = self.kind + ' OF'
@@ -468,26 +478,26 @@ class TaggedType(SemaNode):
         self.class_name = None
         self.class_number = None
         if len(elements) == 3:
-            tag_token, implicity, type_token = elements
+            tag_token, implicitness, type_token = elements
             for tag_element in tag_token.elements:
                 if tag_element.ty == 'TagClassNumber':
                     self.class_number = tag_element.elements[0]
                 elif tag_element.ty == 'TagClass':
                     self.class_name = tag_element.elements[0]
                 else:
-                    assert False, 'Unknown tag element: %s' % tag_element
+                    raise Exception('Unknown tag element: %s' % tag_element)
             self.type_decl = _create_sema_node(type_token)
         elif len(elements) == 4:
-            self.class_name, self.class_number, implicity, self.type_decl = elements
+            self.class_name, self.class_number, implicitness, self.type_decl = elements
         else:
-            assert False, 'Incorrect number of elements passed to TaggedType'
+            raise Exception('Incorrect number of elements passed to TaggedType')
 
-        if implicity == 'IMPLICIT':
-            self.implicity = TagImplicity.IMPLICIT
-        elif implicity == 'EXPLICIT':
-            self.implicity = TagImplicity.EXPLICIT
-        elif implicity is None:
-            self.implicity = None  # Module-default or automatic
+        if implicitness == 'IMPLICIT':
+            self.implicitness = TagImplicitness.IMPLICIT
+        elif implicitness == 'EXPLICIT':
+            self.implicitness = TagImplicitness.EXPLICIT
+        elif implicitness is None:
+            self.implicitness = None  # Module-default or automatic
 
     @property
     def type_name(self):
@@ -500,9 +510,9 @@ class TaggedType(SemaNode):
         class_spec.append(self.class_number)
 
         result = '[%s] ' % ' '.join(class_spec)
-        if self.implicity == TagImplicity.IMPLICIT:
+        if self.implicitness == TagImplicitness.IMPLICIT:
             result += 'IMPLICIT '
-        elif self.implicity == TagImplicity.EXPLICIT:
+        elif self.implicitness == TagImplicitness.EXPLICIT:
             result += 'EXPLICIT '
         else:
             pass  # module-default
@@ -620,12 +630,14 @@ class ValueRangeConstraint(SemaNode):
 
 class SizeConstraint(SemaNode):
     """ Size constraints nest single-value or range constraints to denote valid sizes. """
+
     def __init__(self, elements):
         self.nested = _create_sema_node(elements[0])
-        assert isinstance(self.nested, (ValueRangeConstraint, SingleValueConstraint))
+        if not isinstance(self.nested, (ValueRangeConstraint, SingleValueConstraint)):
+            raise Exception('Unexpected size constraint type %s' % self.nested.__class__.__name__)
 
     def __str__(self):
-        return 'SIZE%s' % (self.nested)
+        return 'SIZE%s' % self.nested
 
     __repr__ = __str__
 
@@ -655,7 +667,7 @@ class ComponentType(SemaNode):
         elif first_token.ty == 'ComponentTypeComponentsOf':
             self.components_of_type = _create_sema_node(first_token.elements[0])
         else:
-            assert False, 'Unknown component type %s' % first_token
+            raise Exception('Unknown component type %s' % first_token)
 
     def __str__(self):
         if self.components_of_type:
@@ -683,6 +695,8 @@ class NamedType(SemaNode):
             # an identifier
             self.identifier = first_token.elements[0]
             type_token = elements[1]
+        else:
+            raise Exception('Unexpected token %s' % first_token.ty)
 
         self.type_decl = _create_sema_node(type_token)
 
@@ -703,7 +717,7 @@ class ValueListType(SemaNode):
                 if idx == 0:
                     n.value = str(0)
                 else:
-                    n.value = str(int(self.named_values[idx-1].value) + 1)
+                    n.value = str(int(self.named_values[idx - 1].value) + 1)
 
         if len(elements) > 2:
             self.constraint = _maybe_create_sema_node(elements[2])
@@ -947,11 +961,14 @@ def _create_sema_node(token):
 
 
 def _assert_annotated_token(obj):
-    assert(type(obj) is parser.AnnotatedToken)
+    if type(obj) is not parser.AnnotatedToken:
+        raise Exception('Object %r is not an annotated token' % obj)
 
 
 # HACK: Generate unique names for unnamed members
 _unnamed_counter = 0
+
+
 def _get_next_unnamed():
     global _unnamed_counter
     _unnamed_counter += 1

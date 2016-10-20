@@ -14,9 +14,17 @@ BEGIN
   -- TypeWithConstraint syntax for SET OF and SEQUENCE OF
   SizedSetOf ::= SET SIZE(1..100) OF INTEGER
   SizedSetOfWithParens ::= SET (SIZE(1..100)) OF INTEGER
+  S0 ::= SEQUENCE
+  {
+    inlineSizedSetOf SET SIZE(0..10) OF INTEGER
+  }
 
   SizedSequenceOf ::= SEQUENCE SIZE(1..100) OF INTEGER
   SizedSequenceOfWithParens ::= SEQUENCE (SIZE(1..100)) OF INTEGER
+  S1 ::= SEQUENCE
+  {
+    inlineSizedSequenceOf SEQUENCE SIZE(0..10) OF INTEGER
+  }
 
   -- TODO: MIN/MAX is not yet translated in codegen.
   -- ConstrainedOctetStr4 ::= OCTET STRING (SIZE(MIN..MAX))

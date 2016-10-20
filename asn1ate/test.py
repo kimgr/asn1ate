@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015, Schneider Electric Buildings AB
+# Copyright (c) 2013-2016, Schneider Electric Buildings AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,20 @@
 from __future__ import print_function  # Python 2 compatibility
 
 import sys
-import argparse # Requires Python 2.7 or later, but that's OK for a test driver
+import argparse  # Requires Python 2.7 or later, but that's OK for a test driver
 from asn1ate import parser, sema, pyasn1gen, __version__
 from asn1ate.support import pygen
+
 
 def parse_args():
     ap = argparse.ArgumentParser(description='Test driver for asn1ate.')
     ap.add_argument('file', help='ASN.1 file to test.')
     group = ap.add_mutually_exclusive_group()
     group.add_argument('--parse', action='store_true', default=False, required=False, help='Only parse.')
-    group.add_argument('--sema', action='store_true', default=False, required=False, help='Only parse and build semantic model.')
-    group.add_argument('--gen', action='store_true', default=True, required=False, help='Parse, build semantic model and generate pyasn1 code. (Default)')
+    group.add_argument('--sema', action='store_true', default=False, required=False,
+                       help='Only parse and build semantic model.')
+    group.add_argument('--gen', action='store_true', default=True, required=False,
+                       help='Parse, build semantic model and generate pyasn1 code. (Default)')
 
     return ap.parse_args()
 

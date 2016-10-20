@@ -1,0 +1,8 @@
+Test DEFINITIONS ::=
+
+BEGIN
+
+Empty ::= SEQUENCE {
+}
+
+END

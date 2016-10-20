@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015, Schneider Electric Buildings AB
+# Copyright (c) 2013-2016, Schneider Electric Buildings AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,8 @@
 
 import re
 from copy import copy
-from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, delimitedList, cStyleComment, nums, srange, dblQuotedString, Or, CaselessLiteral
-
+from pyparsing import Keyword, Literal, Word, OneOrMore, ZeroOrMore, Combine, Regex, Forward, Optional, Group, Suppress, \
+    delimitedList, cStyleComment, nums, srange, dblQuotedString, Or, CaselessLiteral
 
 __all__ = ['parse_asn1', 'AnnotatedToken']
 
@@ -46,6 +46,7 @@ def print_parse_tree(node, indent=1):
     """ Debugging aid. Dumps a parse tree as returned
     from parse_asn1 to stdout in indented tree form.
     """
+
     def indented_print(msg):
         print(' ' * indent + msg)
 
@@ -69,6 +70,7 @@ class AnnotatedToken(object):
     Children may be other annotated tokens, lists or simple
     strings.
     """
+
     def __init__(self, token_type, elements):
         self.ty = token_type
         self.elements = elements
@@ -82,11 +84,12 @@ class AnnotatedToken(object):
 def _build_asn1_grammar():
     def build_identifier(prefix_pattern):
         identifier_suffix = Optional(Word(srange('[-0-9a-zA-Z]')))
-        identifier = Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)  # todo: more rigorous? trailing hyphens and -- forbidden
-        return identifier
+        # todo: more rigorous? trailing hyphens and -- forbidden
+        return Combine(Word(srange(prefix_pattern), exact=1) + identifier_suffix)
 
     def braced_list(element_rule):
-        return Suppress('{') + Group(delimitedList(element_rule)) + Suppress('}')
+        elements_rule = Optional(delimitedList(element_rule))
+        return Suppress('{') + Group(elements_rule) + Suppress('}')
 
     def annotate(name):
         def annotation(t):
@@ -141,7 +144,7 @@ def _build_asn1_grammar():
     BMPString = Keyword('BMPString')
     GeneralString = Keyword('GeneralString')
     GraphicString = Keyword('GraphicString')
-    IA5String =  Keyword('IA5String')
+    IA5String = Keyword('IA5String')
     ISO646String = Keyword('ISO646String')
     NumericString = Keyword('NumericString')
     PrintableString = Keyword('PrintableString')
@@ -218,7 +221,7 @@ def _build_asn1_grammar():
 
     # tags
     class_ = UNIVERSAL | APPLICATION | PRIVATE
-    class_number = Unique(number) # todo: consider defined values from 30.1
+    class_number = Unique(number)  # todo: consider defined values from 30.1
     tag = Suppress('[') + Optional(class_) + class_number + Suppress(']')
     tag_default = EXPLICIT_TAGS | IMPLICIT_TAGS | AUTOMATIC_TAGS
 
@@ -324,7 +327,8 @@ def _build_asn1_grammar():
     module_body = (exports + imports + assignment_list)
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + Suppress(DEFINITIONS) + Optional(tag_default, default=None) + \
-                        Optional(extension_default, default=None) + Suppress('::=') + Suppress(BEGIN) + module_body + Suppress(END)
+                        Optional(extension_default, default=None) + Suppress('::=') + \
+                        Suppress(BEGIN) + module_body + Suppress(END)
 
     module_definition.ignore(comment)
 

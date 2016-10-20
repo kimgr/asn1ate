@@ -1,12 +1,12 @@
 asn1ate -- ASN.1 translation library.
-Copyright 2013-2015 Schneider Electric Buildings AB
+Copyright 2013-2016 Schneider Electric Buildings AB
 
 Introduction
 ------------
 
 ``asn1ate`` is a Python library for translating ASN.1 into other forms.
-It is intended for code generation from formal ASN.1 definitions, and
-code generators for ``pyasn1`` as well as ``Quick DER`` are included.
+It is intended for code generation from formal ASN.1 definitions, and a
+code generator for ``pyasn1`` is included by way of demonstration.
 
 ``asn1ate`` is released under a 3-clause BSD license. For details, see
 LICENSE.txt.
@@ -39,15 +39,14 @@ ASN.1 definitions. The command to do this is::
 
 It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout.
 
-
 Usage with Quick DER
 --------------------
 
 Quick DER is a library found on https://github.com/vanrein/quick-der
-A separate generator exists in ``asn1ate`` to create the parser bytecode
-and overlay structures for this format.  The command to do this is::
+This generator uses the ``asn1ate`` library to create parser bytecode
+and overlay structures from an ASN.1 spec.  The command to do this is::
 
-  $ python .../asn1ate/asn2quickder.py source.asn1
+  $ asn2quickder source.asn1
 
 It will store an include file suitable for use with ``Quick DER`` in ``source.h``,
 which is the source file name with its extension changed to ``.h``.
@@ -62,6 +61,9 @@ When building Quick DER, such header files are constructed for the ASN.1
 files included in the Quick DER package, and they are installed alongside
 the rest of Quick DER.  That use of the `asn2quickder` backend could be
 considered a "build-time" dependency of Quick DER.
+
+Note that Quick DER is not part of the ``asn1ate`` project; the two are
+simply on friendly terms.
 
 
 Dependencies
@@ -91,8 +93,6 @@ driver, a parser, a semantic model and a convention for code generators.
 * ``pyasn1gen.py`` -- a code generator to transform a semantic model into
   ``pyasn1`` syntax. This can be used as a script in which case it will dump
   output to stdout.
-* ``asn2quickder.py`` -- a code generator to transform a semantic model into
-  ``Quick DER`` include file syntax.  This can be used as a command.
 
 The ASN.1 parser is very ad-hoc, I've experimented with the grammar until I
 found something that accepted our proprietary ASN.1 definition. It's based on
