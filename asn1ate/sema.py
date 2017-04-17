@@ -272,6 +272,8 @@ class Module(SemaNode):
             self.tag_default = TagImplicitness.EXPLICIT
 
         self.assignments = [_create_sema_node(token) for token in assignments.elements]
+	self.imports = _create_sema_node (imports)
+	self.exports = _create_sema_node (exports)
 
     def user_types(self):
         if not self._user_types:
@@ -733,6 +735,19 @@ class ValueListType(SemaNode):
     __repr__ = __str__
 
 
+class Imports(SemaNode):
+    def __init__(self, elements):
+	self.module2symbols = { }
+	for i in range (0, len(elements), 2):
+		self.module2symbols [elements [i+1].elements[0]] = set (elements [i])
+
+class Exports(SemaNode):
+    def __init__(self, elements):
+	self.module2symbols = { }
+	for i in range (0, len(elements), 2):
+		self.module2symbols [elements [i+1].elements[0]] = set (elements [i])
+
+
 class BitStringType(SemaNode):
     def __init__(self, elements):
         self.type_name = elements[0]
@@ -915,6 +930,10 @@ def _create_sema_node(token):
         return BinaryStringValue(token.elements)
     elif token.ty == 'HexStringValue':
         return HexStringValue(token.elements)
+    elif token.ty == 'Imports':
+	return Imports(token.elements)
+    elif token.ty == 'Exports':
+	return Exports(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 
