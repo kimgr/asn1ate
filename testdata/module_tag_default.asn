@@ -43,7 +43,7 @@ Sequence ::= SEQUENCE
 END
 
 -- AUTOMATIC TAGS should not be applied if a tag exists.
-AutomaticModule DEFINITIONS AUTOMATIC TAGS ::=
+AutomaticModule2 DEFINITIONS AUTOMATIC TAGS ::=
 BEGIN
 
 Sequence ::= SEQUENCE
@@ -58,7 +58,7 @@ END
 
 -- AUTOMATIC TAGS should nest. CHOICE is tagged EXPLICIT.
 -- Defined types are still EXPLICIT if they are a CHOICE.
-AutomaticModule DEFINITIONS AUTOMATIC TAGS ::=
+AutomaticModule3 DEFINITIONS AUTOMATIC TAGS ::=
 BEGIN
 
 Sequence ::= SEQUENCE
@@ -89,4 +89,3 @@ Sequence2 ::= SEQUENCE {
 }
 
 END
-
