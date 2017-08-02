@@ -17,6 +17,7 @@ dist/
 .ropeproject
 env/
 dbg/
+_testdir
 
 # TODO
 todo.txt

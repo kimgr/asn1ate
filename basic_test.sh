@@ -8,10 +8,18 @@
 # Note that it does not say anything about correctness or
 # completeness of the generated code.
 
-export PYTHONPATH=`pwd`
-for f in testdata/*.asn; 
-do 
-	echo "Checking $f"; 
-	python asn1ate/test.py $f | python
-done
+set -e
 
+export PYTHONPATH=`pwd`
+for f in testdata/*.asn;
+do
+    echo "Checking $f";
+    rm -rf _testdir/
+    mkdir -p _testdir/
+    python asn1ate/test.py --outdir=_testdir $f
+    # Run python over _testdir/*.py
+    for m in _testdir/*.py;
+    do
+        python $m
+    done
+done
