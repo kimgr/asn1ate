@@ -362,9 +362,6 @@ class Module(SemaNode):
 
 class Exports(SemaNode):
     def __init__(self, elements):
-        if not elements:
-            raise Exception('Expected symbols in EXPORT, none found')
-
         self.symbols = [s for s in elements]
 
     def __str__(self):

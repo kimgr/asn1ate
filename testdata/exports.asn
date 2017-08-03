@@ -1,15 +1,22 @@
-TEST 
-DEFINITIONS ::=
+ExportsNothing DEFINITIONS ::=
 BEGIN
+  EXPORTS;
+END
 
-EXPORTS
-	Bool, 
-	Int,
-	Null;
+
+ExportsAll DEFINITIONS ::=
+BEGIN
+  EXPORTS ALL;
+  String ::= UTF8String
+END
+
+
+ExportsSymbols DEFINITIONS ::=
+BEGIN
+  EXPORTS Bool, Int, Null;
 
   -- Simple scalar types
   Bool ::= BOOLEAN
   Null ::= NULL
   Int ::= INTEGER
-
 END

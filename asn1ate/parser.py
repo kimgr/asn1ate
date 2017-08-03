@@ -321,7 +321,7 @@ def _build_asn1_grammar():
     symbols_from_module = Group(symbol_list) + Suppress(FROM) + global_module_reference
     symbols_from_module_list = OneOrMore(symbols_from_module)
     symbols_imported = Optional(symbols_from_module_list)
-    exports = Suppress(EXPORTS) + symbol_list + Suppress(';')
+    exports = Suppress(EXPORTS) + Optional(symbol_list) + Suppress(';')
     imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
 
     module_body = Optional(exports, default=None) + imports + assignment_list
