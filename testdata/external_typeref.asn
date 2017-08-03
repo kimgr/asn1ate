@@ -3,5 +3,6 @@ BEGIN
   T1 ::= INTEGER
   T2 ::= T1
 
+  -- Module self-reference
   T3 ::= SEQUENCE OF M1.T1
 END

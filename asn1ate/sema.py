@@ -557,10 +557,15 @@ class DefinedType(ReferencedType):
         return self.type_name
 
     def __str__(self):
-        if self.constraint is None:
-            return self.type_name
+        if self.module_name:
+            type_name = self.module_name + '.' + self.type_name
+        else:
+            type_name = self.type_name
 
-        return '%s %s' % (self.type_name, self.constraint)
+        if self.constraint is None:
+            return type_name
+
+        return '%s %s' % (type_name, self.constraint)
 
     __repr__ = __str__
 
