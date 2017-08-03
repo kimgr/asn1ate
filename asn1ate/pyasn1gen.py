@@ -359,20 +359,20 @@ class Pyasn1Backend(object):
     def build_constraint_expr(self, constraint):
         def unpack_size_constraint(nested):
             if isinstance(nested, SingleValueConstraint):
-                return _translate_value(nested.value), _translate_value(nested.value)
+                return self.translate_value(nested.value), self.translate_value(nested.value)
             elif isinstance(nested, ValueRangeConstraint):
-                return _translate_value(nested.min_value), _translate_value(nested.max_value)
+                return self.translate_value(nested.min_value), self.translate_value(nested.max_value)
             else:
                 raise Exception('Unrecognized nested size constraint type: %s' % nested.__class__.__name__)
 
         if isinstance(constraint, SingleValueConstraint):
-            return 'constraint.SingleValueConstraint(%s)' % (_translate_value(constraint.value))
+            return 'constraint.SingleValueConstraint(%s)' % (self.translate_value(constraint.value))
         elif isinstance(constraint, SizeConstraint):
             min_value, max_value = unpack_size_constraint(constraint.nested)
-            return 'constraint.ValueSizeConstraint(%s, %s)' % (_translate_value(min_value), _translate_value(max_value))
+            return 'constraint.ValueSizeConstraint(%s, %s)' % (self.translate_value(min_value), self.translate_value(max_value))
         elif isinstance(constraint, ValueRangeConstraint):
-            return 'constraint.ValueRangeConstraint(%s, %s)' % (_translate_value(constraint.min_value),
-                                                                _translate_value(constraint.max_value))
+            return 'constraint.ValueRangeConstraint(%s, %s)' % (self.translate_value(constraint.min_value),
+                                                                self.translate_value(constraint.max_value))
         else:
             raise Exception('Unrecognized constraint type: %s' % constraint.__class__.__name__)
 
@@ -396,7 +396,7 @@ class Pyasn1Backend(object):
                 else:
                     return '"\'%s\'H"' % value.value
             else:
-                return _translate_value(value)
+                return self.translate_value(value)
 
         if isinstance(value, ObjectIdentifierValue):
             return self.build_object_identifier_value(value)
@@ -420,7 +420,7 @@ class Pyasn1Backend(object):
             return "namedtype.OptionalNamedType('%s', %s)" % (t.identifier, self.generate_expr(t.type_decl))
         elif t.default_value is not None:
             type_expr = self.generate_expr(t.type_decl)
-            type_expr += '.subtype(value=%s)' % _translate_value(t.default_value)
+            type_expr += '.subtype(value=%s)' % self.translate_value(t.default_value)
 
             return "namedtype.DefaultedNamedType('%s', %s)" % (t.identifier, type_expr)
         else:
@@ -460,7 +460,7 @@ class Pyasn1Backend(object):
                 if c.name in REGISTERED_OID_NAMES:
                     objid_components.append(str(REGISTERED_OID_NAMES[c.name]))
                 else:
-                    objid_components.append(_translate_value(c.name))
+                    objid_components.append(self.translate_value(c.name))
             elif isinstance(c, NumberForm):
                 objid_components.append(str(c.value))
             elif isinstance(c, NameAndNumberForm):
@@ -494,6 +494,25 @@ class Pyasn1Backend(object):
         fragment.pop_indent()
 
         return str(fragment)
+
+    def translate_value(self, value):
+        """ Translate ASN.1 built-in values to Python equivalents.
+        Unrecognized values are not translated.
+        """
+        if isinstance(value, ReferencedValue):
+            v = _sanitize_identifier(value.name)
+
+            # If this is a cross-module reference, extract the Python module
+            # name as a prefix.
+            module = value.module_reference
+            if module and module != self.sema_module.name:
+                v = _sanitize_module(module) + '.' + v
+        elif _heuristic_is_identifier(value):
+            v = _sanitize_identifier(value)
+        else:
+            v = value
+
+        return _ASN1_BUILTIN_VALUES.get(v, v)
 
 
 def generate_pyasn1(sema_module, out_stream, referenced_modules):
@@ -562,16 +581,6 @@ def _translate_tag_class(tag_class):
     recognized.
     """
     return _ASN1_TAG_CONTEXTS.get(tag_class, 'tag.tagClassContext')
-
-
-def _translate_value(value):
-    """ Translate ASN.1 built-in values to Python equivalents.
-    Unrecognized values are not translated.
-    """
-    if isinstance(value, ReferencedValue) or _heuristic_is_identifier(value):
-        value = _sanitize_identifier(value)
-
-    return _ASN1_BUILTIN_VALUES.get(value, value)
 
 
 def _heuristic_is_identifier(value):
