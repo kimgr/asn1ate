@@ -317,14 +317,14 @@ def _build_asn1_grammar():
     global_module_reference = module_reference + assigned_identifier
 
     symbol = Unique(reference)  # TODO: parameterized reference?
-    symbol_list = Group(delimitedList(symbol))
-    symbols_from_module = symbol_list + Suppress(FROM) + global_module_reference
+    symbol_list = delimitedList(symbol)
+    symbols_from_module = Group(symbol_list) + Suppress(FROM) + global_module_reference
     symbols_from_module_list = OneOrMore(symbols_from_module)
     symbols_imported = Optional(symbols_from_module_list)
-    exports = Optional(Suppress(EXPORTS) + symbol_list + Suppress(';'))
+    exports = Suppress(EXPORTS) + symbol_list + Suppress(';')
     imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
 
-    module_body = (exports + imports + assignment_list)
+    module_body = Optional(exports, default=None) + imports + assignment_list
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + Suppress(DEFINITIONS) + Optional(tag_default, default=None) + \
                         Optional(extension_default, default=None) + Suppress('::=') + \

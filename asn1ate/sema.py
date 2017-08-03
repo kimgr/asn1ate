@@ -255,7 +255,6 @@ class Module(SemaNode):
         self._user_types = {}
 
         module_reference, definitive_identifier, tag_default, extension_default, module_body = elements
-        exports, imports, assignments = module_body.elements
 
         self.name = module_reference.elements[0]
 
@@ -271,6 +270,8 @@ class Module(SemaNode):
             # Tag default was not specified, default to explicit
             self.tag_default = TagImplicitness.EXPLICIT
 
+        exports, imports, assignments = module_body.elements
+        self.exports = _maybe_create_sema_node(exports)
         self.assignments = [_create_sema_node(token) for token in assignments.elements]
 
     def user_types(self):
@@ -344,10 +345,30 @@ class Module(SemaNode):
         return self.tag_default
 
     def __str__(self):
-        return '%s DEFINITIONS ::=\n' % self.name \
-               + 'BEGIN\n' \
-               + '\n'.join(map(str, self.assignments)) + '\n' \
-               + 'END\n'
+        lines = []
+        lines += ['%s DEFINITIONS ::=' % self.name]
+        lines += ['BEGIN']
+
+        if self.exports:
+            lines += [str(self.exports)]
+
+        lines += [str(a) for a in self.assignments]
+        lines += ['END']
+
+        return '\n'.join(lines) + '\n'
+
+    __repr__ = __str__
+
+
+class Exports(SemaNode):
+    def __init__(self, elements):
+        if not elements:
+            raise Exception('Expected symbols in EXPORT, none found')
+
+        self.symbols = [s for s in elements]
+
+    def __str__(self):
+        return 'EXPORTS %s;' % ', '.join(self.symbols)
 
     __repr__ = __str__
 
@@ -862,6 +883,8 @@ def _create_sema_node(token):
 
     if token.ty == 'ModuleDefinition':
         return Module(token.elements)
+    elif token.ty == 'Exports':
+        return Exports(token.elements)
     elif token.ty == 'TypeAssignment':
         return TypeAssignment(token.elements)
     elif token.ty == 'ValueAssignment':
