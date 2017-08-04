@@ -504,8 +504,8 @@ class Pyasn1Backend(object):
 
             # If this is a cross-module reference, extract the Python module
             # name as a prefix.
-            if value.module_reference:
-                module = value.module_reference.name
+            if value.module_ref:
+                module = value.module_ref.name
             else:
                 module = None
 

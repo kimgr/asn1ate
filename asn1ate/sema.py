@@ -406,15 +406,15 @@ class ModuleReference(SemaNode):
 
 class GlobalModuleReference(SemaNode):
     def __init__(self, elements):
-        module_reference, oid = elements
-        self.module_reference = _create_sema_node(module_reference)
+        module_ref, oid = elements
+        self.module_ref = _create_sema_node(module_ref)
         self.oid = _maybe_create_sema_node(oid)
 
     def __str__(self):
-        moduleref = self.module_reference.name
+        module_name = self.module_ref.name
         if self.oid:
-            moduleref += ' ' + str(self.oid)
-        return moduleref
+            module_name += ' ' + str(self.oid)
+        return module_name
 
     __repr__ = __str__
 
@@ -658,19 +658,19 @@ class SelectionType(ReferencedType):
 class ReferencedValue(SemaNode):
     def __init__(self, elements):
         if len(elements) > 1 and elements[0].ty == 'ModuleReference':
-            self.module_reference = _create_sema_node(elements[0])
+            self.module_ref = _create_sema_node(elements[0])
             self.name = elements[1]
         else:
-            self.module_reference = None
+            self.module_ref = None
             self.name = elements[0]
 
     def reference_name(self):
         return self.name
 
     def __str__(self):
-        if not self.module_reference:
+        if not self.module_ref:
             return self.name
-        return '%s.%s' % (self.module_reference.name, self.name)
+        return '%s.%s' % (self.module_ref.name, self.name)
 
     __repr__ = __str__
 
