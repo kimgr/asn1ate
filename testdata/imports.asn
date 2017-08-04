@@ -1,17 +1,32 @@
-TEST DEFINITIONS ::=
+ImportsNothing DEFINITIONS ::=
 BEGIN
+IMPORTS;
+END
 
--- Try various forms of imports
+ImportWithAssignedOID DEFINITIONS ::=
+BEGIN
 IMPORTS
-informationFramework
-        FROM UsefulDefinitions {joint-iso-itu-t(2) ds(5) module(1)
-        usefulDefinitions(0) 3}
+    informationFramework FROM UsefulDefinitions {joint-iso-itu-t(2) ds(5) module(1) usefulDefinitions(0) 3};
+END
 
-ATTRIBUTE
-	FROM InformationFramework informationFramework
-;
+ImportWithoutAssignedOID DEFINITIONS ::=
+BEGIN
+IMPORTS
+    ATTRIBUTE FROM InformationFramework;
+END
 
--- Must have assignments if there are imports
-value INTEGER ::= 1
 
+ImportMultiple DEFINITIONS ::=
+BEGIN
+IMPORTS
+    ATTRIBUTE,PROPERTY FROM Module1
+    someValue, SomeType FROM Module2;
+END
+
+
+ImportMultipleWithAssignedOID DEFINITIONS ::=
+BEGIN
+IMPORTS
+    ATTRIBUTE,PROPERTY FROM Module1 {joint-iso-itu-t(2) ds(5) module(1) usefulDefinitions(0) 3}
+    someValue, SomeType FROM Module2 {joint-iso-itu-t(2) ds(5) module(1) usefulDefinitions(0) 4};
 END

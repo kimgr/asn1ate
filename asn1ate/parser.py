@@ -313,18 +313,20 @@ def _build_asn1_grammar():
     assignment = type_assignment | value_assignment
     assignment_list = ZeroOrMore(assignment)
 
-    assigned_identifier = Optional(object_identifier_value | defined_value)
-    global_module_reference = module_reference + assigned_identifier
+    # TODO: Maybe handle full assigned-identifier syntax with defined values
+    # described in 12.1, but I haven't been able to find examples of it, and I
+    # can't say for sure what acceptable syntax is.
+    global_module_reference = module_reference + Optional(object_identifier_value, default=None)
 
     symbol = Unique(reference)  # TODO: parameterized reference?
-    symbol_list = delimitedList(symbol)
+    symbol_list = delimitedList(symbol, delim=',')
     symbols_from_module = Group(symbol_list) + Suppress(FROM) + global_module_reference
     symbols_from_module_list = OneOrMore(symbols_from_module)
-    symbols_imported = Optional(symbols_from_module_list)
+    symbols_imported = Unique(symbols_from_module_list)
     exports = Suppress(EXPORTS) + Optional(symbol_list) + Suppress(';')
-    imports = Optional(Suppress(IMPORTS) + symbols_imported + Suppress(';'))
+    imports = Suppress(IMPORTS) + Optional(symbols_imported) + Suppress(';')
 
-    module_body = Optional(exports, default=None) + imports + assignment_list
+    module_body = Optional(exports, default=None) + Optional(imports, default=None) + assignment_list
     module_identifier = module_reference + definitive_identifier
     module_definition = module_identifier + Suppress(DEFINITIONS) + Optional(tag_default, default=None) + \
                         Optional(extension_default, default=None) + Suppress('::=') + \
@@ -371,8 +373,8 @@ def _build_asn1_grammar():
     definitive_identifier.setParseAction(annotate('DefinitiveIdentifier'))
     definitive_number_form.setParseAction(annotate('DefinitiveNumberForm'))
     definitive_name_and_number_form.setParseAction(annotate('DefinitiveNameAndNumberForm'))
-    imports.setParseAction(annotate('Imports'))
     exports.setParseAction(annotate('Exports'))
+    imports.setParseAction(annotate('Imports'))
     assignment_list.setParseAction(annotate('AssignmentList'))
     bstring.setParseAction(annotate('BinaryStringValue'))
     hstring.setParseAction(annotate('HexStringValue'))
