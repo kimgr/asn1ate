@@ -363,6 +363,7 @@ def _build_asn1_grammar():
     type_assignment.setParseAction(annotate('TypeAssignment'))
     value_assignment.setParseAction(annotate('ValueAssignment'))
     module_reference.setParseAction(annotate('ModuleReference'))
+    global_module_reference.setParseAction(annotate('GlobalModuleReference'))
     module_body.setParseAction(annotate('ModuleBody'))
     module_definition.setParseAction(annotate('ModuleDefinition'))
     extension_marker.setParseAction(annotate('ExtensionMarker'))

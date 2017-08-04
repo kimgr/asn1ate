@@ -504,7 +504,11 @@ class Pyasn1Backend(object):
 
             # If this is a cross-module reference, extract the Python module
             # name as a prefix.
-            module = value.module_reference
+            if value.module_reference:
+                module = value.module_reference.name
+            else:
+                module = None
+
             if module and module != self.sema_module.name:
                 v = _sanitize_module(module) + '.' + v
         elif _heuristic_is_identifier(value):

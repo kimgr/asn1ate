@@ -379,8 +379,8 @@ class Exports(SemaNode):
 class Imports(SemaNode):
     def __init__(self, elements):
         self.imports = {}
-        for symbols, module, oid in elements:
-            module = GlobalModuleReference(module, oid)
+        for symbols, module_reference in elements:
+            module = _create_sema_node(module_reference)
             self.imports.setdefault(module, []).extend(symbols)
 
     def __str__(self):
@@ -392,13 +392,26 @@ class Imports(SemaNode):
     __repr__ = __str__
 
 
+class ModuleReference(SemaNode):
+    """ We need this in the sema tree to make an inventory of all external
+    module references for cross-module imports. """
+    def __init__(self, elements):
+        self.name = elements[0]
+
+    def __str__(self):
+        return self.name
+
+    __repr__ = __str__
+
+
 class GlobalModuleReference(SemaNode):
-    def __init__(self, module, oid):
-        self.module = module.elements[0]
+    def __init__(self, elements):
+        module_reference, oid = elements
+        self.module_reference = _create_sema_node(module_reference)
         self.oid = _maybe_create_sema_node(oid)
 
     def __str__(self):
-        moduleref = self.module
+        moduleref = self.module_reference.name
         if self.oid:
             moduleref += ' ' + str(self.oid)
         return moduleref
@@ -645,7 +658,7 @@ class SelectionType(ReferencedType):
 class ReferencedValue(SemaNode):
     def __init__(self, elements):
         if len(elements) > 1 and elements[0].ty == 'ModuleReference':
-            self.module_reference = elements[0].elements[0]
+            self.module_reference = _create_sema_node(elements[0])
             self.name = elements[1]
         else:
             self.module_reference = None
@@ -657,7 +670,7 @@ class ReferencedValue(SemaNode):
     def __str__(self):
         if not self.module_reference:
             return self.name
-        return '%s.%s' % (self.module_reference, self.name)
+        return '%s.%s' % (self.module_reference.name, self.name)
 
     __repr__ = __str__
 
@@ -978,6 +991,10 @@ def _create_sema_node(token):
         return BinaryStringValue(token.elements)
     elif token.ty == 'HexStringValue':
         return HexStringValue(token.elements)
+    elif token.ty == 'ModuleReference':
+        return ModuleReference(token.elements)
+    elif token.ty == 'GlobalModuleReference':
+        return GlobalModuleReference(token.elements)
 
     raise Exception('Unknown token type: %s' % token.ty)
 
