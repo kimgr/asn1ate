@@ -290,16 +290,16 @@ class Module(SemaNode):
         """
         if isinstance(type_decl, ReferencedType):
             module = None
-            if not type_decl.module_name or type_decl.module_name == self.name:
+            if not type_decl.module_ref or type_decl.module_ref.name == self.name:
                 module = self
             else:
                 # Find the referenced module
                 for ref_mod in referenced_modules:
-                    if ref_mod.name == type_decl.module_name:
+                    if ref_mod.name == type_decl.module_ref.name:
                         module = ref_mod
                         break
             if not module:
-                raise Exception('Unrecognized referenced module %s in %s.' % (type_decl.module_name,
+                raise Exception('Unrecognized referenced module %s in %s.' % (type_decl.module_ref.name,
                                                                               [module.name for module in
                                                                                referenced_modules]))
             return module.resolve_type_decl(module.user_types()[type_decl.type_name], referenced_modules)
@@ -610,22 +610,17 @@ class ReferencedType(SemaNode):
 
 class DefinedType(ReferencedType):
     def __init__(self, elements):
-        self.constraint = None
-        self.module_name = None
-
         module_ref, type_ref, size_constraint = elements
-        if module_ref:
-            self.module_name = module_ref.elements[0]
+        self.module_ref = _maybe_create_sema_node(module_ref)
         self.type_name = type_ref
-        if size_constraint:
-            self.constraint = _create_sema_node(size_constraint)
+        self.constraint = _maybe_create_sema_node(size_constraint)
 
     def reference_name(self):
         return self.type_name
 
     def __str__(self):
-        if self.module_name:
-            type_name = self.module_name + '.' + self.type_name
+        if self.module_ref:
+            type_name = self.module_ref.name + '.' + self.type_name
         else:
             type_name = self.type_name
 

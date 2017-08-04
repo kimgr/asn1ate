@@ -293,8 +293,8 @@ class Pyasn1Backend(object):
 
     def inline_defined_type(self, t):
         translated_type = _translate_type(t.type_name) + '()'
-        if t.module_name and t.module_name != self.sema_module.name:
-            translated_type = _sanitize_module(t.module_name) + '.' + translated_type
+        if t.module_ref and t.module_ref.name != self.sema_module.name:
+            translated_type = _sanitize_module(t.module_ref.name) + '.' + translated_type
         return translated_type
 
     def inline_constructed_type(self, t):
