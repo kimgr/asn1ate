@@ -272,6 +272,7 @@ class Module(SemaNode):
 
         exports, imports, assignments = module_body.elements
         self.exports = _maybe_create_sema_node(exports)
+        self.imports = _maybe_create_sema_node(imports)
         self.assignments = [_create_sema_node(token) for token in assignments.elements]
 
     def user_types(self):
@@ -351,11 +352,16 @@ class Module(SemaNode):
 
         if self.exports:
             lines += [str(self.exports)]
+            lines += ['']
+
+        if self.imports:
+            lines += [str(self.imports)]
+            lines += ['']
 
         lines += [str(a) for a in self.assignments]
         lines += ['END']
 
-        return '\n'.join(lines) + '\n'
+        return '\n'.join(lines)
 
     __repr__ = __str__
 
@@ -366,6 +372,36 @@ class Exports(SemaNode):
 
     def __str__(self):
         return 'EXPORTS %s;' % ', '.join(self.symbols)
+
+    __repr__ = __str__
+
+
+class Imports(SemaNode):
+    def __init__(self, elements):
+        self.imports = {}
+        for symbols, module, oid in elements:
+            module = GlobalModuleReference(module, oid)
+            self.imports.setdefault(module, []).extend(symbols)
+
+    def __str__(self):
+        lines = ['IMPORTS']
+        for module, symbols in sorted(self.imports.items()):
+            lines += ['  %s FROM %s' % (', '.join(symbols), module)]
+        return '\n'.join(lines) + ';'
+
+    __repr__ = __str__
+
+
+class GlobalModuleReference(SemaNode):
+    def __init__(self, module, oid):
+        self.module = module.elements[0]
+        self.oid = _maybe_create_sema_node(oid)
+
+    def __str__(self):
+        moduleref = self.module
+        if self.oid:
+            moduleref += ' ' + str(self.oid)
+        return moduleref
 
     __repr__ = __str__
 
@@ -882,6 +918,8 @@ def _create_sema_node(token):
         return Module(token.elements)
     elif token.ty == 'Exports':
         return Exports(token.elements)
+    elif token.ty == 'Imports':
+        return Imports(token.elements)
     elif token.ty == 'TypeAssignment':
         return TypeAssignment(token.elements)
     elif token.ty == 'ValueAssignment':

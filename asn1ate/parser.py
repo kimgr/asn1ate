@@ -320,7 +320,7 @@ def _build_asn1_grammar():
 
     symbol = Unique(reference)  # TODO: parameterized reference?
     symbol_list = delimitedList(symbol, delim=',')
-    symbols_from_module = Group(symbol_list) + Suppress(FROM) + global_module_reference
+    symbols_from_module = Group(Group(symbol_list) + Suppress(FROM) + global_module_reference)
     symbols_from_module_list = OneOrMore(symbols_from_module)
     symbols_imported = Unique(symbols_from_module_list)
     exports = Suppress(EXPORTS) + Optional(symbol_list) + Suppress(';')
