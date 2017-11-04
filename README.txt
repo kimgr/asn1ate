@@ -39,6 +39,23 @@ ASN.1 definitions. The command to do this is::
 
 It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout.
 
+But ``asn1ate`` is also designed to be usable as a library, to allow reuse of
+the ASN.1 parser for custom code generation.
+
+
+Caveat #2
+---------
+
+My understanding of ASN.1 syntax and semantics is limited. As I learn and
+discover more, the design *will* change. I will always prioritize a better model
+before API stability for the foreseeable future.
+
+So if you're using ``asn1ate`` as a library for custom codegen, please be aware
+that every release will likely break something for you.
+
+The in-tree ``pyasn1`` code generator will be kept up-to-date, of course, and
+may serve as an example of different codegen tasks,
+
 
 Dependencies
 ------------
