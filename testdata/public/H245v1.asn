@@ -405,7 +405,7 @@ V76Capability	::=SEQUENCE
 	sREJCapability	BOOLEAN,
 	mREJCapability	BOOLEAN,
 	crc8bitCapability	BOOLEAN,
-	crc16bitCapability	BOOLEAN, 
+	crc16bitCapability	BOOLEAN,
 	crc32bitCapability	BOOLEAN,
 	uihCapability	BOOLEAN,
 	numOfDLCS	INTEGER (2..8191),
@@ -750,7 +750,7 @@ V76LogicalChannelParameters	::=SEQUENCE
 {
 	hdlcParameters	V76HDLCParameters,
  	suspendResume	CHOICE
-	{ 
+	{
 		wAddress	NULL,
 		woAddress	NULL,
 		...
@@ -911,7 +911,7 @@ MultiplexElement	::=SEQUENCE
 	repeatCount	CHOICE
 	{
 		finite	INTEGER (1..65535),	-- repeats of type
-		untilClosingFlag	NULL	-- used for last element 
+		untilClosingFlag	NULL	-- used for last element
 	}
 }
 
@@ -1074,7 +1074,7 @@ H223ModeParameters	::=SEQUENCE
 	...
 }
 
- 
+
 
 -- ===================================================================================
 -- Request mode definitions: Video modes
@@ -1421,7 +1421,7 @@ FlowControlCommand	::=SEQUENCE
 	},
 	restriction	CHOICE
 	{
-		maximumBitRate	INTEGER (0..16777215),	-- units 100 bits per second 
+		maximumBitRate	INTEGER (0..16777215),	-- units 100 bits per second
 		noRestriction	NULL
 	},
 	...

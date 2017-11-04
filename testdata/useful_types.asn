@@ -3,7 +3,7 @@ BEGIN
   g1 GeneralizedTime ::= "12345678901234.5"
   u1 UTCTime ::= "1234567890Z"
   o1 ObjectDescriptor ::= "Text"
- 
+
   GTime ::= GeneralizedTime
   UTime ::= UTCTime
   OD ::= ObjectDescriptor

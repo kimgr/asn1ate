@@ -9,7 +9,7 @@ BEGIN
 
 -- EXPORTS ALL
 -- All types and values defined in this module is exported for use in
--- other ASN.1 modules. 
+-- other ASN.1 modules.
 
 IMPORTS
 
@@ -78,25 +78,25 @@ SafeBag ::= SEQUENCE {
 
 -- Bag types
 
-keyBag 	  BAG-TYPE ::= 
+keyBag 	  BAG-TYPE ::=
 	{KeyBag IDENTIFIED BY {bagtypes 1}}
 pkcs8ShroudedKeyBag BAG-TYPE ::=
 	{PKCS8ShroudedKeyBag IDENTIFIED BY {bagtypes 2}}
-certBag BAG-TYPE ::= 
+certBag BAG-TYPE ::=
 	{CertBag IDENTIFIED BY {bagtypes 3}}
 crlBag BAG-TYPE ::=
 	{CRLBag IDENTIFIED BY {bagtypes 4}}
-secretBag BAG-TYPE ::=    
+secretBag BAG-TYPE ::=
 	{SecretBag IDENTIFIED BY {bagtypes 5}}
 safeContentsBag BAG-TYPE ::=
 	{SafeContents IDENTIFIED BY {bagtypes 6}}
 
 PKCS12BagSet BAG-TYPE ::= {
-	keyBag | 
+	keyBag |
 	pkcs8ShroudedKeyBag |
 	certBag |
-	crlBag | 
-	secretBag | 
+	crlBag |
+	secretBag |
 	safeContentsBag,
 	... -- For future extensions
 }

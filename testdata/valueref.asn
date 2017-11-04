@@ -6,6 +6,6 @@ BEGIN
   -- Use a value reference
   limit INTEGER ::= value
 
-  -- Use a value reference in a range 
+  -- Use a value reference in a range
   Limited ::= INTEGER (1 .. limit)
 END

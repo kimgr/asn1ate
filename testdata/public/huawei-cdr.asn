@@ -151,7 +151,7 @@ MOCallRecord    ::= SET
     eCategory                           [215] ECategory                                    OPTIONAL,
     tariffCode                          [217] TariffCode                                   OPTIONAL,
     disconnectparty                     [218] DisconnectParty                              OPTIONAL,
-    chargePulseNum                      [219] ChargePulseNumber                            OPTIONAL,    
+    chargePulseNum                      [219] ChargePulseNumber                            OPTIONAL,
     csReference                         [220] CAMELCSReference                             OPTIONAL,
     csaReference                        [221] CAMELCSAReference                            OPTIONAL,
     camelphase                          [222] CAMELVPHASE                                  OPTIONAL,
@@ -175,13 +175,13 @@ MOCallRecord    ::= SET
     channelmode                         [249] ChannelMode                                  OPTIONAL,
     channel                             [250] Channel                                      OPTIONAL,
     specialBillPrefix                   [252] SpecialBillPrefix                            OPTIONAL,
-    calledportedflag                    [255] PortedFlag                                   OPTIONAL,    
+    calledportedflag                    [255] PortedFlag                                   OPTIONAL,
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     routingcategory                     [257] RoutingCategory                              OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     calledIMEI                          [260] IMEI                                         OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     roDefaultCallHandling               [263] DefaultCallHandling                          OPTIONAL,
     roLinkFailureTime                   [264] TimeStamp                                    OPTIONAL,
     lastSuccCCRTime                     [265] TimeStamp                                    OPTIONAL,
@@ -305,17 +305,17 @@ MTCallRecord            ::= SET
     mapbypassind                        [247] BOOLEAN                                      OPTIONAL,
     channelmode                         [249] ChannelMode                                  OPTIONAL,
     channel                             [250] Channel                                      OPTIONAL,
-    specialBillPrefix                   [252] SpecialBillPrefix                            OPTIONAL,   
+    specialBillPrefix                   [252] SpecialBillPrefix                            OPTIONAL,
     calledportedflag                    [255] PortedFlag                                   OPTIONAL,
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     roDefaultCallHandling               [263] DefaultCallHandling                          OPTIONAL,
     roLinkFailureTime                   [264] TimeStamp                                    OPTIONAL,
     lastSuccCCRTime                     [265] TimeStamp                                    OPTIONAL,
     drcCallId                           [266] DrcCallNumber                                OPTIONAL,
-    drcCallRN                           [267] DrcCallNumber                                OPTIONAL    
+    drcCallRN                           [267] DrcCallNumber                                OPTIONAL
 }
 
 RoamingRecord            ::= SET
@@ -348,7 +348,7 @@ RoamingRecord            ::= SET
     ussdCallBackFlag                    [138] NULL                                         OPTIONAL,
     chargedParty                        [141] ChargedParty                                 OPTIONAL,
     originalCalledNumber                [142] OriginalCalledNumber                         OPTIONAL,
-    chargeAreaCode                      [145] ChargeAreaCode                               OPTIONAL,  
+    chargeAreaCode                      [145] ChargeAreaCode                               OPTIONAL,
     calledChargeAreaCode                [146] ChargeAreaCode                               OPTIONAL,
     mscOutgoingCircuit                  [166] MSCCIC                                       OPTIONAL,
     mscIncomingCircuit                  [167] MSCCIC                                       OPTIONAL,
@@ -356,7 +356,7 @@ RoamingRecord            ::= SET
     callEmlppPriority                   [170] EmlppPriority                                OPTIONAL,
     defaultCallHandling                 [171] DefaultCallHandling                          OPTIONAL,
     freeFormatData                      [172] FreeFormatData                               OPTIONAL,
-    freeFormatDataAppend                [173] BOOLEAN                                      OPTIONAL,    
+    freeFormatDataAppend                [173] BOOLEAN                                      OPTIONAL,
     eaSubscriberInfo                    [174] EASubscriberInfo                             OPTIONAL,
     selectedCIC                         [175] SelectedCIC                                  OPTIONAL,
     optimalRoutingFlag                  [177] NULL                                         OPTIONAL,
@@ -383,12 +383,12 @@ RoamingRecord            ::= SET
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     roDefaultCallHandling               [263] DefaultCallHandling                          OPTIONAL,
     roLinkFailureTime                   [264] TimeStamp                                    OPTIONAL,
     lastSuccCCRTime                     [265] TimeStamp                                    OPTIONAL,
     drcCallId                           [266] DrcCallNumber                                OPTIONAL,
-    drcCallRN                           [267] DrcCallNumber                                OPTIONAL    
+    drcCallRN                           [267] DrcCallNumber                                OPTIONAL
 }
 
 TermCAMELRecord    ::= SET
@@ -434,7 +434,7 @@ TermCAMELRecord    ::= SET
     ussdCallBackFlag                    [138] NULL                                         OPTIONAL,
     chargedParty                        [141] ChargedParty                                 OPTIONAL,
     originalCalledNumber                [142] OriginalCalledNumber                         OPTIONAL,
-    chargeAreaCode                      [145] ChargeAreaCode                               OPTIONAL,                                                                                                    
+    chargeAreaCode                      [145] ChargeAreaCode                               OPTIONAL,
     orgMSCId                            [168] MSCId                                        OPTIONAL,
     callerportedflag                    [180] PortedFlag                                   OPTIONAL,
     subscriberCategory                  [190] SubscriberCategory                           OPTIONAL,
@@ -459,12 +459,12 @@ TermCAMELRecord    ::= SET
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     roDefaultCallHandling               [263] DefaultCallHandling                          OPTIONAL,
     roLinkFailureTime                   [264] TimeStamp                                    OPTIONAL,
     lastSuccCCRTime                     [265] TimeStamp                                    OPTIONAL,
     drcCallId                           [266] DrcCallNumber                                OPTIONAL,
-    drcCallRN                           [267] DrcCallNumber                                OPTIONAL    
+    drcCallRN                           [267] DrcCallNumber                                OPTIONAL
 }
 
 IncGatewayRecord        ::= SET
@@ -535,9 +535,9 @@ IncGatewayRecord        ::= SET
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     drcCallId                           [266] DrcCallNumber                                OPTIONAL,
-    drcCallRN                           [267] DrcCallNumber                                OPTIONAL    
+    drcCallRN                           [267] DrcCallNumber                                OPTIONAL
 }
 
 OutGatewayRecord        ::= SET
@@ -605,9 +605,9 @@ OutGatewayRecord        ::= SET
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     drcCallId                           [266] DrcCallNumber                                OPTIONAL,
-    drcCallRN                           [267] DrcCallNumber                                OPTIONAL    
+    drcCallRN                           [267] DrcCallNumber                                OPTIONAL
 }
 
 TransitCallRecord        ::= SET
@@ -672,9 +672,9 @@ TransitCallRecord        ::= SET
     locationroutingnumber               [256] LocationRoutingNumber                        OPTIONAL,
     intermediateChargingInd             [258] IntermediateChargingInd                      OPTIONAL,
     mscOutgoingROUTENumber              [261] MscOutgoingROUTENumber                       OPTIONAL,
-    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,    
+    mscIncomingROUTENumber              [262] MscIncomingROUTENumber                       OPTIONAL,
     drcCallId                           [266] DrcCallNumber                                OPTIONAL,
-    drcCallRN                           [267] DrcCallNumber                                OPTIONAL    
+    drcCallRN                           [267] DrcCallNumber                                OPTIONAL
 }
 
 MOSMSRecord                ::= SET
@@ -711,7 +711,7 @@ MOSMSRecord                ::= SET
     sequenceNumberOfTheCurrentSMS            [199] SequenceNumberOfTheCurrentSMS           OPTIONAL,
     hotBillingTag                            [200] HotBillingTag                           OPTIONAL,
     callReference                            [201] CallReference                           OPTIONAL,
-    tariffCode                               [202] TariffCode                              OPTIONAL,    
+    tariffCode                               [202] TariffCode                              OPTIONAL,
     networkOperatorId                        [223] NetworkOperatorId                       OPTIONAL,
     typeOfSubscribers                        [224] TypeOfSubscribers                       OPTIONAL,
     recordNumber                             [232] RecordNumber                            OPTIONAL,
@@ -1372,7 +1372,7 @@ BearerServiceCode ::= OCTET STRING (SIZE (1))
 --    plmn-specificBS-F            (0xdf)
 
 
-IsdnServiceCode ::= OCTET STRING (SIZE(1))  
+IsdnServiceCode ::= OCTET STRING (SIZE(1))
 --This parameter identifies the ISDN Basic service as defined in ETSI   specification ETS 300 196.
 --   allServices                            '00'h
 --   speech                                 '01'h
@@ -1565,8 +1565,8 @@ ChangeFlags                ::= BIT STRING
      genericNumbersModified                (3),
      redirectingPartyNumberModified        (4),
      redirectionCounterModified            (5),
-     calledPartyNumberModified             (6) 
-     
+     calledPartyNumberModified             (6)
+
 }
 
 ChangeOfClassmark         ::= SEQUENCE
@@ -2086,7 +2086,7 @@ ObservedIMEITicketEnable    ::= BOOLEAN
 
 ECategory                   ::= INTEGER (0..255)
 
-TariffCode                  ::= INTEGER (0..255)  
+TariffCode                  ::= INTEGER (0..255)
 
 AudioDataType               ::= ENUMERATED
 {
@@ -2160,7 +2160,7 @@ PartialRecordType        ::= ENUMERATED
     bearRedirectStop                (24),
     triggerDCHcontinue              (25),
     iNAPCS1Shortnumber              (26),
-    roLinkFail                      (27)  
+    roLinkFail                      (27)
 }
 
 PartialRecordTypes        ::= SET OF PartialRecordType
@@ -2302,7 +2302,7 @@ CAMELVPHASE      ::= ENUMERATED
     wincamelphase1             (1),
     wincamelphase2             (2),
     wincamelphase3             (3),
-    wincamelphase4             (4),    
+    wincamelphase4             (4),
     wininapphaseericsson       (8),
     wininapphasesiemens        (16),
     wininapphasenortel         (24),
@@ -2513,7 +2513,7 @@ SwitchoverTime              ::= SEQUENCE
 {
     hour              [2]      INTEGER ,
     minute            [2]      INTEGER ,
-    second            [2]      INTEGER 
+    second            [2]      INTEGER
 }
 
 SystemType  ::= ENUMERATED
@@ -2836,7 +2836,7 @@ GuaranteedBitRate                   ::= ENUMERATED
      gBR5900BitsPerSecond (111),        -- AMR speech
      gBR5150BitsPerSecond (112),        -- AMR speech
      gBR4750BitsPerSecond (113),        -- AMR speech
-     gBR23850BitsPerSecond (114),       -- AMR speech 
+     gBR23850BitsPerSecond (114),       -- AMR speech
      gBR15850BitsPerSecond (115),       -- AMR speech
      gBR12650BitsPerSecond (116),       -- AMR speech
      gBR8850BitsPerSecond  (117),       -- AMR speech
@@ -2862,7 +2862,7 @@ MaximumBitRate                  ::= ENUMERATED
      mBR5900BitsPerSecond (111),        -- AMR speech
      mBR5150BitsPerSecond (112),        -- AMR speech
      mBR4750BitsPerSecond (113),         -- AMR speech
-     mBR23850BitsPerSecond (114),       -- AMR speech 
+     mBR23850BitsPerSecond (114),       -- AMR speech
      mBR15850BitsPerSecond (115),       -- AMR speech
      mBR12650BitsPerSecond (116),       -- AMR speech
      mBR8850BitsPerSecond  (117),       -- AMR speech
@@ -2974,7 +2974,7 @@ GroupCallReference          ::= OCTET STRING(SIZE(4))
 
 UUS1Type                    ::=    ENUMERATED
 {
-    uus1Implicit               (0),   
+    uus1Implicit               (0),
     uus1ExplicitRequired       (1),
     uus1ExplicitNotRequired    (2)
 }
@@ -3006,9 +3006,9 @@ ReleaseParty                  ::= ENUMERATED
 {
    bssmap   (0),
    ranap    (1),
-   dtap     (2), 
+   dtap     (2),
    isup     (3),
-   relbutt  (255)   
+   relbutt  (255)
 }
 
 Cap4UcbNcnpType           ::= ENUMERATED
@@ -3056,7 +3056,7 @@ ChannelMode                 ::= ENUMERATED
     hscsd-14500down43500upchannelmode        (7),
     hscsd-14500down29000upchannelmode        (10),
     hscsd-29000down43500upchannelmode        (15)
-    
+
 }
 
 Channel                 ::= ENUMERATED
@@ -3082,7 +3082,7 @@ ChargePulseNumber    ::= INTEGER
 IntermediateChargingInd  ::=    ENUMERATED
 {
     sINGLE-BILL  (0),
-    fIRST-BILL   (1), 
+    fIRST-BILL   (1),
     iNTERMEDIATE-BILL (2),
     lAST-BILL (3)
 }
