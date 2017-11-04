@@ -66,8 +66,8 @@ Although ``asn1ate`` was initially developed on Python 3.2, it has been tested
 with Python 2.7 and should port to older Python versions easily. Latest release
 tested with:
 
-* Python 3.4.0
-* Python 2.7.3
+* Python 3.6.3
+* Python 2.7.14
 
 
 Design notes
