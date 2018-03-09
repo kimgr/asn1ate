@@ -301,11 +301,7 @@ def _build_asn1_grammar():
     referenced_type = defined_type | selection_type  # todo: consider other ref:d types from 16.3
 
     type_ << (builtin_type | referenced_type)
-
-    # EXT: identifier should not be Optional here, but
-    # our other ASN.1 code generator supports unnamed members,
-    # and we use them.
-    named_type << (Optional(identifier) + type_)
+    named_type << (identifier + type_)
 
     type_assignment = typereference + '::=' + type_
     value_assignment = valuereference + type_ + '::=' + value

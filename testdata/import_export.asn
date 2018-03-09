@@ -8,7 +8,10 @@ IMPORTS DataType FROM OtherASN1Module;
 
 MyType ::= INTEGER
 
-MySet ::= SET {MyType, BOOLEAN}
+MySet ::= SET {
+  x MyType,
+  y BOOLEAN
+}
 
 END --MyASN1Module
 

@@ -749,19 +749,8 @@ class ComponentType(SemaNode):
 
 class NamedType(SemaNode):
     def __init__(self, elements):
-        first_token = elements[0]
-        if first_token.ty == 'Type':
-            # EXT: unnamed member
-            type_token = first_token
-            self.identifier = _get_next_unnamed()
-        elif first_token.ty == 'Identifier':
-            # an identifier
-            self.identifier = first_token.elements[0]
-            type_token = elements[1]
-        else:
-            raise Exception('Unexpected token %s' % first_token.ty)
-
-        self.type_decl = _create_sema_node(type_token)
+        self.identifier = elements[0].elements[0]
+        self.type_decl = _create_sema_node(elements[1])
 
     def __str__(self):
         return '%s %s' % (self.identifier, self.type_decl)
