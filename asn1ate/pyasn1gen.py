@@ -631,16 +631,25 @@ def main():
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
     output_file = sys.stdout
+    if args.split:
+        source_writer = pygen.Asn1SourceWriter()
+    else:
+        source_writer = pygen.Asn1SourcesListWriter()
+        print(source_writer.sources_array_initializer(), file=output_file)
     for module in modules:
         try:
             if args.split:
                 output_file = open(_sanitize_module(module.name) + '.py', 'w')
             print(pygen.auto_generated_header(args.file, __version__),
                   file=output_file)
+            print(source_writer.python_inclusion(str(module)),
+                  file=output_file)
             generate_pyasn1(module, output_file, modules)
         finally:
             if output_file != sys.stdout:
                 output_file.close()
+    if not args.split:
+        print(source_writer.join_of_array())
 
     return 0
 
