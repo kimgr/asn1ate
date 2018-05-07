@@ -619,6 +619,8 @@ def main():
     arg_parser.add_argument('file', help='the ASN.1 file to process')
     arg_parser.add_argument('--split', action='store_true',
                             help='output multiple modules to separate files')
+    arg_parser.add_argument('-c', '--asn1-constants', action='store_true',
+                            help='generate constants in the output containing the input ASN.1')
     args = arg_parser.parse_args()
 
     with open(args.file, 'r') as data:
@@ -631,7 +633,10 @@ def main():
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
     output_file = sys.stdout
-    if args.split:
+    source_writer = None
+    if not args.asn1_constants:
+        pass
+    elif args.split:
         source_writer = pygen.Asn1SourceWriter()
     else:
         source_writer = pygen.Asn1SourcesListWriter()
@@ -642,13 +647,14 @@ def main():
                 output_file = open(_sanitize_module(module.name) + '.py', 'w')
             print(pygen.auto_generated_header(args.file, __version__),
                   file=output_file)
-            print(source_writer.python_inclusion(str(module)),
-                  file=output_file)
+            if source_writer is not None:
+                print(source_writer.python_inclusion(str(module)),
+                      file=output_file)
             generate_pyasn1(module, output_file, modules)
         finally:
             if output_file != sys.stdout:
                 output_file.close()
-    if not args.split:
+    if hasattr(source_writer, 'join_of_array'):
         print(source_writer.join_of_array())
 
     return 0
