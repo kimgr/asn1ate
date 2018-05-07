@@ -37,7 +37,11 @@ ASN.1 definitions. The command to do this is::
 
   $ python .../asn1ate/pyasn1gen.py source.asn1
 
-It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout.
+It will print the ``pyasn1`` equivalent of ``source.asn1`` to stdout. Output
+can also (when the appropriate flag is given) include a constant named
+``ASN1_SOURCE`` containing the non-comment content of the source file; if the
+output is split into multiple Python modules, each module will have the
+corresponding ``ASN1_SOURCE``.
 
 But ``asn1ate`` is also designed to be usable as a library, to allow reuse of
 the ASN.1 parser for custom code generation.

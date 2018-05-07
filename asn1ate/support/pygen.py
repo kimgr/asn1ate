@@ -105,3 +105,44 @@ class PythonFragment(PythonWriter):
 
     def __str__(self):
         return self.buf.getvalue()
+
+class Asn1SourceWriter(object):
+    const_name = "ASN1_SOURCE"
+    
+    def python_inclusion(self, module_name, asn1_str):
+        return "\n{} = {}\n".format(
+            self.const_name,
+            self.const_format(asn1_str)
+        ).format(asn1_str)
+    
+    @classmethod
+    def const_format(cls, asn1_str):
+        if '"""' in asn1_str:
+            return "{!r}"
+        else:
+            return 'r"""\n{}\n"""'
+
+class Asn1SourcesCollectionWriter(Asn1SourceWriter):
+    collection_const_name = "ASN1_MODULE_SOURCES"
+    
+    def __init__(self):
+        super(Asn1SourcesCollectionWriter, self).__init__()
+        self.__collection_initialized = False
+    
+    def collection_initializer(self, ):
+        self.__collection_initialized = True
+        return "\n{} = dict()\n".format(self.collection_const_name)
+    
+    def python_inclusion(self, module_name, asn1_str):
+        assert self.__collection_initialized
+        return "\n{}[{!r}] = {}\n".format(
+            self.collection_const_name,
+            module_name,
+            self.const_format(asn1_str)
+        ).format(asn1_str)
+    
+    def join_of_sources(self):
+        return "\n{} = ''.join({}.values())\n".format(
+            self.const_name,
+            self.collection_const_name
+        )
