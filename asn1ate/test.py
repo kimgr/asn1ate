@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright (c) 2013-2018, Schneider Electric Buildings AB
 # All rights reserved.
 #
