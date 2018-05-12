@@ -34,14 +34,17 @@ from asn1ate import parser, sema, pyasn1gen
 def parse_args():
     ap = argparse.ArgumentParser(description='Test driver for asn1ate.')
     ap.add_argument('file', help='ASN.1 file to test.')
-    group = ap.add_mutually_exclusive_group()
-    group.add_argument('--parse', action='store_true', default=False, required=False, help='Only parse.')
-    group.add_argument('--sema', action='store_true', default=False, required=False,
-                       help='Only parse and build semantic model.')
-    group.add_argument('--gen', action='store_true', default=True, required=False,
-                       help='Parse, build semantic model and generate pyasn1 code. (Default)')
-    group.add_argument('--outdir', default=None, required=False,
-                       help='Write Python modules to a temporary output dir instead of to stdout.')
+    ap.add_argument('--outdir',
+                    help='Write Python module files to directory instead of stdout')
+
+    # Actions
+    group = ap.add_mutually_exclusive_group(required=True)
+    group.add_argument('--parse', action='store_true',
+                       help='Only parse.')
+    group.add_argument('--sema', action='store_true',
+                       help='Only parse and build semantic model')
+    group.add_argument('--gen', action='store_true',
+                       help='Parse, build semantic model and generate pyasn1 code (default)')
 
     return ap.parse_args()
 
@@ -67,8 +70,8 @@ def main():
     with open(args.file) as f:
         asn1def = f.read()
 
-    if args.outdir and (args.parse or args.sema):
-        print('ERROR: can only use --outdir with --gen')
+    if args.outdir and not args.gen:
+        print('ERROR: can only use --outdir with --gen', file=sys.stderr)
         return 1
 
     parse_tree = parser.parse_asn1(asn1def)

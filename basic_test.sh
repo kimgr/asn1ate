@@ -16,7 +16,7 @@ do
     echo "Checking $f";
     rm -rf _testdir/
     mkdir -p _testdir/
-    python asn1ate/test.py --outdir=_testdir $f
+    python asn1ate/test.py --outdir=_testdir --gen $f
     # Run python over _testdir/*.py
     for m in _testdir/*.py;
     do
