@@ -38,6 +38,8 @@ def parse_args():
     ap.add_argument('file', help='ASN.1 file to test.')
     ap.add_argument('--outdir',
                     help='Write Python module files to directory instead of stdout')
+    ap.add_argument('--include-asn1', action='store_true',
+                    help='Pass --include-asn1 to code generator')
 
     # Actions
     group = ap.add_mutually_exclusive_group(required=True)
@@ -61,7 +63,8 @@ def generate_module_code(args):
         if split:
             os.chdir(args.outdir)
 
-        pyasn1gen.main(argparse.Namespace(file=infile, split=split))
+        pyasn1gen.main(argparse.Namespace(file=infile, split=split,
+                                          include_asn1=args.include_asn1))
     finally:
         os.chdir(prev_cwd)
 

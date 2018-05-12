@@ -1,0 +1,8 @@
+-- Test handling of strings with escape chars
+Escaped DEFINITIONS ::=
+BEGIN
+  backslashString PrintableString ::= "This is a string with \ in it"
+  newlineString PrintableString ::= "String with \n in it"
+
+  -- TODO: Cover double- and triple-quote string escaping when that works
+END

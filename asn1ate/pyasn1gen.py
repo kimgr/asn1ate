@@ -27,6 +27,7 @@
 
 from __future__ import print_function  # Python 2 compatibility
 
+import os
 import sys
 import argparse
 import keyword
@@ -523,11 +524,16 @@ class Pyasn1Backend(object):
         return _ASN1_BUILTIN_VALUES.get(v, v)
 
 
-def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None):
+def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None):
     if header:
         print(header, file=out_stream)
 
-    return Pyasn1Backend(sema_module, out_stream, referenced_modules).generate_code()
+    result = Pyasn1Backend(sema_module, out_stream, referenced_modules).generate_code()
+
+    if footer:
+        print(footer, file=out_stream)
+
+    return result
 
 
 # Translation tables from ASN.1 primitives to pyasn1 primitives
@@ -651,6 +657,10 @@ def main(args):
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
     header = pygen.auto_generated_header(args.file, __version__)
+    if args.include_asn1:
+        header += 'ASN1_SOURCES = {}'
+        header += os.linesep
+
     if not args.split:
         # Print header once and then reset so we don't emit it for every module
         print(header, file=sys.stdout)
@@ -662,8 +672,15 @@ def main(args):
         else:
             outfile = '-'
 
+        if args.include_asn1:
+            footer = 'ASN1_SOURCES[%r] = %s' % (module.name,
+                                                pygen.format_longstring(str(module)))
+            footer += os.linesep
+        else:
+            footer = None
+
         with _maybe_open(outfile) as output_file:
-            generate_pyasn1(module, output_file, modules, header=header)
+            generate_pyasn1(module, output_file, modules, header=header, footer=footer)
 
     return 0
 
@@ -675,6 +692,8 @@ def main_cli():
     arg_parser.add_argument('file', help='the ASN.1 file to process')
     arg_parser.add_argument('--split', action='store_true',
                             help='output multiple modules to separate files')
+    arg_parser.add_argument('--include-asn1', action='store_true',
+                            help='output ASN.1 source as part of generated code')
     args = arg_parser.parse_args()
     return main(args)
 
