@@ -12,7 +12,7 @@ FOR %%t IN (testdata\*.asn) DO (
   @ECHO Checking %%t
   RD /s /q _testdir
   MD _testdir
-  python asn1ate\test.py --outdir=_testdir %%t
+  python asn1ate\test.py --outdir=_testdir --gen %%t
   IF %ERRORLEVEL% NEQ 0 (
      EXIT /B %ERRORLEVEL%
   )
