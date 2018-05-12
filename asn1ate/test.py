@@ -28,8 +28,7 @@ from __future__ import print_function  # Python 2 compatibility
 import os
 import sys
 import argparse  # Requires Python 2.7 or later, but that's OK for a test driver
-from asn1ate import parser, sema, pyasn1gen, __version__
-from asn1ate.support import pygen
+from asn1ate import parser, sema, pyasn1gen
 
 
 def parse_args():
@@ -47,22 +46,19 @@ def parse_args():
     return ap.parse_args()
 
 
-def generate_code_to_file(input_name, module, modules, file):
-    header = pygen.auto_generated_header(input_name, __version__)
-    pyasn1gen.generate_pyasn1(module, file, modules, header=header)
+def generate_module_code(args):
+    # Absolutize input path before changing working directory
+    infile = os.path.abspath(args.file)
+    split = bool(args.outdir)
 
+    prev_cwd = os.getcwd()
+    try:
+        if split:
+            os.chdir(args.outdir)
 
-def generate_module_code(args, module, modules):
-    if not args.outdir:
-        generate_code_to_file(args.file, module, modules, sys.stdout)
-    else:
-        output_file = pyasn1gen._sanitize_module(module.name) + '.py'
-        output_file = os.path.join(args.outdir, output_file)
-        if os.path.exists(output_file):
-            raise Exception('ERROR: output file %s already exists' % output_file)
-
-        with open(output_file, 'w') as file:
-            generate_code_to_file(args.file, module, modules, file)
+        pyasn1gen.main(argparse.Namespace(file=infile, split=split))
+    finally:
+        os.chdir(prev_cwd)
 
 
 # Simplistic command-line driver
@@ -87,8 +83,7 @@ def main():
         return 0
 
     if args.gen:
-        for module in modules:
-            generate_module_code(args, module, modules)
+        generate_module_code(args)
 
     return 0
 

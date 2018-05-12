@@ -616,14 +616,7 @@ def _sanitize_module(name):
 
 
 # Simplistic command-line driver
-def main():
-    arg_parser = argparse.ArgumentParser(description='Generate Python classes from an ASN.1 definition file.'
-                                                     'Output to stdout by default.')
-    arg_parser.add_argument('file', help='the ASN.1 file to process')
-    arg_parser.add_argument('--split', action='store_true',
-                            help='output multiple modules to separate files')
-    args = arg_parser.parse_args()
-
+def main(args):
     with open(args.file, 'r') as data:
         asn1def = data.read()
 
@@ -654,4 +647,11 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    arg_parser = argparse.ArgumentParser(
+        description=('Generate Python classes from an ASN.1 definition file. '
+                     'Output to stdout by default.'))
+    arg_parser.add_argument('file', help='the ASN.1 file to process')
+    arg_parser.add_argument('--split', action='store_true',
+                            help='output multiple modules to separate files')
+    args = arg_parser.parse_args()
+    sys.exit(main(args))
