@@ -30,6 +30,7 @@ from __future__ import print_function  # Python 2 compatibility
 import sys
 import argparse
 import keyword
+import contextlib
 from asn1ate import parser, __version__
 from asn1ate.support import pygen
 from asn1ate.sema import *
@@ -617,6 +618,26 @@ def _sanitize_module(name):
     return _sanitize_identifier(name).lower()
 
 
+@contextlib.contextmanager
+def _maybe_open(filename):
+    """ Maybe open the file indicated by filename.
+
+    If filename is '-', return sys.stdout.
+
+    Otherwise return a file object opened for writing, and close it at
+    context-manager exit.
+    """
+    if filename == '-':
+        fileobj = sys.stdout
+    else:
+        fileobj = open(filename, 'w')
+
+    yield fileobj
+
+    if fileobj is not sys.stdout:
+        fileobj.close()
+
+
 # Simplistic command-line driver
 def main(args):
     with open(args.file, 'r') as data:
@@ -628,22 +649,20 @@ def main(args):
     if len(modules) > 1 and not args.split:
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
-    output_file = sys.stdout
-
     header = pygen.auto_generated_header(args.file, __version__)
     if not args.split:
         # Print header once and then reset so we don't emit it for every module
-        print(header, file=output_file)
+        print(header, file=sys.stdout)
         header = None
 
     for module in modules:
-        try:
-            if args.split:
-                output_file = open(_sanitize_module(module.name) + '.py', 'w')
+        if args.split:
+            outfile = _sanitize_module(module.name) + '.py'
+        else:
+            outfile = '-'
+
+        with _maybe_open(outfile) as output_file:
             generate_pyasn1(module, output_file, modules, header=header)
-        finally:
-            if output_file != sys.stdout:
-                output_file.close()
 
     return 0
 
