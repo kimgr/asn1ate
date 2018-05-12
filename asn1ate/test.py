@@ -48,9 +48,8 @@ def parse_args():
 
 
 def generate_code_to_file(input_name, module, modules, file):
-    print(pygen.auto_generated_header(input_name, __version__),
-          file=file)
-    pyasn1gen.generate_pyasn1(module, file, modules)
+    header = pygen.auto_generated_header(input_name, __version__)
+    pyasn1gen.generate_pyasn1(module, file, modules, header=header)
 
 
 def generate_module_code(args, module, modules):

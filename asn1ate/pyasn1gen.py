@@ -519,7 +519,10 @@ class Pyasn1Backend(object):
         return _ASN1_BUILTIN_VALUES.get(v, v)
 
 
-def generate_pyasn1(sema_module, out_stream, referenced_modules):
+def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None):
+    if header:
+        print(header, file=out_stream)
+
     return Pyasn1Backend(sema_module, out_stream, referenced_modules).generate_code()
 
 
@@ -631,13 +634,18 @@ def main():
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
     output_file = sys.stdout
+
+    header = pygen.auto_generated_header(args.file, __version__)
+    if not args.split:
+        # Print header once and then reset so we don't emit it for every module
+        print(header, file=output_file)
+        header = None
+
     for module in modules:
         try:
             if args.split:
                 output_file = open(_sanitize_module(module.name) + '.py', 'w')
-            print(pygen.auto_generated_header(args.file, __version__),
-                  file=output_file)
-            generate_pyasn1(module, output_file, modules)
+            generate_pyasn1(module, output_file, modules, header=header)
         finally:
             if output_file != sys.stdout:
                 output_file.close()
