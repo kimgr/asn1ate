@@ -30,7 +30,7 @@ except ImportError:
     # Python 3
     from io import StringIO
 
-import os.path
+import os
 from datetime import datetime
 
 
@@ -105,3 +105,26 @@ class PythonFragment(PythonWriter):
 
     def __str__(self):
         return self.buf.getvalue()
+
+
+def format_longstring(content):
+    """ Wrap content in a Python longstring format.
+
+    E.g. format_longstring("Hello") will return:
+
+    \"\"\"
+    Hello
+    \"\"\"
+
+    Backslashes and inline triple-quotes are escaped.
+    """
+    escaped = content
+    escaped = escaped.replace('\\', '\\\\')
+    escaped = escaped.replace('"""', '\\"\\"\\"')
+
+    lines = [
+        '"""',
+        escaped,
+        '"""'
+    ]
+    return os.linesep.join(lines)
