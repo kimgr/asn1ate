@@ -126,6 +126,7 @@ class Pyasn1Backend(object):
         }
 
     def generate_code(self):
+        self.writer.write_line('# %s' % self.sema_module.name)
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
         for module in self.referenced_modules:
             if module is not self.sema_module:
