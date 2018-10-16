@@ -675,7 +675,7 @@ def main_cli():
     arg_parser.add_argument('--split', action='store_true',
                             help='output multiple modules to separate files')
     args = arg_parser.parse_args()
-    sys.exit(main(args))
+    return main(args)
 
 
 if __name__ == '__main__':
