@@ -667,7 +667,7 @@ def main(args):
     return 0
 
 
-if __name__ == '__main__':
+def main_cli():
     arg_parser = argparse.ArgumentParser(
         description=('Generate Python classes from an ASN.1 definition file. '
                      'Output to stdout by default.'))
@@ -676,3 +676,7 @@ if __name__ == '__main__':
                             help='output multiple modules to separate files')
     args = arg_parser.parse_args()
     sys.exit(main(args))
+
+
+if __name__ == '__main__':
+    sys.exit(main_cli())

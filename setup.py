@@ -48,7 +48,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'asn1ate = asn1ate.pyasn1gen:main'
+            'asn1ate = asn1ate.pyasn1gen:main_cli'
         ]
     }
 )
