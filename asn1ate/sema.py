@@ -120,7 +120,7 @@ def dependency_sort(assignments):
     # Build the dependency graph.
     graph = {}
     for assignment in assignments:
-        references = assignment.references()
+        references = sorted(assignment.references())
         graph[assignment] = [assignments_by_name[r] for r in references
                              if r in assignments_by_name]
 
