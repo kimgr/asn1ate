@@ -271,7 +271,7 @@ def _build_asn1_grammar():
     selection_type = identifier + Suppress('<') + type_
     enumerated_type = ENUMERATED + braced_list(enumeration | extension_marker)
     bitstring_type = BIT_STRING + Optional(braced_list(named_number), default=[]) + Optional(single_value_constraint | size_constraint, default=None)
-    plain_integer_type = INTEGER
+    integer_type = Unique(INTEGER)
     restricted_integer_type = INTEGER + braced_list(named_number) + Optional(single_value_constraint, default=None)
     boolean_type = BOOLEAN
     real_type = REAL
@@ -293,7 +293,7 @@ def _build_asn1_grammar():
     any_type = ANY + Optional(Suppress(DEFINED_BY + identifier))
 
     # todo: consider other builtins from 16.2
-    simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | plain_integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
+    simple_type = (any_type | boolean_type | null_type | octetstring_type | characterstring_type | real_type | integer_type | object_identifier_type | useful_type) + Optional(value_range_constraint | single_value_constraint)
     constructed_type = choice_type | sequence_type | set_type
     value_list_type = restricted_integer_type | enumerated_type
     builtin_type = value_list_type | tagged_type | simple_type | constructed_type | sequenceof_type | setof_type | bitstring_type
