@@ -672,10 +672,10 @@ class ReferencedValue(SemaNode):
 
 class SingleValueConstraint(SemaNode):
     def __init__(self, elements):
-        self.value = _maybe_create_sema_node(elements[0])
+        self.values = [_maybe_create_sema_node(e) for e in elements[0]]
 
     def __str__(self):
-        return '(%s)' % self.value
+        return '(%s)' % ' | '.join(map(str, self.values))
 
     __repr__ = __str__
 
