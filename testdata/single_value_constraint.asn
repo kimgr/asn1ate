@@ -18,4 +18,6 @@ BEGIN
 
   Alias ::= OCTET STRING
   ConstrainedAlias ::= Alias (SIZE(8))
+
+  PolicyQualifierId ::= OBJECT IDENTIFIER ( 1 | 0 )
 END
