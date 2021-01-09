@@ -129,6 +129,10 @@ class Pyasn1Backend(object):
     def generate_code(self):
         self.writer.write_line('# %s' % self.sema_module.name)
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
+
+        for imp, values in self.sema_module.imports.imports.iteritems():
+            self.writer.write_line('from _%s import %s' %
+                    ('_'.join([str(d.number) for d in imp.descendants() if isinstance(d, NameAndNumberForm)]),', '.join(map(_sanitize_identifier, values))))
         for module in self.referenced_modules:
             if module is not self.sema_module:
                 self.writer.write_line('import ' + _sanitize_module(module.name))
@@ -652,7 +656,7 @@ def main(args):
 
     parse_tree = parser.parse_asn1(asn1def)
 
-    modules = build_semantic_model(parse_tree)
+    modules = build_semantic_model(parse_tree, args.skip_missing)
     if len(modules) > 1 and not args.split:
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
@@ -668,7 +672,10 @@ def main(args):
 
     for module in modules:
         if args.split:
-            outfile = _sanitize_module(module.name) + '.py'
+            if args.use_oid:
+                outfile = "_" + "_".join(module.oid) + '.py'
+            else:
+                outfile = _sanitize_module(module.name) + '.py'
         else:
             outfile = '-'
 
@@ -694,6 +701,10 @@ def main_cli():
                             help='output multiple modules to separate files')
     arg_parser.add_argument('--include-asn1', action='store_true',
                             help='output ASN.1 source as part of generated code')
+    arg_parser.add_argument('--use-oid', action='store_true',
+                            help='output module using the OID')
+    arg_parser.add_argument('--skip-missing', action='store_true',
+                            help='continue when a missing idenfitier is found')
     args = arg_parser.parse_args()
     return main(args)
 
