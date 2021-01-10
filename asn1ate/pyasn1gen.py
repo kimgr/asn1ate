@@ -86,10 +86,11 @@ class Pyasn1Backend(object):
     definitions.
     """
 
-    def __init__(self, sema_module, out_stream, referenced_modules):
+    def __init__(self, sema_module, out_stream, referenced_modules, use_oid=False):
         self.sema_module = sema_module
         self.referenced_modules = referenced_modules
         self.writer = pygen.PythonWriter(out_stream)
+        self.use_oid = use_oid
 
         self.decl_generators = {
             TypeAssignment: self.decl_type_assignment,
@@ -131,7 +132,11 @@ class Pyasn1Backend(object):
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
 
         for imp, values in self.sema_module.imports.imports.iteritems():
-            module = _sanitize_module(imp.module_ref.name)
+            if self.use_oid:
+                module = '_' + '_'.join([_sanitize_identifier(d.number) for d in imp.descendants()
+                                    if isinstance(d, NameAndNumberForm)])
+            else:
+                module = _sanitize_module(imp.module_ref.name)
             symbols = ', '.join(_sanitize_identifier(v) for v in values)
             self.writer.write_line('from %s import %s' % (module, symbols))
 
@@ -530,11 +535,11 @@ class Pyasn1Backend(object):
         return _ASN1_BUILTIN_VALUES.get(v, v)
 
 
-def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None):
+def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None, use_oid=False):
     if header:
         print(header, file=out_stream)
 
-    result = Pyasn1Backend(sema_module, out_stream, referenced_modules).generate_code()
+    result = Pyasn1Backend(sema_module, out_stream, referenced_modules, use_oid).generate_code()
 
     if footer:
         print(footer, file=out_stream)
@@ -680,7 +685,10 @@ def main(args):
 
     for module in modules:
         if args.split:
-            outfile = _sanitize_module(module.name) + '.py'
+            if args.use_oid:
+                outfile = _sanitize_oid(module.oid) + '.py'
+            else:
+                outfile = _sanitize_module(module.name) + '.py'
         else:
             outfile = '-'
 
@@ -710,6 +718,8 @@ def main_cli():
                             help='output module using the OID')
     arg_parser.add_argument('--skip-missing', action='store_true',
                             help='continue when a missing idenfitier is found')
+    arg_parser.add_argument('--use-oid', action='store_true',
+                            help='use the OID as the output file instead of the module name')
     args = arg_parser.parse_args()
     return main(args)
 
