@@ -86,11 +86,12 @@ class Pyasn1Backend(object):
     definitions.
     """
 
-    def __init__(self, sema_module, out_stream, referenced_modules, use_oid=False):
+    def __init__(self, sema_module, out_stream, referenced_modules, skip_missing=False, use_oid=False):
         self.sema_module = sema_module
         self.referenced_modules = referenced_modules
         self.writer = pygen.PythonWriter(out_stream)
         self.use_oid = use_oid
+        self.skip_missing = skip_missing
 
         self.decl_generators = {
             TypeAssignment: self.decl_type_assignment,
@@ -364,7 +365,7 @@ class Pyasn1Backend(object):
     def build_tag_expr(self, tag_def):
         context = _translate_tag_class(tag_def.class_name)
 
-        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl, self.referenced_modules)
+        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl, self.referenced_modules, skip_missing=self.skip_missing)
         if isinstance(tagged_type_decl, ConstructedType):
             tag_format = 'tag.tagFormatConstructed'
         else:
@@ -418,14 +419,14 @@ class Pyasn1Backend(object):
             return self.build_object_identifier_value(value)
         else:
             value_type = _translate_type(type_decl.type_name)
-            root_type = self.sema_module.resolve_type_decl(type_decl, self.referenced_modules)
+            root_type = self.sema_module.resolve_type_decl(type_decl, self.referenced_modules, skip_missing=self.skip_missing)
             return '%s(%s)' % (value_type, build_value_expr(root_type.type_name, value))
 
     def inline_component_type(self, t):
         if t.components_of_type:
             # COMPONENTS OF works like a literal include, so just
             # expand all components of the referenced type.
-            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type, self.referenced_modules)
+            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type, self.referenced_modules, skip_missing=self.skip_missing)
             included_content = self.inline_component_types(included_type_decl.components)
 
             # Strip trailing newline from inline_component_types
@@ -535,11 +536,11 @@ class Pyasn1Backend(object):
         return _ASN1_BUILTIN_VALUES.get(v, v)
 
 
-def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None, use_oid=False):
+def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None, skip_missing=False, use_oid=False):
     if header:
         print(header, file=out_stream)
 
-    result = Pyasn1Backend(sema_module, out_stream, referenced_modules, use_oid).generate_code()
+    result = Pyasn1Backend(sema_module, out_stream, referenced_modules, skip_missing, use_oid).generate_code()
 
     if footer:
         print(footer, file=out_stream)
@@ -669,7 +670,7 @@ def main(args):
 
     parse_tree = parser.parse_asn1(asn1def)
 
-    modules = build_semantic_model(parse_tree, args.skip_missing)
+    modules = build_semantic_model(parse_tree)
     if len(modules) > 1 and not args.split:
         print('WARNING: More than one module generated to the same stream.', file=sys.stderr)
 
@@ -700,7 +701,7 @@ def main(args):
             footer = None
 
         with _maybe_open(outfile) as output_file:
-            generate_pyasn1(module, output_file, modules, header=header, footer=footer, use_oid=args.use_oid)
+            generate_pyasn1(module, output_file, modules, header=header, footer=footer, skip_missing=args.skip_missing, use_oid=args.use_oid)
 
     return 0
 
