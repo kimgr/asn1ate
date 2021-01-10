@@ -700,7 +700,7 @@ def main(args):
             footer = None
 
         with _maybe_open(outfile) as output_file:
-            generate_pyasn1(module, output_file, modules, header=header, footer=footer, use_oid=use_args.use_oid)
+            generate_pyasn1(module, output_file, modules, header=header, footer=footer, use_oid=args.use_oid)
 
     return 0
 
