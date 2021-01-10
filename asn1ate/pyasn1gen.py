@@ -130,6 +130,11 @@ class Pyasn1Backend(object):
         self.writer.write_line('# %s' % self.sema_module.name)
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
 
+        for imp, values in self.sema_module.imports.imports.iteritems():
+            module = _sanitize_module(imp.module_ref.name)
+            symbols = ', '.join(_sanitize_identifier(v) for v in values)
+            self.writer.write_line('from %s import %s' % (module, symbols))
+
         for module in self.referenced_modules:
             if module is not self.sema_module:
                 self.writer.write_line('import ' + _sanitize_module(module.name))
