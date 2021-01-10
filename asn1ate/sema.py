@@ -307,16 +307,15 @@ class Module(SemaNode):
                                                                               [module.name for module in
                                                                                referenced_modules]))
 
-            type_decl = module.user_types().get(type_decl.type_name, None)
-            if type_decl is None:
+            user_type = module.user_types().get(type_decl.type_name, None)
+            if user_type is None:
                 # It's OK for imported symbols to be missing when
                 # not all modules are passed to the code generator.
-                 if self.skip_missing:
-                     if type_decl.type_name not in module.user_types():
-                            for value in self.imports.imports.values():
-                                if type_decl.type_name in value:
-                                    return type_decl
-            return module.resolve_type_decl(type_decl, referenced_modules)
+                if self.skip_missing:
+                    for value in self.imports.imports.values():
+                        if type_decl.type_name in value:
+                            return type_decl.type_name
+            return module.resolve_type_decl(user_type, referenced_modules)
         else:
             return type_decl
 
