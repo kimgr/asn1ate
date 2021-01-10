@@ -130,9 +130,6 @@ class Pyasn1Backend(object):
         self.writer.write_line('# %s' % self.sema_module.name)
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
 
-        for imp, values in self.sema_module.imports.imports.iteritems():
-            self.writer.write_line('from _%s import %s' %
-                    ('_'.join([str(d.number) for d in imp.descendants() if isinstance(d, NameAndNumberForm)]),', '.join(map(_sanitize_identifier, values))))
         for module in self.referenced_modules:
             if module is not self.sema_module:
                 self.writer.write_line('import ' + _sanitize_module(module.name))
@@ -629,6 +626,12 @@ def _sanitize_module(name):
     return _sanitize_identifier(name).lower()
 
 
+def _sanitize_oid(oid):
+    """ Sanitize ASN.1 Object identifiers so that they're PEP8 compliant identifiers.
+    """
+    return "_" + "_".join(_sanitize_identifier(c) for c in oid)
+
+
 @contextlib.contextmanager
 def _maybe_open(filename):
     """ Maybe open the file indicated by filename.
@@ -672,10 +675,7 @@ def main(args):
 
     for module in modules:
         if args.split:
-            if args.use_oid:
-                outfile = "_" + "_".join(module.oid) + '.py'
-            else:
-                outfile = _sanitize_module(module.name) + '.py'
+            outfile = _sanitize_module(module.name) + '.py'
         else:
             outfile = '-'
 
@@ -701,7 +701,7 @@ def main_cli():
                             help='output multiple modules to separate files')
     arg_parser.add_argument('--include-asn1', action='store_true',
                             help='output ASN.1 source as part of generated code')
-    arg_parser.add_argument('--use-oid', action='store_true',
+    arg_parser.add_argument('--v', action='store_true',
                             help='output module using the OID')
     arg_parser.add_argument('--skip-missing', action='store_true',
                             help='continue when a missing idenfitier is found')
