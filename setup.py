@@ -35,7 +35,7 @@ setup(
     ],
     platforms=['any'],
     install_requires=[
-        'pyparsing>=2.0.0',
+        'pyparsing >=2.0.0, !=3.0.5, !=3.0.6',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
