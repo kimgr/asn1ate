@@ -86,10 +86,12 @@ class Pyasn1Backend(object):
     definitions.
     """
 
-    def __init__(self, sema_module, out_stream, referenced_modules):
+    def __init__(self, sema_module, out_stream, referenced_modules, skip_missing=False, use_oid=False):
         self.sema_module = sema_module
         self.referenced_modules = referenced_modules
         self.writer = pygen.PythonWriter(out_stream)
+        self.use_oid = use_oid
+        self.skip_missing = skip_missing
 
         self.decl_generators = {
             TypeAssignment: self.decl_type_assignment,
@@ -129,6 +131,16 @@ class Pyasn1Backend(object):
     def generate_code(self):
         self.writer.write_line('# %s' % self.sema_module.name)
         self.writer.write_line('from pyasn1.type import univ, char, namedtype, namedval, tag, constraint, useful')
+
+        for imp, values in self.sema_module.imports.imports.iteritems():
+            if self.use_oid:
+                module = '_' + '_'.join([_sanitize_identifier(d.number) for d in imp.descendants()
+                                    if isinstance(d, NameAndNumberForm)])
+            else:
+                module = _sanitize_module(imp.module_ref.name)
+            symbols = ', '.join(_sanitize_identifier(v) for v in values)
+            self.writer.write_line('from %s import %s' % (module, symbols))
+
         for module in self.referenced_modules:
             if module is not self.sema_module:
                 self.writer.write_line('import ' + _sanitize_module(module.name))
@@ -353,7 +365,7 @@ class Pyasn1Backend(object):
     def build_tag_expr(self, tag_def):
         context = _translate_tag_class(tag_def.class_name)
 
-        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl, self.referenced_modules)
+        tagged_type_decl = self.sema_module.resolve_type_decl(tag_def.type_decl, self.referenced_modules, skip_missing=self.skip_missing)
         if isinstance(tagged_type_decl, ConstructedType):
             tag_format = 'tag.tagFormatConstructed'
         else:
@@ -407,14 +419,14 @@ class Pyasn1Backend(object):
             return self.build_object_identifier_value(value)
         else:
             value_type = _translate_type(type_decl.type_name)
-            root_type = self.sema_module.resolve_type_decl(type_decl, self.referenced_modules)
+            root_type = self.sema_module.resolve_type_decl(type_decl, self.referenced_modules, skip_missing=self.skip_missing)
             return '%s(%s)' % (value_type, build_value_expr(root_type.type_name, value))
 
     def inline_component_type(self, t):
         if t.components_of_type:
             # COMPONENTS OF works like a literal include, so just
             # expand all components of the referenced type.
-            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type, self.referenced_modules)
+            included_type_decl = self.sema_module.resolve_type_decl(t.components_of_type, self.referenced_modules, skip_missing=self.skip_missing)
             included_content = self.inline_component_types(included_type_decl.components)
 
             # Strip trailing newline from inline_component_types
@@ -524,11 +536,11 @@ class Pyasn1Backend(object):
         return _ASN1_BUILTIN_VALUES.get(v, v)
 
 
-def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None):
+def generate_pyasn1(sema_module, out_stream, referenced_modules, header=None, footer=None, skip_missing=False, use_oid=False):
     if header:
         print(header, file=out_stream)
 
-    result = Pyasn1Backend(sema_module, out_stream, referenced_modules).generate_code()
+    result = Pyasn1Backend(sema_module, out_stream, referenced_modules, skip_missing, use_oid).generate_code()
 
     if footer:
         print(footer, file=out_stream)
@@ -625,6 +637,12 @@ def _sanitize_module(name):
     return _sanitize_identifier(name).lower()
 
 
+def _sanitize_oid(oid):
+    """ Sanitize ASN.1 Object identifiers so that they're PEP8 compliant identifiers.
+    """
+    return "_" + "_".join(_sanitize_identifier(c) for c in oid)
+
+
 @contextlib.contextmanager
 def _maybe_open(filename):
     """ Maybe open the file indicated by filename.
@@ -668,7 +686,10 @@ def main(args):
 
     for module in modules:
         if args.split:
-            outfile = _sanitize_module(module.name) + '.py'
+            if args.use_oid:
+                outfile = _sanitize_oid(module.oid) + '.py'
+            else:
+                outfile = _sanitize_module(module.name) + '.py'
         else:
             outfile = '-'
 
@@ -680,7 +701,7 @@ def main(args):
             footer = None
 
         with _maybe_open(outfile) as output_file:
-            generate_pyasn1(module, output_file, modules, header=header, footer=footer)
+            generate_pyasn1(module, output_file, modules, header=header, footer=footer, skip_missing=args.skip_missing, use_oid=args.use_oid)
 
     return 0
 
@@ -694,6 +715,12 @@ def main_cli():
                             help='output multiple modules to separate files')
     arg_parser.add_argument('--include-asn1', action='store_true',
                             help='output ASN.1 source as part of generated code')
+    arg_parser.add_argument('--v', action='store_true',
+                            help='output module using the OID')
+    arg_parser.add_argument('--skip-missing', action='store_true',
+                            help='continue when a missing idenfitier is found')
+    arg_parser.add_argument('--use-oid', action='store_true',
+                            help='use the OID as the output file instead of the module name')
     args = arg_parser.parse_args()
     return main(args)
 
